@@ -208,3 +208,7 @@ __marimo__/
 
 # Develop prompt files
 develop_prompt_files/
+
+# Test images & DB
+image_qa/test_images/
+text_qa/chroma_db/
