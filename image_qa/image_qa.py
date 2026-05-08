@@ -20,7 +20,8 @@ from langchain_ollama import OllamaLLM
 from langchain_core.prompts import PromptTemplate
 
 from image_classifier import CitrusImageClassifier
-from prompts import IMAGE_QA_PROMPT
+from label_utils import is_healthy_label
+from prompts import IMAGE_QA_PROMPT, HEALTHY_ANSWER_TEMPLATE
 
 # text_qa 경로 (벡터 저장소 공유)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -120,16 +121,16 @@ class ImagePestDiseaseQA:
         
         print("\n[초기화] 이미지 Q&A 시스템 준비 완료!\n")
     
-    def query(self, image_path: str, extra_question: str = "") -> str:
+    def query(self, image_path: str, extra_question: str = "") -> dict:
         """
-        이미지를 분석하고 RAG를 통해 상세 답변 생성
+        이미지를 분석하고 건강/병해충 분기에 따라 답변 생성
         
         Args:
             image_path: 감귤 이미지 경로
             extra_question: 추가 질문 (선택, 예: "방제방법만 알려줘")
             
         Returns:
-            LLM 답변 문자열
+            dict: {image_path, predicted_label, confidence, is_healthy, rag_used, final_answer, all_scores}
         """
         print(f"\n{'='*60}")
         print(f"🖼️  이미지 분석 중: {image_path}")
@@ -149,11 +150,32 @@ class ImagePestDiseaseQA:
             image_result_parts.append(f"- {r['label_ko']}({r['label']}): {r['score']*100:.1f}%")
         image_result_str = "\n".join(image_result_parts)
         
-        # 2단계: 분류 결과로 RAG 검색
-        if label_ko == "건강":
-            search_query = "감귤 건강 관리 예방 방제"
-        else:
-            search_query = f"{label_ko} 증상 원인 방제방법 약제"
+        # 2단계: 건강/병해충 분기
+        healthy = is_healthy_label(label_ko)
+        
+        if healthy:
+            # 정상 판정 → RAG 호출 없이 고정 답변
+            print("\n✅ 정상 판정 → RAG 호출 생략")
+            summary_line = ", ".join(
+                f"{r['label_ko']}({r['label']}) {r['score']*100:.1f}%"
+                for r in all_results
+            )
+            answer = HEALTHY_ANSWER_TEMPLATE.format(image_result_summary=summary_line)
+            print(f"\n{answer}")
+            print(f"\n{'='*60}\n")
+            
+            return {
+                "image_path": image_path,
+                "predicted_label": label_ko,
+                "confidence": score,
+                "is_healthy": True,
+                "rag_used": False,
+                "final_answer": answer,
+                "all_scores": all_results,
+            }
+        
+        # 3단계: 병해충 → RAG 검색
+        search_query = f"{label_ko} 증상 원인 방제방법 약제"
         
         if extra_question:
             search_query += f" {extra_question}"
@@ -162,7 +184,7 @@ class ImagePestDiseaseQA:
         source_docs = self.retriever.invoke(search_query)
         context = "\n\n".join(doc.page_content for doc in source_docs)
         
-        # 3단계: 프롬프트 생성 & LLM 답변
+        # 4단계: 프롬프트 생성 & LLM 답변
         extra_q_str = ""
         if extra_question:
             extra_q_str = f"사용자 추가 질문: {extra_question}"
@@ -185,7 +207,15 @@ class ImagePestDiseaseQA:
         print(f"\n{answer}")
         print(f"\n{'='*60}\n")
         
-        return answer
+        return {
+            "image_path": image_path,
+            "predicted_label": label_ko,
+            "confidence": score,
+            "is_healthy": False,
+            "rag_used": True,
+            "final_answer": answer,
+            "all_scores": all_results,
+        }
     
     def interactive_mode(self):
         """대화형 모드 실행"""
@@ -228,6 +258,29 @@ class ImagePestDiseaseQA:
                 break
             except Exception as e:
                 print(f"\n❌ 오류 발생: {e}\n")
+
+
+# --- 모듈 레벨 편의 함수 ---
+
+_qa_instance = None
+
+
+def classifier_rag_pipeline(image_path: str, user_question: str = "") -> dict:
+    """
+    이미지 분류 + RAG 파이프라인 (모듈 레벨 함수).
+    ImagePestDiseaseQA 인스턴스를 한 번만 생성하여 재사용한다.
+    
+    Args:
+        image_path: 이미지 파일 경로
+        user_question: 추가 질문 (선택)
+        
+    Returns:
+        dict: {image_path, predicted_label, confidence, is_healthy, rag_used, final_answer, all_scores}
+    """
+    global _qa_instance
+    if _qa_instance is None:
+        _qa_instance = ImagePestDiseaseQA()
+    return _qa_instance.query(image_path, user_question)
 
 
 def main():

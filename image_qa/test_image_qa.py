@@ -1,183 +1,178 @@
 """
-이미지 기반 병해충 Q&A 시스템 테스트 스크립트
-1. 테스트 이미지 다운로드 (HuggingFace datasets에서)
-2. 이미지 분류기 단독 테스트
-3. 이미지 + RAG 연동 테스트
+이미지 분류 + RAG 방식 병해충 Q&A 테스트 스크립트
+- test_images/ 폴더의 모든 이미지를 자동 순회
+- 건강/정상 판정 시 RAG 호출 없이 고정 답변
+- 병해충 판정 시 RAG 연동 답변
+- 결과를 result_md/classifier_rag_results.md에 저장
 """
 
 import os
 import sys
-import json
-import urllib.request
+from datetime import datetime
 
 # GPU 설정
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
 TEST_IMAGE_DIR = os.path.join(SCRIPT_DIR, "test_images")
+RESULT_DIR = os.path.join(PROJECT_DIR, "result_md")
+RESULT_FILE = os.path.join(RESULT_DIR, "classifier_rag_results.md")
+
+SUPPORTED_EXT = (".jpg", ".jpeg", ".png", ".webp")
 
 
-def download_test_images():
-    """테스트용 감귤 이미지 다운로드 (HuggingFace에서)"""
-    os.makedirs(TEST_IMAGE_DIR, exist_ok=True)
+def collect_test_images():
+    """test_images/ 폴더에서 이미지 파일 목록 수집"""
+    if not os.path.isdir(TEST_IMAGE_DIR):
+        print(f"❌ 테스트 이미지 폴더가 없습니다: {TEST_IMAGE_DIR}")
+        return []
     
-    # 공개 감귤 병해충 이미지 URL (Wikimedia Commons - 자유 이미지)
-    test_images = {
-        "citrus_canker_test.jpg": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Citrus_canker_leaf.jpg/640px-Citrus_canker_leaf.jpg",
-        "healthy_orange_test.jpg": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Oranges_-_whole-halved-segment.jpg/640px-Oranges_-_whole-halved-segment.jpg",
-    }
-    
-    downloaded = []
-    for filename, url in test_images.items():
-        filepath = os.path.join(TEST_IMAGE_DIR, filename)
-        if os.path.exists(filepath):
-            print(f"  ✅ 이미 존재: {filename}")
-            downloaded.append(filepath)
-            continue
-        
-        try:
-            print(f"  ⬇️  다운로드 중: {filename}...")
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                with open(filepath, "wb") as f:
-                    f.write(resp.read())
-            print(f"  ✅ 다운로드 완료: {filename}")
-            downloaded.append(filepath)
-        except Exception as e:
-            print(f"  ❌ 다운로드 실패: {filename} - {e}")
-    
-    return downloaded
+    images = []
+    for fname in sorted(os.listdir(TEST_IMAGE_DIR)):
+        if fname.lower().endswith(SUPPORTED_EXT):
+            images.append(os.path.join(TEST_IMAGE_DIR, fname))
+            print(f"  ✅ {fname}")
+    return images
 
 
-def test_classifier_only(image_paths):
-    """이미지 분류기 단독 테스트"""
-    print("\n" + "=" * 60)
-    print("🧪 테스트 1: 이미지 분류기 단독 테스트")
+def run_all_test_images():
+    """test_images/ 전체 이미지에 대해 classifier + RAG 파이프라인 실행"""
+    print("=" * 60)
+    print("🧪 이미지 분류 + RAG 파이프라인 테스트")
     print("=" * 60)
     
-    from image_classifier import CitrusImageClassifier
+    # 1. 이미지 수집
+    print("\n[1단계] 테스트 이미지 수집")
+    image_paths = collect_test_images()
     
-    classifier = CitrusImageClassifier()
+    if not image_paths:
+        print("❌ 테스트 이미지가 없습니다. test_images/ 폴더에 감귤 이미지를 넣어주세요.")
+        sys.exit(1)
     
-    results = []
-    for img_path in image_paths:
-        print(f"\n📷 이미지: {os.path.basename(img_path)}")
-        try:
-            label_ko, score, all_results = classifier.classify_with_summary(img_path)
-            print(f"   판별: {label_ko} (신뢰도: {score*100:.1f}%)")
-            for r in all_results:
-                bar = "█" * int(r["score"] * 20)
-                print(f"   {r['label_ko']:15s} {r['score']*100:5.1f}% {bar}")
-            results.append({"image": os.path.basename(img_path), "label": label_ko, "score": score, "status": "SUCCESS"})
-        except Exception as e:
-            print(f"   ❌ 오류: {e}")
-            results.append({"image": os.path.basename(img_path), "error": str(e), "status": "FAILED"})
+    print(f"\n총 {len(image_paths)}개 이미지 발견\n")
     
-    return results
-
-
-def test_image_qa(image_paths):
-    """이미지 + RAG 연동 테스트"""
-    print("\n" + "=" * 60)
-    print("🧪 테스트 2: 이미지 + RAG 연동 테스트")
-    print("=" * 60)
-    
-    from image_qa import ImagePestDiseaseQA
-    
-    qa_system = ImagePestDiseaseQA()
+    # 2. 파이프라인 실행
+    print("[2단계] 파이프라인 실행")
+    from image_qa import classifier_rag_pipeline
     
     results = []
-    
-    # 테스트 케이스
-    test_cases = []
-    for img_path in image_paths:
-        test_cases.append({"image": img_path, "question": ""})
-    
-    # 추가 질문 테스트
-    if image_paths:
-        test_cases.append({"image": image_paths[0], "question": "방제방법만 알려줘"})
-    
-    for i, case in enumerate(test_cases, 1):
+    for i, img_path in enumerate(image_paths, 1):
         print(f"\n{'='*60}")
-        print(f"테스트 {i}/{len(test_cases)}")
-        print(f"이미지: {os.path.basename(case['image'])}")
-        if case["question"]:
-            print(f"추가 질문: {case['question']}")
+        print(f"[{i}/{len(image_paths)}] {os.path.basename(img_path)}")
         print(f"{'='*60}")
         
         try:
-            answer = qa_system.query(case["image"], case["question"])
-            results.append({
-                "image": os.path.basename(case["image"]),
-                "question": case["question"],
-                "answer_preview": answer[:300] + "..." if len(answer) > 300 else answer,
-                "status": "SUCCESS",
-            })
+            result = classifier_rag_pipeline(img_path)
+            result["status"] = "SUCCESS"
+            results.append(result)
         except Exception as e:
             print(f"❌ 오류: {e}")
             results.append({
-                "image": os.path.basename(case["image"]),
-                "question": case["question"],
-                "error": str(e),
+                "image_path": img_path,
+                "predicted_label": "ERROR",
+                "confidence": 0.0,
+                "is_healthy": False,
+                "rag_used": False,
+                "final_answer": f"오류 발생: {e}",
+                "all_scores": [],
                 "status": "FAILED",
             })
+    
+    # 3. 결과 요약 출력
+    print_summary(results)
+    
+    # 4. Markdown 파일로 저장
+    save_results_md(results)
     
     return results
 
 
-def print_summary(classifier_results, qa_results):
+def print_summary(results):
     """결과 요약 출력"""
     print("\n" + "=" * 60)
     print("📊 테스트 결과 요약")
     print("=" * 60)
     
-    print("\n[이미지 분류기 테스트]")
-    c_success = sum(1 for r in classifier_results if r["status"] == "SUCCESS")
-    print(f"  성공: {c_success}/{len(classifier_results)}")
+    total = len(results)
+    success = sum(1 for r in results if r["status"] == "SUCCESS")
+    healthy_count = sum(1 for r in results if r.get("is_healthy"))
+    rag_count = sum(1 for r in results if r.get("rag_used"))
     
-    print("\n[이미지 + RAG 연동 테스트]")
-    q_success = sum(1 for r in qa_results if r["status"] == "SUCCESS")
-    print(f"  성공: {q_success}/{len(qa_results)}")
+    print(f"  전체: {success}/{total} 성공")
+    print(f"  정상 판정 (RAG 미사용): {healthy_count}개")
+    print(f"  병해충 판정 (RAG 사용): {rag_count}개")
     
-    total = len(classifier_results) + len(qa_results)
-    total_success = c_success + q_success
-    print(f"\n전체: {total_success}/{total} 성공")
-    
-    if total_success == total:
+    if success == total:
         print("\n✅ 모든 테스트 통과!")
     else:
         print("\n⚠️ 일부 테스트 실패")
-        for r in classifier_results + qa_results:
+        for r in results:
             if r["status"] == "FAILED":
-                print(f"  - {r.get('image', 'N/A')}: {r.get('error', 'Unknown')}")
+                print(f"  - {os.path.basename(r['image_path'])}: {r['final_answer']}")
 
 
-def main():
-    print("=" * 60)
-    print("🧪 이미지 병해충 Q&A 시스템 테스트")
-    print("=" * 60)
+def save_results_md(results):
+    """결과를 result_md/classifier_rag_results.md에 저장"""
+    os.makedirs(RESULT_DIR, exist_ok=True)
     
-    # 1. 테스트 이미지 준비
-    print("\n[1단계] 테스트 이미지 준비")
-    image_paths = download_test_images()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    total = len(results)
+    success = sum(1 for r in results if r["status"] == "SUCCESS")
+    healthy_count = sum(1 for r in results if r.get("is_healthy"))
+    rag_count = sum(1 for r in results if r.get("rag_used"))
     
-    if not image_paths:
-        print("❌ 테스트 이미지가 없습니다. 수동으로 test_images/ 폴더에 감귤 이미지를 넣어주세요.")
-        sys.exit(1)
+    lines = []
+    lines.append("# 이미지 분류 + RAG 테스트 결과\n")
+    lines.append("## 테스트 설정\n")
+    lines.append(f"- 테스트 일시: {now}")
+    lines.append("- 방식: 이미지 분류 모델 + RAG")
+    lines.append("- 이미지 분류 모델: `dima806/orange_fruit_disease_detection` (ViT)")
+    lines.append("- LLM: `gemma3:12B` (Ollama)")
+    lines.append("- 임베딩: `intfloat/multilingual-e5-large`")
+    lines.append(f"- 테스트 이미지 폴더: `image_qa/test_images/` ({total}장)")
+    lines.append("- 정상/건강 판정 시 RAG 사용 여부: **사용하지 않음**\n")
     
-    print(f"\n준비된 이미지: {len(image_paths)}개")
+    lines.append("## 결과 요약\n")
+    lines.append(f"| 항목 | 값 |")
+    lines.append(f"|---|---|")
+    lines.append(f"| 전체 | {success}/{total} 성공 |")
+    lines.append(f"| 정상 판정 (RAG 미사용) | {healthy_count}개 |")
+    lines.append(f"| 병해충 판정 (RAG 사용) | {rag_count}개 |\n")
     
-    # 2. 분류기 단독 테스트
-    print("\n[2단계] 이미지 분류기 테스트")
-    classifier_results = test_classifier_only(image_paths)
+    lines.append("---\n")
     
-    # 3. 이미지 + RAG 연동 테스트
-    print("\n[3단계] 이미지 + RAG 연동 테스트")
-    qa_results = test_image_qa(image_paths)
+    for i, r in enumerate(results, 1):
+        fname = os.path.basename(r["image_path"])
+        lines.append(f"## 결과 {i}\n")
+        lines.append(f"### 입력 이미지\n")
+        lines.append(f"- 파일명: `{fname}`\n")
+        
+        lines.append(f"### 이미지 분류 결과\n")
+        lines.append(f"- 예측 라벨: **{r['predicted_label']}**")
+        lines.append(f"- 신뢰도: {r['confidence']*100:.1f}%")
+        lines.append(f"- 정상 여부: {'✅ 정상' if r['is_healthy'] else '❌ 병해충'}")
+        lines.append(f"- RAG 사용 여부: {'사용' if r['rag_used'] else '미사용'}")
+        
+        if r.get("all_scores"):
+            lines.append(f"\n| 라벨 | 신뢰도 |")
+            lines.append(f"|---|---|")
+            for s in r["all_scores"]:
+                lines.append(f"| {s['label_ko']} ({s['label']}) | {s['score']*100:.1f}% |")
+        
+        lines.append(f"\n### 최종 답변\n")
+        lines.append(f"```")
+        lines.append(r["final_answer"])
+        lines.append(f"```\n")
+        lines.append("---\n")
     
-    # 4. 결과 요약
-    print_summary(classifier_results, qa_results)
+    content = "\n".join(lines)
+    
+    with open(RESULT_FILE, "w", encoding="utf-8") as f:
+        f.write(content)
+    
+    print(f"\n📄 결과 저장 완료: {RESULT_FILE}")
 
 
 if __name__ == "__main__":
-    main()
+    run_all_test_images()
