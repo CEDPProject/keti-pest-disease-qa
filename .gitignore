@@ -40,9 +40,6 @@ pip-delete-this-directory.txt
 *.pptx
 *.csv
 
-# test images datasets
-datasets/
-
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -213,9 +210,33 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# Develop prompt files
-develop_prompt_files/
+# Vector DB (재생성 가능)
+qa/text_qa/chroma_db/
 
-# Test images & DB
-image_qa/test_images/
-text_qa/chroma_db/
+# ────────────────────────────────────────────────
+# 데이터 — 실체는 데이터 디스크에 있고 심볼릭 링크로 연결됨
+#   /opt/project_data/users/jhlee/keti-pest-disease-qa/data/
+# 링크는 절대경로라 다른 머신에서 깨지므로 커밋하지 않는다.
+# 구조 설명은 data/README.md 참조.
+# ────────────────────────────────────────────────
+# 링크 4개만 명시적으로 제외 (심볼릭 링크는 git이 '파일'로 취급하므로 data/*/ 로는 안 잡힘)
+/data/raw
+/data/external
+/data/legacy_test_images
+/data/vlm_finetune
+
+# 학습 산출물 (21GB — 체크포인트·병합모델)
+models/
+
+# 임베딩 캐시 (재생성 가능)
+core/rag/*.npy
+core/rag/_archive_design_a/*.npy
+core/rag/kb_meta.json
+core/rag/*.json
+
+# 실행 로그
+core/results/logs/
+
+# 정리 백업
+.cleanup_backup_*.tar.gz
+.restructure_backup_*.tar.gz

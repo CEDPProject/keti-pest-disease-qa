@@ -20,8 +20,8 @@ from eval_utils import compute_metrics, plot_confusion_matrix, print_metrics
 
 # ── 설정 ──
 MODEL_NAME = "dima806/orange_fruit_disease_detection"
-DATASET_ROOT = os.path.join(os.path.dirname(SCRIPT_DIR), "datasets", "Citrus")
-RESULT_DIR = os.path.join(os.path.dirname(SCRIPT_DIR), "result_md")
+DATASET_ROOT = os.path.join(os.path.dirname(os.path.dirname(SCRIPT_DIR)), "data", "external", "mendeley_citrus")
+RESULT_DIR = os.path.join(os.path.dirname(os.path.dirname(SCRIPT_DIR)), "result_md")
 
 # 모델 출력 라벨 → 통합 라벨 매핑
 PRED_LABEL_MAP = {

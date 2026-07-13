@@ -286,7 +286,7 @@ def classifier_rag_pipeline(image_path: str, user_question: str = "") -> dict:
 def main():
     """메인 함수"""
     qa_system = ImagePestDiseaseQA()
-    qa_system.query("test_images/잎_궤양병.jpg")
+    qa_system.query("../../data/legacy_test_images/잎_궤양병.jpg")
 
 
 if __name__ == "__main__":

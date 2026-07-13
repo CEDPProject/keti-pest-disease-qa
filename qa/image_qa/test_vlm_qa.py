@@ -14,8 +14,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
-TEST_IMAGE_DIR = os.path.join(SCRIPT_DIR, "test_images")
-RESULT_DIR = os.path.join(PROJECT_DIR, "result_md")
+TEST_IMAGE_DIR = os.path.join(os.path.dirname(os.path.dirname(SCRIPT_DIR)), "data", "legacy_test_images")
+RESULT_DIR = os.path.join(os.path.dirname(PROJECT_DIR), "result_md")
 RESULT_FILE = os.path.join(RESULT_DIR, "vlm_qa_results.md")
 
 SUPPORTED_EXT = (".jpg", ".jpeg", ".png", ".webp")

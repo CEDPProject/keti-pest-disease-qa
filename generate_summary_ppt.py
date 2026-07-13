@@ -14,7 +14,7 @@ OUTPUT_PATH = os.path.join(PROJECT_DIR, "result_md", "감귤_병해충_QA_요약
 EXAMPLES_PATH = os.path.join(PROJECT_DIR, "result_md", "ppt_examples.json")
 CM_CLASSIFIER = os.path.join(PROJECT_DIR, "result_md", "classifier_confusion_matrix.png")
 CM_VLM = os.path.join(PROJECT_DIR, "result_md", "vlm_confusion_matrix.png")
-TEST_IMAGES_DIR = os.path.join(PROJECT_DIR, "image_qa", "test_images")
+TEST_IMAGES_DIR = os.path.join(PROJECT_DIR, "data", "legacy_test_images")
 
 # ── 색상 ──
 C_TITLE = RGBColor(0x1B, 0x2A, 0x3D)

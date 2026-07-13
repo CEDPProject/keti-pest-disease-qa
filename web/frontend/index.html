@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>감귤 병해충 AI 진단</title>
+<style>
+/* ============================================================
+   라이트 기본. 밝은 웜화이트 배경 + 순백 카드.
+   액센트는 절제 — 선명한 감귤 오렌지(#f97316)는 버튼·강조·포커스에만.
+   그린은 'KB 검증' 등 긍정 배지에만. 대부분 면적은 화이트/그레이 + 진한 텍스트.
+   ============================================================ */
+:root{
+  --bg:#f8fafc; --surface:#ffffff; --surface-2:#f9fafb; --kb-bg:#f9fafb;
+  --border:#e5e7eb; --border-2:#eef0f2;
+  --ink:#1f2937; --muted:#6b7280; --faint:#9ca3af;
+  --accent:#f97316; --accent-hover:#ea680c; --accent-soft:#fff7ed; --accent-line:#fed7aa; --accent-text:#ea580c;
+  --ok:#16a34a; --ok-soft:#f0fdf4; --ok-line:#bbf7d0; --ok-text:#15803d;
+  --warn:#f59e0b; --warn-soft:#fffbeb; --warn-line:#fde68a; --warn-text:#92400e;
+  --danger:#dc2626;
+  --shadow-sm:0 1px 2px rgba(17,24,39,.04);
+  --shadow:0 1px 2px rgba(17,24,39,.04), 0 8px 20px -14px rgba(17,24,39,.10);
+  --focus:#f97316;
+  --font-sans:'Pretendard','Pretendard Variable','Noto Sans KR',system-ui,-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;
+  --font-mono:'SFMono-Regular',ui-monospace,'JetBrains Mono','D2Coding',Menlo,Consolas,monospace;
+  --radius:14px; --radius-sm:10px;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--font-sans); line-height:1.6; font-size:15px;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+h1,h2,h3{margin:0; text-wrap:balance; line-height:1.3}
+button{font-family:inherit; cursor:pointer}
+:focus-visible{outline:2.5px solid var(--focus); outline-offset:2px; border-radius:6px}
+.mono{font-family:var(--font-mono)}
+
+/* ---------- 상단바 + 내비게이션 ---------- */
+.top{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; gap:18px;
+  padding:11px clamp(16px,3.5vw,32px);
+  background:color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--border);
+}
+.brand{display:flex; align-items:center; gap:11px; min-width:0; background:none; border:none; padding:2px 6px 2px 2px; cursor:pointer; border-radius:10px}
+.brand:hover{background:var(--surface-2)}
+.logo{
+  width:34px; height:34px; flex:none; border-radius:10px;
+  background:var(--accent-soft); border:1px solid var(--accent-line);
+  display:grid; place-items:center; font-size:18px;
+}
+.brand h1{font-size:16px; font-weight:800; letter-spacing:-.02em; white-space:nowrap; color:var(--ink)}
+.nav{display:flex; gap:2px; align-items:center; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none}
+.nav::-webkit-scrollbar{display:none}
+.nav .tab{
+  padding:8px 13px; border:none; background:transparent; border-radius:8px;
+  font-size:13.5px; font-weight:600; color:var(--muted); white-space:nowrap; transition:.14s;
+}
+.nav .tab:hover{background:var(--surface-2); color:var(--ink)}
+.nav .tab.on{background:var(--accent-soft); color:var(--accent-text)}
+
+/* ---------- 페이지 전환 ---------- */
+.page{display:none}
+.page.active{display:block; animation:fade .22s ease}
+@keyframes fade{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
+.pw{margin:0 auto; padding:clamp(20px,3vw,34px) clamp(16px,3.5vw,36px) 64px}
+.pw.wide{max-width:min(1840px,96vw)}
+.pw.doc{max-width:min(1460px,94vw)}
+
+/* ---------- 진단: 2단 레이아웃 (입력 고정폭 + 결과 넓게) ---------- */
+.grid{display:grid; grid-template-columns:410px minmax(0,1fr); gap:26px; align-items:start}
+@media(max-width:940px){ .grid{grid-template-columns:1fr} }
+.panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow)}
+.panel.input{position:sticky; top:74px}
+@media(max-width:940px){ .panel.input{position:static} }
+.panel-h{padding:18px 22px 16px; border-bottom:1px solid var(--border-2)}
+.panel-h .k{font-size:10.5px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--faint)}
+.panel-h .hrow{display:flex; align-items:center; gap:10px; margin-top:6px}
+.panel-h .hic{
+  width:30px; height:30px; flex:none; border-radius:9px;
+  background:var(--accent-soft); border:1px solid var(--accent-line); color:var(--accent);
+  display:grid; place-items:center;
+}
+.panel-h .hic svg{width:17px; height:17px}
+.panel-h h2{font-size:17.5px; font-weight:800; letter-spacing:-.015em}
+.panel-h .sub{margin:9px 0 0; font-size:12.5px; color:var(--muted); line-height:1.55}
+.panel-b{padding:20px 22px 22px}
+
+/* ---------- 업로드 ---------- */
+.drop{
+  position:relative; border:1.5px dashed var(--border); border-radius:var(--radius-sm);
+  background:var(--surface-2); aspect-ratio:4/3; overflow:hidden;
+  display:grid; place-items:center; text-align:center; transition:border-color .15s, background .15s;
+}
+.drop.drag{border-color:var(--accent); background:var(--accent-soft)}
+.drop.has{border-style:solid; border-color:var(--border)}
+.drop input{position:absolute; inset:0; opacity:0; cursor:pointer}
+.drop .ph{padding:22px; color:var(--muted); pointer-events:none}
+.drop .ph .big{font-size:30px; line-height:1; margin-bottom:12px; opacity:.55}
+.drop .ph b{color:var(--ink); font-weight:700}
+.drop img{width:100%; height:100%; object-fit:cover; display:none}
+.drop.has img{display:block}
+.drop.has .ph{display:none}
+.chg{
+  position:absolute; right:9px; bottom:9px; display:none; height:29px; padding:0 11px;
+  border-radius:8px; border:none; background:rgba(17,24,39,.72); color:#fff;
+  font-size:12px; font-weight:600; backdrop-filter:blur(4px);
+}
+.drop.has .chg{display:inline-flex; align-items:center; gap:5px}
+
+.field{margin-top:18px}
+.field label{display:block; font-size:12.5px; font-weight:600; color:var(--ink); margin-bottom:7px}
+textarea{
+  width:100%; resize:vertical; min-height:46px; padding:11px 13px;
+  border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface);
+  color:var(--ink); font-family:inherit; font-size:14px; line-height:1.55;
+}
+textarea::placeholder{color:var(--faint)}
+textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+.chip{
+  display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 13px;
+  border-radius:999px; border:1px solid var(--border); background:var(--surface);
+  color:var(--ink); font-size:13px; font-weight:600; transition:.14s;
+}
+.chip .t{font-size:11px; color:var(--faint); font-weight:600}
+.chip:hover{border-color:var(--accent-line); background:var(--accent-soft)}
+.chip[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-soft); color:var(--accent-text)}
+.chip[aria-pressed="true"] .t{color:var(--accent-text)}
+
+.run{
+  margin-top:20px; width:100%; height:48px; border:none; border-radius:var(--radius-sm);
+  background:var(--accent); color:#fff; font-size:15px; font-weight:700; letter-spacing:-.01em;
+  display:inline-flex; align-items:center; justify-content:center; gap:9px; transition:background .14s, transform .1s;
+}
+.run:hover:not(:disabled){background:var(--accent-hover)}
+.run:active:not(:disabled){transform:translateY(1px)}
+.run:disabled{opacity:.45; cursor:not-allowed}
+.run .spin{width:16px; height:16px; border:2.4px solid rgba(255,255,255,.4); border-top-color:#fff;
+  border-radius:50%; animation:spin .7s linear infinite; display:none}
+.run.loading .spin{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hint{margin-top:14px; font-size:12px; color:var(--faint); line-height:1.6}
+.hint b{color:var(--muted); font-weight:600}
+
+/* ---------- 결과: 빈 상태 ---------- */
+.empty{padding:44px 26px; text-align:center}
+.empty .ic{font-size:32px; margin-bottom:14px; opacity:.55}
+.empty h3{font-size:16px; margin-bottom:7px}
+.empty p{color:var(--muted); font-size:13.5px; max-width:40ch; margin:0 auto 22px}
+.legend{
+  display:grid; gap:12px; max-width:640px; margin:0 auto; text-align:left;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  padding:16px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface-2);
+}
+.legend .row{display:flex; gap:12px; align-items:flex-start; font-size:12.5px}
+.legend .sw{width:16px; height:16px; border-radius:5px; flex:none; margin-top:1px}
+.legend .sw.model{background:var(--accent-soft); border:1.5px solid var(--accent)}
+.legend .sw.kb{background:var(--kb-bg); border:1.5px solid var(--ok)}
+.legend .row div{color:var(--muted)}
+.legend .row div b{color:var(--ink)}
+
+/* ---------- 결과 ---------- */
+.result{padding:20px 22px 24px; display:none}
+.result.show{display:block}
+
+/* 모델 판단 카드 = 오렌지 좌측보더 + 옅은 오렌지 배경 */
+.diag{
+  border:1px solid var(--accent-line); border-left:4px solid var(--accent);
+  border-radius:var(--radius); background:var(--accent-soft); padding:18px 20px;
+}
+.tag{
+  display:inline-flex; align-items:center; gap:6px; height:23px; padding:0 10px;
+  border-radius:999px; font-size:11px; font-weight:700; letter-spacing:-.01em;
+}
+.tag.model{background:var(--accent); color:#fff}
+.tag.kb{background:var(--ok-soft); color:var(--ok-text); border:1px solid var(--ok-line)}
+.diag .dx{display:flex; align-items:flex-end; justify-content:space-between; gap:6px 22px; flex-wrap:wrap; margin:12px 0 2px}
+.diag .dx-main{min-width:0}
+.diag h2{font-size:30px; font-weight:800; letter-spacing:-.03em; margin:0; color:var(--ink)}
+.diag .en{font-family:var(--font-mono); font-size:12.5px; color:var(--muted); margin-top:3px}
+.diag .dx-sci{display:flex; flex-direction:column; align-items:flex-end; gap:4px; text-align:right; padding-bottom:4px}
+.diag .dx-sci .sci{font-family:var(--font-mono); font-size:12.5px; color:var(--ink); word-break:break-word; line-height:1.4}
+.diag .dx-sci .kbtag{display:inline-flex; align-items:center; gap:3px; font-size:9.5px; font-weight:700;
+  letter-spacing:.03em; color:var(--ok-text); background:var(--ok-soft); border:1px solid var(--ok-line);
+  border-radius:5px; padding:1px 7px; white-space:nowrap}
+.badges{display:flex; flex-wrap:wrap; gap:8px; margin-top:15px}
+.badge{
+  display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 11px;
+  border-radius:999px; font-size:11.5px; font-weight:600; border:1px solid var(--border);
+  background:var(--surface); color:var(--muted);
+}
+.badge.exact{background:var(--ok-soft); color:var(--ok-text); border-color:var(--ok-line)}
+.badge.syn,.badge.partial,.badge.rag{background:var(--warn-soft); color:var(--warn-text); border-color:var(--warn-line)}
+
+.callout{
+  display:flex; gap:10px; padding:12px 14px; border-radius:var(--radius-sm);
+  font-size:12.5px; line-height:1.55; margin-top:14px; border:1px solid;
+}
+.callout .ci{font-size:14px; flex:none; line-height:1.35}
+.callout.warn{background:var(--warn-soft); border-color:var(--warn-line); color:var(--ink)}
+.callout.warn b{color:var(--warn-text)}
+.callout.map{background:var(--surface); border-color:var(--border); color:var(--muted)}
+.callout.map b{color:var(--ink)}
+
+details.raw{margin-top:14px; border-top:1px solid var(--accent-line); padding-top:12px}
+details.raw summary{font-size:12px; color:var(--muted); cursor:pointer; font-weight:600; list-style:none}
+details.raw summary::-webkit-details-marker{display:none}
+details.raw summary::before{content:"▸ "; color:var(--faint)}
+details.raw[open] summary::before{content:"▾ "}
+details.raw .rawtext{
+  margin-top:10px; padding:11px 13px; border-radius:8px; background:var(--surface);
+  font-family:var(--font-mono); font-size:11.5px; color:var(--muted); line-height:1.6;
+  white-space:pre-wrap; word-break:break-word; border:1px solid var(--border);
+}
+
+/* KB 원문 카드 = 그린 좌측보더 + 옅은 그레이 배경. 넓은 결과 폭을 활용해 다단 배치 */
+.kbwrap{margin-top:22px}
+.kbhead{display:flex; align-items:center; gap:10px; margin-bottom:7px}
+.kbhead .line{flex:1; height:1px; background:var(--border)}
+.kbhead .tag{font-size:12.5px; height:27px; padding:0 13px}
+.kbnote{font-size:11.5px; color:var(--faint); margin:0 0 14px}
+.kbnote b{color:var(--muted); font-weight:600}
+.kbgrid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start}
+@media(max-width:640px){ .kbgrid{grid-template-columns:1fr} }
+.kbcard{
+  border:1px solid var(--border); border-left:4px solid var(--ok);
+  border-radius:var(--radius-sm); background:var(--kb-bg); padding:15px 17px;
+}
+.kbcard.primary{box-shadow:var(--shadow-sm); grid-column:1 / -1}
+.kbcard .ct{display:flex; align-items:center; gap:8px; margin-bottom:9px}
+.kbcard .ct .n{font-size:13px; font-weight:700; color:var(--ink)}
+.kbcard .ct .pr{font-size:10px; font-weight:700; color:var(--accent-text); background:var(--accent-soft);
+  border:1px solid var(--accent-line); border-radius:999px; padding:2px 9px; letter-spacing:.02em}
+.kbcard ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:7px}
+.kbcard li{font-size:13.5px; line-height:1.6; color:var(--ink)}
+.kbcard .sci{font-family:var(--font-mono); font-size:12.5px; color:var(--ink)}
+.kbcard .none{font-size:12.5px; color:var(--faint); font-style:italic}
+.pills{display:flex; flex-wrap:wrap; gap:7px}
+.pills span{font-size:12px; padding:4px 10px; border-radius:8px; background:var(--surface);
+  border:1px solid var(--border); color:var(--ink); font-weight:500}
+
+/* ---------- 미확정(unknown) ---------- */
+.unknown{border:1px solid var(--warn-line); border-left:4px solid var(--warn); border-radius:var(--radius);
+  background:var(--warn-soft); padding:19px}
+.unknown h2{font-size:20px; color:var(--warn-text); margin:12px 0 5px}
+.unknown p{font-size:13px; color:var(--muted); margin:0 0 13px}
+.sugg{display:flex; flex-direction:column; gap:8px}
+.sugg .s{display:flex; align-items:center; gap:11px; padding:10px 12px; background:var(--surface);
+  border:1px solid var(--border); border-radius:9px}
+.sugg .s .name{font-weight:600; font-size:13.5px; flex:1}
+.sugg .s .sc{font-family:var(--font-mono); font-size:12px; color:var(--muted)}
+.sugg .bar{width:64px; height:6px; border-radius:3px; background:var(--surface-2); overflow:hidden}
+.sugg .bar i{display:block; height:100%; background:var(--warn)}
+
+/* ---------- 진단 하단 고지 ---------- */
+.disclaimer{margin-top:26px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
+.disclaimer .in{padding:16px 20px; display:flex; gap:14px; align-items:flex-start}
+.disclaimer .ic{font-size:18px; flex:none; opacity:.9}
+.disclaimer h3{font-size:13.5px; margin-bottom:6px}
+.disclaimer p{font-size:12.5px; color:var(--muted); margin:0; line-height:1.65}
+.disclaimer .stat{display:inline-flex; gap:4px; align-items:baseline}
+.disclaimer .stat b{font-family:var(--font-mono); font-weight:700; color:var(--ink); font-size:12.5px}
+.disclaimer .stat.bad b{color:var(--danger)}
+
+/* ============================================================
+   콘텐츠 페이지 (홈 · 데이터셋 · 지식베이스 · 활용 기술 · Reference)
+   ============================================================ */
+.doc-h{margin-bottom:8px}
+.eyebrow{font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-text)}
+.doc-h h1{font-size:clamp(24px,3.2vw,33px); font-weight:800; letter-spacing:-.03em; margin:11px 0 0}
+.doc-h .lead{font-size:15.5px; color:var(--muted); margin:13px 0 0; max-width:92ch; line-height:1.72}
+.doc-actions{display:flex; flex-wrap:wrap; gap:10px; margin-top:22px}
+
+.cta{display:inline-flex; align-items:center; gap:8px; height:46px; padding:0 22px; border-radius:var(--radius-sm);
+  background:var(--accent); color:#fff; font-weight:700; font-size:14.5px; border:none; box-shadow:var(--shadow)}
+.cta:hover{background:var(--accent-hover)}
+.cta.ghost{background:var(--surface); color:var(--ink); border:1px solid var(--border); box-shadow:none}
+.cta.ghost:hover{background:var(--surface-2)}
+
+.sec{margin-top:44px}
+.sec-h{display:flex; align-items:baseline; gap:11px; margin-bottom:18px}
+.sec-h .no{font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--accent-text);
+  background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:7px; padding:2px 8px}
+.sec-h h2{font-size:20px; font-weight:800; letter-spacing:-.02em}
+.sec-h .desc{font-size:13px; color:var(--faint); margin-left:auto}
+.prose p{color:var(--ink); font-size:14.5px; line-height:1.75; margin:0 0 13px; max-width:94ch}
+.prose p.mut{color:var(--muted)}
+.prose b{font-weight:700}
+
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow-sm)}
+.card .em{font-size:22px; margin-bottom:10px; display:block; line-height:1}
+.card h3{font-size:14.5px; font-weight:700; margin-bottom:6px}
+.card p{font-size:13px; color:var(--muted); line-height:1.65; margin:0}
+.card.accent{border-color:var(--accent-line); background:var(--accent-soft)}
+.card.accent h3{color:var(--accent-text)}
+.card.ok{border-color:var(--ok-line); background:var(--ok-soft)}
+.card.ok h3{color:var(--ok-text)}
+
+/* 성능 흐름 */
+.flow{display:flex; flex-wrap:wrap; align-items:stretch; gap:12px}
+.flow .st{flex:1; min-width:150px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px; text-align:center}
+.flow .st .v{font-family:var(--font-mono); font-size:30px; font-weight:800; letter-spacing:-.02em; color:var(--ink)}
+.flow .st .l{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.4}
+.flow .st.good{border-color:var(--ok-line); background:var(--ok-soft)} .flow .st.good .v{color:var(--ok-text)}
+.flow .st.bad{border-color:var(--warn-line)} .flow .st.bad .v{color:var(--danger)}
+.flow .st.mut .v{color:var(--faint)}
+.flow .arw{display:grid; place-items:center; color:var(--faint); font-size:22px; flex:none}
+@media(max-width:640px){ .flow .arw{transform:rotate(90deg)} .flow{flex-direction:column} }
+
+/* 표 */
+.tblwrap{overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow-sm)}
+.tbl{width:100%; border-collapse:collapse; font-size:13.5px; min-width:560px}
+.tbl th,.tbl td{padding:10px 14px; border-bottom:1px solid var(--border-2); text-align:left}
+.tbl thead th{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--faint); font-weight:700; background:var(--surface-2)}
+.tbl td.num,.tbl th.num{text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums}
+.tbl tbody tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:var(--surface-2)}
+.tbl tr.total td{font-weight:800; background:var(--surface-2)}
+.tbl .warn-cell{color:var(--warn-text); font-weight:700}
+.parts-cell{display:flex; flex-wrap:wrap; gap:5px}
+.part{display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:600;
+  padding:2px 8px; border-radius:7px; border:1px solid var(--border); background:var(--surface); color:var(--muted); white-space:nowrap}
+.part.leaf{background:var(--ok-soft); border-color:var(--ok-line); color:var(--ok-text)}
+.part.fruit{background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent-text)}
+
+/* 파이프라인 스텝 */
+.steps{display:flex; flex-direction:column}
+.step{display:flex; gap:16px; padding:0 0 22px; position:relative}
+.step:not(:last-child)::before{content:""; position:absolute; left:15px; top:36px; bottom:2px; width:2px; background:var(--border)}
+.step .n{width:32px; height:32px; flex:none; border-radius:9px; background:var(--accent); color:#fff;
+  display:grid; place-items:center; font-weight:800; font-size:14px; z-index:1}
+.step .b{padding-top:3px}
+.step .b h3{font-size:15px; font-weight:700; margin-bottom:4px}
+.step .b p{font-size:13.5px; color:var(--muted); margin:0; line-height:1.65; max-width:70ch}
+.step .b code{font-family:var(--font-mono); font-size:12.5px; background:var(--surface-2); border:1px solid var(--border); border-radius:6px; padding:1px 6px}
+
+/* 스펙 리스트 (dl) */
+.spec{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px}
+.spec .row{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px}
+.spec .row dt{font-size:11.5px; color:var(--faint); font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px}
+.spec .row dd{margin:0; font-size:14px; font-weight:600; color:var(--ink)}
+.spec .row dd .mono{font-size:13px; color:var(--muted); font-weight:500}
+
+/* 질병 칩 목록 (지식베이스) */
+.dlist{display:flex; flex-wrap:wrap; gap:7px}
+.dchip{font-size:12.5px; padding:6px 12px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface); color:var(--ink); font-weight:500; font-family:inherit; cursor:pointer; transition:.13s}
+.dchip::after{content:"›"; margin-left:5px; color:var(--faint); font-weight:700}
+.dchip:hover{border-color:var(--accent); background:var(--accent-soft); color:var(--accent-text)}
+.dchip:hover::after{color:var(--accent)}
+.dchip.on{border-color:var(--accent); background:var(--accent-soft); color:var(--accent-text); font-weight:700}
+.dchip.on::after{color:var(--accent-line)}
+.dchip.draft{border-style:dashed; color:var(--warn-text); border-color:var(--warn-line); background:var(--warn-soft)}
+.dchip.draft::after{color:var(--warn-line)}
+
+/* KB 상세 모달 */
+.modal{position:fixed; inset:0; z-index:60; display:none; align-items:flex-start; justify-content:center;
+  padding:6vh 16px; background:rgba(17,24,39,.45); overflow-y:auto}
+.modal.show{display:flex; animation:fade .18s ease}
+.modal .box{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  width:100%; max-width:680px; box-shadow:0 24px 60px -20px rgba(17,24,39,.45); overflow:hidden}
+.modal .mh{display:flex; align-items:center; gap:11px; padding:17px 22px; border-bottom:1px solid var(--border-2)}
+.modal .mh .tag{flex:none}
+.modal .mh h3{font-size:20px; font-weight:800; letter-spacing:-.02em; margin-right:auto}
+.modal .mh .x{width:32px; height:32px; border-radius:8px; border:1px solid var(--border); background:var(--surface);
+  color:var(--muted); font-size:15px; display:grid; place-items:center; flex:none}
+.modal .mh .x:hover{background:var(--surface-2); color:var(--ink)}
+.modal .mb{padding:18px 22px 24px; max-height:66vh; overflow-y:auto}
+.modal .mb h4{font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--accent-text); margin:18px 0 8px}
+.modal .mb h4:first-child{margin-top:0}
+.modal .mb ul{margin:0; padding-left:19px; display:flex; flex-direction:column; gap:6px}
+.modal .mb li{font-size:13.5px; line-height:1.62; color:var(--ink)}
+.modal .mb li.sub{list-style:none; margin-left:2px; color:var(--muted); font-size:12.5px}
+.modal .mb p{font-size:13.5px; line-height:1.62; color:var(--ink); margin:7px 0}
+.modal .mb .metaline{font-family:var(--font-mono); font-size:12.5px; color:var(--muted); margin:0 0 4px}
+
+/* 노트 박스 */
+.note{display:flex; gap:12px; padding:14px 16px; border-radius:var(--radius-sm); font-size:13px; line-height:1.62; border:1px solid; margin-top:16px}
+.note .i{flex:none; font-size:15px; line-height:1.3}
+.note.info{background:var(--accent-soft); border-color:var(--accent-line); color:var(--ink)}
+.note.info b{color:var(--accent-text)}
+.note.warn{background:var(--warn-soft); border-color:var(--warn-line); color:var(--ink)}
+.note.warn b{color:var(--warn-text)}
+.note.ok{background:var(--ok-soft); border-color:var(--ok-line); color:var(--ink)}
+.note.ok b{color:var(--ok-text)}
+
+/* Reference */
+.reflist{display:flex; flex-direction:column}
+.ref{display:flex; gap:14px; padding:16px 4px; border-bottom:1px solid var(--border-2)}
+.ref:last-child{border-bottom:none}
+.ref .rn{font-family:var(--font-mono); font-size:12px; color:var(--faint); flex:none; width:24px; padding-top:2px}
+.ref .rb h3{font-size:14.5px; font-weight:700; margin-bottom:4px}
+.ref .rb p{font-size:12.5px; color:var(--muted); margin:0 0 3px; line-height:1.6}
+.ref .rb .id{font-family:var(--font-mono); font-size:12px; color:var(--accent-text)}
+
+/* KB 구조 예시 코드블록 */
+.kbex{border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sm)}
+.kbex .exh{padding:10px 15px; background:var(--surface-2); border-bottom:1px solid var(--border-2);
+  font-size:12px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:8px}
+.kbex .exb{padding:15px 17px; background:var(--surface)}
+.kbex .exb .k{font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--accent-text); margin:12px 0 5px}
+.kbex .exb .k:first-child{margin-top:0}
+.kbex .exb p{font-size:13px; color:var(--ink); margin:0; line-height:1.6}
+
+/* ---------- 토스트 ---------- */
+.toast{
+  position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:var(--surface); padding:12px 18px; border-radius:11px; font-size:13px; font-weight:600;
+  box-shadow:0 12px 32px -8px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:.25s; z-index:50; max-width:90vw;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+@media(prefers-reduced-motion:reduce){ *{animation-duration:.01ms !important; transition-duration:.01ms !important} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <button class="brand" id="brandHome" aria-label="홈으로 이동" type="button">
+    <div class="logo">🍊</div>
+    <h1>감귤 병해충 AI 진단</h1>
+  </button>
+  <nav class="nav" id="nav" aria-label="주요 메뉴">
+    <button class="tab" data-page="diagnose">병해충 AI 진단</button>
+    <button class="tab" data-page="data">데이터셋</button>
+    <button class="tab" data-page="kb">지식베이스</button>
+    <button class="tab" data-page="tech">활용 기술</button>
+    <button class="tab" data-page="ref">Reference</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ==================== 홈 ==================== -->
+<section class="page active" id="page-home">
+  <div class="pw doc">
+    <div class="doc-h">
+      <div class="eyebrow">감귤 병해충 AI 질의응답 · PoC</div>
+      <h1>감귤 사진 한 장으로 병해충을 진단하고,<br>검증된 방제 정보를 답한다</h1>
+      <p class="lead">
+        감귤 병해충 사진을 파인튜닝한 시각언어모델(VLM)이 <b>병명</b>을 판단하고,
+        전문가 지식베이스(RAG)가 <b>학명·증상·방제·약제</b>를 원문 그대로 조회해 답합니다.
+        모델이 사실을 생성하지 않는 구조라 환각(없는 정보를 지어내는 것)을 근본적으로 차단합니다.
+      </p>
+      <div class="doc-actions">
+        <button class="cta" data-goto="diagnose">📷 진단 시작하기</button>
+        <button class="cta ghost" data-goto="tech">활용 기술 보기</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">01</span><h2>왜 이 연구인가 — 문제</h2></div>
+      <div class="cards">
+        <div class="card">
+          <span class="em">🔍</span>
+          <h3>조기 진단의 벽</h3>
+          <p>병해충은 초기 대응이 관건이지만, 유사한 병징을 육안으로 감별하려면 전문성이 필요하고 현장 전문가는 부족합니다.</p>
+        </div>
+        <div class="card">
+          <span class="em">📡</span>
+          <h3>접근성의 한계</h3>
+          <p>농가가 병징을 발견한 순간 즉시 물어볼 전문가나 신뢰할 자료에 접근하기 어렵습니다.</p>
+        </div>
+        <div class="card">
+          <span class="em">💊</span>
+          <h3>오진 → 약제 오남용</h3>
+          <p>잘못된 진단은 부적절한 약제·살포 시기로 이어져 방제 실패와 비용·환경 부담을 키웁니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">02</span><h2>목적과 접근</h2></div>
+      <p class="prose">
+        사진으로 <b>병명을 판단</b>하고, 그 병에 대한 <b>검증된 방제 지식</b>을 함께 제공하는 것이 목표입니다.
+        핵심 설계 원칙은 <b>“모델은 병명만, 지식은 지식베이스만”</b> — 역할을 분리해 신뢰성을 확보합니다.
+      </p>
+      <div class="cards" style="margin-top:6px">
+        <div class="card accent">
+          <span class="em">🧠</span>
+          <h3>모델 — 무엇인가</h3>
+          <p>파인튜닝한 VLM이 이미지 근거로 <b>병명 하나</b>만 결정합니다. 시각 판단은 모델이 가장 잘합니다.</p>
+        </div>
+        <div class="card ok">
+          <span class="em">🔒</span>
+          <h3>지식베이스 — 무슨 뜻인가</h3>
+          <p>학명·증상·약제 등 <b>사실</b>은 전문가 KB 원문에서 그대로 조회합니다. 모델이 생성하지 않습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">03</span><h2>핵심 결과 — 정직하게</h2></div>
+      <div class="flow">
+        <div class="st mut"><div class="v">0.038</div><div class="l">무학습 VLM<br>(macro-F1)</div></div>
+        <div class="arw">→</div>
+        <div class="st good"><div class="v">0.941</div><div class="l">파인튜닝 후<br>동일 분포 (정확도 92%)</div></div>
+        <div class="arw">→</div>
+        <div class="st bad"><div class="v">0.155</div><div class="l">다른 출처 사진<br>(교차 검증 · 무작위 수준)</div></div>
+      </div>
+      <div class="note warn">
+        <span class="i">⚠️</span>
+        <div><b>파이프라인은 작동하지만 일반화는 실패했습니다.</b> 사진 121장으로 학습하면 같은 분포에서 92%가 나오지만,
+        다른 출처 사진에서는 15.5%로 무너집니다. 모델이 병반의 형태가 아니라 <b>학습 사진의 스타일</b>(품종·조명·배경)을 외운 것입니다.
+        <b>다양한 출처의 데이터 확보가 유일한 근본 해법</b>이며, 이것이 이 프로젝트의 핵심 결론이자 데이터 투자의 정량적 근거입니다.</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">04</span><h2>기대 효과</h2></div>
+      <div class="cards">
+        <div class="card"><span class="em">⏱️</span><h3>조기 대응 지원</h3><p>현장에서 즉시 1차 진단을 받아 초기 방제 타이밍을 놓치지 않도록 돕습니다.</p></div>
+        <div class="card"><span class="em">🧪</span><h3>약제 오남용 감소</h3><p>검증된 방제 정보만 제공해 부적절한 약제 선택·시기를 줄입니다.</p></div>
+        <div class="card"><span class="em">📚</span><h3>전문지식 접근성</h3><p>전문가 지식베이스를 누구나 질문 형태로 활용할 수 있게 합니다.</p></div>
+        <div class="card"><span class="em">📈</span><h3>데이터 투자 근거</h3><p>“데이터에 투자하면 성능이 나온다”를 숫자로 증명해 후속 데이터 확보의 근거를 제공합니다.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 진단 ==================== -->
+<section class="page" id="page-diagnose">
+  <div class="pw wide">
+    <div class="grid">
+
+      <!-- 입력 -->
+      <section class="panel input">
+        <div class="panel-h">
+          <div class="k">Input</div>
+          <div class="hrow">
+            <span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
+            <h2>감귤 사진 진단</h2>
+          </div>
+          <p class="sub">사진을 올리면 병명과 방제 정보를 알려드립니다.</p>
+        </div>
+        <div class="panel-b">
+          <div class="drop" id="drop">
+            <input type="file" id="file" accept="image/*" aria-label="감귤 사진 업로드" />
+            <img id="preview" alt="업로드한 감귤 사진 미리보기" />
+            <div class="ph">
+              <div class="big">🖼</div>
+              <div><b>사진을 끌어다 놓거나 클릭</b>하세요</div>
+              <div style="font-size:12px; margin-top:5px; color:var(--faint)">JPG · PNG</div>
+            </div>
+            <button class="chg" id="chgBtn" type="button">↻ 다른 사진</button>
+          </div>
+
+          <div class="field">
+            <label for="q">질문 <span style="color:var(--faint); font-weight:400">(선택 — 비우면 종합 진단)</span></label>
+            <textarea id="q" placeholder="예) 약제 뭐 써요? / 이거 왜 이래요?"></textarea>
+            <div class="chips" id="chips" role="group" aria-label="질문 의도 빠른 선택">
+              <button class="chip" data-intent="diagnose" data-q="이 병 뭐예요? 증상이랑 방제법도 알려주세요."><span class="t">진단</span> 이 병 뭐예요?</button>
+              <button class="chip" data-intent="name" data-q="병명만 알려주세요."><span class="t">병명</span> 병명만</button>
+              <button class="chip" data-intent="control" data-q="약제 뭐 써요?"><span class="t">방제</span> 약제 뭐 써요?</button>
+              <button class="chip" data-intent="symptom" data-q="어떤 증상이 보이나요?"><span class="t">증상</span> 증상이 뭐예요?</button>
+            </div>
+          </div>
+
+          <button class="run" id="run" disabled>
+            <span class="spin"></span><span class="label">진단하기</span>
+          </button>
+          <div class="hint">
+            진단 대상 <b>8종</b> — 잿빛곰팡이병·더뎅이병·탄저병·궤양병·수지병·녹색곰팡이병·검은점무늬병·검은무늬병.
+            <br>학습 데이터와 비슷한 출처의 사진에서 가장 정확합니다.
+          </div>
+        </div>
+      </section>
+
+      <!-- 결과 -->
+      <section class="panel">
+        <div class="panel-h">
+          <div class="k">Result</div>
+          <div class="hrow">
+            <span class="hic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg></span>
+            <h2>진단 결과</h2>
+          </div>
+          <p class="sub">모델이 병명을 판단하고, 지식베이스에서 관련 정보를 조회합니다.</p>
+        </div>
+
+        <div class="empty" id="empty">
+          <div class="ic">🔬</div>
+          <h3>사진을 올리고 진단해 보세요</h3>
+          <p><b>병명</b>과 <b>정보</b>는 서로 다른 출처에서 옵니다.</p>
+          <div class="legend">
+            <div class="row">
+              <span class="sw model"></span>
+              <div><b>병명 — 모델 판단</b>. 파인튜닝 모델이 이미지 근거로 결정한 추정이라 <b>틀릴 수 있습니다.</b></div>
+            </div>
+            <div class="row">
+              <span class="sw kb"></span>
+              <div><b>정보 — 지식베이스 원문</b>. 학명·증상·약제는 전문가 KB에서 그대로 조회하며 <b>모델이 생성하지 않습니다.</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result" id="result"></div>
+      </section>
+    </div>
+
+    <div class="disclaimer">
+      <div class="in">
+        <div class="ic">⚠️</div>
+        <div>
+          <h3>이 시스템은 PoC(가능성 검증) 단계입니다</h3>
+          <p>
+            학습 데이터(감귤 사진 121장)와 <b>유사한 출처</b>의 사진에서만 신뢰할 수 있습니다
+            <span class="stat">— 동일 분포 <b>92%</b></span>.
+            촬영 환경·품종·출처가 다른 사진에서는 정확도가 크게 떨어집니다
+            <span class="stat bad">다른 출처 <b>15.5%</b></span>.
+            실제 방제 판단은 반드시 전문가·현장 확인을 거치세요.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 데이터셋 ==================== -->
+<section class="page" id="page-data">
+  <div class="pw doc">
+    <div class="doc-h">
+      <div class="eyebrow">Dataset</div>
+      <h1>감귤 병해충 사진 데이터셋</h1>
+      <p class="lead">
+        감귤 병해충 <b>8개 클래스, 원본 사진 121장</b>으로 파인튜닝했습니다. 클래스 불균형이 크고 전체 규모가 작아,
+        데이터의 양과 다양성이 성능의 병목입니다. 별도 외부 공개 데이터셋으로 일반화 성능을 교차 검증했습니다.
+      </p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">01</span><h2>클래스별 구성</h2><span class="desc">stratified split · seed 42</span></div>
+      <div class="tblwrap">
+        <table class="tbl">
+          <thead><tr><th>클래스</th><th>발생 부위</th><th class="num">전체</th><th class="num">train</th><th class="num">test</th><th>비고</th></tr></thead>
+          <tbody>
+            <tr><td>잿빛곰팡이병</td><td><div class="parts-cell"><span class="part">🌸 꽃</span><span class="part fruit">🍊 열매</span></div></td><td class="num">27</td><td class="num">22</td><td class="num">5</td><td></td></tr>
+            <tr><td>더뎅이병</td><td><div class="parts-cell"><span class="part leaf">🍃 잎</span><span class="part fruit">🍊 열매</span></div></td><td class="num">21</td><td class="num">17</td><td class="num">4</td><td></td></tr>
+            <tr><td>탄저병</td><td><div class="parts-cell"><span class="part leaf">🍃 잎</span><span class="part fruit">🍊 열매</span><span class="part">🌿 가지</span></div></td><td class="num">19</td><td class="num">15</td><td class="num">4</td><td class="warn-cell">KB 초안</td></tr>
+            <tr><td>궤양병</td><td><div class="parts-cell"><span class="part leaf">🍃 잎</span><span class="part fruit">🍊 열매</span><span class="part">🌿 가지</span></div></td><td class="num">18</td><td class="num">14</td><td class="num">4</td><td></td></tr>
+            <tr><td>수지병</td><td><div class="parts-cell"><span class="part">🌿 가지·줄기</span></div></td><td class="num">13</td><td class="num">10</td><td class="num">3</td><td></td></tr>
+            <tr><td>녹색곰팡이병</td><td><div class="parts-cell"><span class="part fruit">🍊 열매</span><span class="part">수확 후</span></div></td><td class="num">11</td><td class="num">9</td><td class="num">2</td><td></td></tr>
+            <tr><td>검은점무늬병</td><td><div class="parts-cell"><span class="part leaf">🍃 잎</span><span class="part fruit">🍊 열매</span></div></td><td class="num">8</td><td class="num">6</td><td class="num">2</td><td></td></tr>
+            <tr><td>검은무늬병</td><td><div class="parts-cell"><span class="part leaf">🍃 잎</span><span class="part fruit">🍊 열매</span></div></td><td class="num">4</td><td class="num">3</td><td class="num warn-cell">1</td><td class="warn-cell">KB 초안 · 병명 미확정</td></tr>
+            <tr class="total"><td>합계</td><td></td><td class="num">121</td><td class="num">96</td><td class="num">25</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note info">
+        <span class="i">ℹ️</span>
+        <div><b>발생 부위</b>는 KB '형태/병징' 기준이며, 한 병해가 여러 부위(잎·열매·가지)에 함께 발생할 수 있습니다.
+        녹색곰팡이병은 <b>수확 후 저장 과실</b>에서 주로 문제됩니다.<br>
+        증강(augmentation)은 <b>train에만</b> 적용해 test 누수를 방지했습니다 → 학습 <b>384샘플</b>.
+        검은무늬병은 test가 1장뿐이라 해당 클래스의 F1은 통계적으로 의미가 약합니다.</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">02</span><h2>학습 데이터 형식</h2></div>
+      <p class="prose">
+        단순 이미지 분류가 아니라 <b>“이미지 + 질문 → 답변”</b> 형태의 멀티모달 QA로 구성했습니다.
+        질문 의도 <b>4종(진단 · 병명 · 방제 · 증상)</b>을 균형 있게 넣었고, 정답 답변은 모두 지식베이스(citrus_PD_ver3.md)에 grounding했습니다.
+      </p>
+      <div class="spec">
+        <div class="row"><dt>입력</dt><dd>감귤 사진 <span class="mono">+ 자연어 질문</span></dd></div>
+        <div class="row"><dt>출력</dt><dd>병명 <span class="mono">+ KB 근거 답변</span></dd></div>
+        <div class="row"><dt>질문 의도</dt><dd>진단 · 병명 · 방제 · 증상</dd></div>
+        <div class="row"><dt>정답 근거</dt><dd>지식베이스 원문 grounding</dd></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">03</span><h2>교차 검증용 외부 데이터</h2></div>
+      <p class="prose">
+        학습에 쓰지 않은 <b>다른 출처의 공개 감귤 병해 사진(Mendeley Data, 약 758장)</b>으로
+        일반화 성능을 별도 검증했습니다. 동일 분포 92% → 다른 출처 <b>15.5%</b>로,
+        모델이 병반 형태가 아니라 학습 사진의 스타일에 의존함을 확인했습니다(<span class="kbd">활용 기술 · 평가</span> 참고).
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 지식베이스 ==================== -->
+<section class="page" id="page-kb">
+  <div class="pw doc">
+    <div class="doc-h">
+      <div class="eyebrow">Knowledge Base</div>
+      <h1>병해충 지식베이스</h1>
+      <p class="lead">
+        감귤 병해 <b>14종</b>과 해충 <b>23종</b>, 총 <b>37종</b>의 전문가 정리 문서(<span class="kbd">citrus_PD_ver3.md</span>)입니다.
+        진단 결과의 학명·증상·방제·약제는 모두 이 원문에서 그대로 조회되며, 모델이 생성하지 않습니다.
+      </p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">01</span><h2>각 항목의 구조</h2></div>
+      <p class="prose">모든 병해충 항목은 아래 형식으로 정리되어 있으며, RAG는 이 원문을 <b>섹션 검색 → 문장 재랭킹</b> 방식으로 찾아 답합니다.</p>
+      <div class="kbex">
+        <div class="exh">📄 예시 — 궤양병 (citrus_PD_ver3.md)</div>
+        <div class="exb">
+          <div class="k">학명 / 영명</div>
+          <p><span class="mono">Xanthomonas axonopodis pv. citri</span> · Canker</p>
+          <div class="k">형태 / 병징</div>
+          <p>잎·가지·열매에 반점 형태로 발생, 감염 7~10일 후 황화 반점 → 코르크화된 황갈색 분화구 모양.</p>
+          <div class="k">발생생태 및 피해</div>
+          <p>낙화 후 3개월까지가 가장 취약. 기공·바람·해충(귤굴나방) 상처로 침입.</p>
+          <div class="k">방제 및 과원관리</div>
+          <p>첫 방제 5월 중·하순, 태풍 내습 전 살포, 병든 가지 사전 제거.</p>
+          <div class="k">방제약제</div>
+          <p>가스란(수), 네오보르도(수) 등 — 계통·성분·동시방제 병해충까지 명시.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">02</span><h2>수록 병해 (14종)</h2><span class="desc">클릭 시 상세 · 주황 = 진단 대상 · 점선 = KB 초안</span></div>
+      <div class="dlist">
+        <button type="button" class="dchip on" data-kb="궤양병">궤양병</button>
+        <button type="button" class="dchip on" data-kb="더뎅이병">더뎅이병</button>
+        <button type="button" class="dchip on" data-kb="검은점무늬병">검은점무늬병</button>
+        <button type="button" class="dchip on" data-kb="녹색곰팡이병ㆍ푸른곰팡이병">녹색곰팡이병ㆍ푸른곰팡이병</button>
+        <button type="button" class="dchip on" data-kb="잿빛곰팡이병">잿빛곰팡이병</button>
+        <button type="button" class="dchip on" data-kb="수지병">수지병</button>
+        <button type="button" class="dchip on draft" data-kb="탄저병">탄저병</button>
+        <button type="button" class="dchip on draft" data-kb="검은무늬병">검은무늬병</button>
+        <button type="button" class="dchip" data-kb="소립검은점무늬병">소립검은점무늬병</button>
+        <button type="button" class="dchip" data-kb="황반병">황반병</button>
+        <button type="button" class="dchip" data-kb="그을음병">그을음병</button>
+        <button type="button" class="dchip" data-kb="배꼽썩음병">배꼽썩음병</button>
+        <button type="button" class="dchip" data-kb="온주위축병">온주위축병</button>
+        <button type="button" class="dchip" data-kb="모자이크병">모자이크병</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">03</span><h2>수록 해충 (23종)</h2><span class="desc">클릭하면 상세 정보</span></div>
+      <div class="dlist">
+        <button type="button" class="dchip" data-kb="귤응애">귤응애</button><button type="button" class="dchip" data-kb="귤녹응애">귤녹응애</button><button type="button" class="dchip" data-kb="차먼지응애">차먼지응애</button>
+        <button type="button" class="dchip" data-kb="차응애(간자와응애)">차응애(간자와응애)</button><button type="button" class="dchip" data-kb="조팝나무진딧물">조팝나무진딧물</button><button type="button" class="dchip" data-kb="목화진딧물">목화진딧물</button>
+        <button type="button" class="dchip" data-kb="애넓적밑빠진벌레">애넓적밑빠진벌레</button><button type="button" class="dchip" data-kb="꽃노랑총채벌레">꽃노랑총채벌레</button><button type="button" class="dchip" data-kb="볼록총채벌레">볼록총채벌레</button>
+        <button type="button" class="dchip" data-kb="화살깍지벌레">화살깍지벌레</button><button type="button" class="dchip" data-kb="이세리아깍지벌레">이세리아깍지벌레</button><button type="button" class="dchip" data-kb="루비깍지벌레">루비깍지벌레</button>
+        <button type="button" class="dchip" data-kb="귤애가루깍지벌레">귤애가루깍지벌레</button><button type="button" class="dchip" data-kb="썩덩나무노린재">썩덩나무노린재</button><button type="button" class="dchip" data-kb="풀색노린재">풀색노린재</button>
+        <button type="button" class="dchip" data-kb="감귤꽃혹파리">감귤꽃혹파리</button><button type="button" class="dchip" data-kb="귤굴나방">귤굴나방</button><button type="button" class="dchip" data-kb="네눈쑥가지나방">네눈쑥가지나방</button>
+        <button type="button" class="dchip" data-kb="왕담배나방">왕담배나방</button><button type="button" class="dchip" data-kb="차잎말이나방">차잎말이나방</button><button type="button" class="dchip" data-kb="귤가루이">귤가루이</button>
+        <button type="button" class="dchip" data-kb="초록애매미충">초록애매미충</button><button type="button" class="dchip" data-kb="명주달팽이">명주달팽이</button>
+      </div>
+    </div>
+
+    <div class="note warn">
+      <span class="i">⚠️</span>
+      <div>진단 대상 8종 중 <b>탄저병·검은무늬병</b>은 원래 KB에 없어 초안을 추가했습니다(35→37종).
+      이 2종은 <b>전문가 검증 전</b>이며, 검은무늬병은 병명 정의 자체가 미확정입니다. 방제 정보는 참고용으로만 사용하세요.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 활용 기술 ==================== -->
+<section class="page" id="page-tech">
+  <div class="pw doc">
+    <div class="doc-h">
+      <div class="eyebrow">Method</div>
+      <h1>활용 기술</h1>
+      <p class="lead">
+        시각언어모델(VLM) 파인튜닝과 지식베이스 RAG를 <b>역할 분리</b>로 결합했습니다.
+        분류(무엇인가)는 VLM이, 지식(그게 무슨 뜻인가)은 KB가 담당해 환각을 구조적으로 차단합니다.
+      </p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">01</span><h2>추론 파이프라인</h2></div>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><div class="b">
+          <h3>VLM — 병명 결정</h3>
+          <p>파인튜닝한 <code>Qwen2.5-VL-7B</code>이 이미지(+선택 질문)에서 <b>병명 하나만</b> 추출합니다. 생성 텍스트의 나머지는 폐기합니다.</p></div></div>
+        <div class="step"><div class="n">2</div><div class="b">
+          <h3>RAG — 이름 해석</h3>
+          <p>모델이 답한 병명을 <b>정확 일치 / 동의어 / 부분 일치 / 최근접 매핑 / unknown</b>으로 정규화합니다. 오타·환각 병명은 여기서 걸러집니다.</p></div></div>
+        <div class="step"><div class="n">3</div><div class="b">
+          <h3>RAG — 정보 조회</h3>
+          <p>질문 의도에 맞는 KB 청크를 <b>섹션 검색 → 문장 재랭킹</b>으로 찾아, 학명·증상·방제·약제를 <b>원문 그대로</b> 반환합니다.</p></div></div>
+        <div class="step"><div class="n">4</div><div class="b">
+          <h3>출력</h3>
+          <p><b>병명(모델이 결정) + 정보(KB 원문, 모델이 생성하지 않음)</b>. 학명·약제 같은 사실을 모델이 만들지 않으므로 환각이 불가능합니다.</p></div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">02</span><h2>모델 · 학습</h2></div>
+      <div class="spec">
+        <div class="row"><dt>Base 모델</dt><dd>Qwen2.5-VL-7B-Instruct</dd></div>
+        <div class="row"><dt>파인튜닝</dt><dd>LoRA <span class="mono">r=16, α=32</span></dd></div>
+        <div class="row"><dt>비전 타워</dt><dd>동결 <span class="mono">(freeze) — 과적합 방지</span></dd></div>
+        <div class="row"><dt>에폭</dt><dd>10 학습 · <span class="mono">ep5 채택</span></dd></div>
+        <div class="row"><dt>RAG 임베딩</dt><dd class="mono" style="font-size:13px">intfloat/multilingual-e5-large</dd></div>
+        <div class="row"><dt>학습 프레임워크</dt><dd>LLaMA-Factory</dd></div>
+        <div class="row"><dt>환경</dt><dd class="mono" style="font-size:13px">torch 2.6+cu124 · transformers 5.7</dd></div>
+        <div class="row"><dt>GPU</dt><dd>RTX A6000 ×3</dd></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">03</span><h2>왜 RAG를 분류기로 쓰지 않는가</h2></div>
+      <p class="prose">개발 초기에는 “VLM이 후보를 내면 RAG로 가장 근접한 것을 선택”하는 설계(A)를 시도했지만, 실제로 성능이 악화됐습니다.</p>
+      <div class="tblwrap">
+        <table class="tbl">
+          <thead><tr><th>설계</th><th>방식</th><th class="num">우리 test</th><th class="num">Mendeley</th><th>판정</th></tr></thead>
+          <tbody>
+            <tr><td>A</td><td>VLM 후보 → RAG가 선택</td><td class="num">0.920 → 0.480</td><td class="num">0.052</td><td class="warn-cell">❌ 실패</td></tr>
+            <tr><td>B</td><td>VLM 병명 결정 → RAG는 정보만</td><td class="num">0.920</td><td class="num">0.190</td><td style="color:var(--ok-text); font-weight:700">✅ 채택</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note info">
+        <span class="i">💡</span>
+        <div><b>교훈 — 폐쇄된 라벨 집합에서 RAG를 분류기로 쓰면 안 됩니다.</b> 1·2위 후보의 코사인 점수차가 평균 0.018로 구분이 불가능해,
+        VLM의 정확한 시각 판단(0.920)을 텍스트 유사도 노이즈로 덮어썼습니다.</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">04</span><h2>평가 — 성능을 의심하고 검증</h2></div>
+      <div class="tblwrap">
+        <table class="tbl">
+          <thead><tr><th>검증</th><th>방법</th><th>결과</th></tr></thead>
+          <tbody>
+            <tr><td>데이터 누수</td><td>pHash 근접 중복 검사</td><td>누수 0건</td></tr>
+            <tr><td>통계적 불확실성</td><td>부트스트랩 신뢰구간</td><td class="mono">95% CI [0.639, 1.000]</td></tr>
+            <tr><td>의도별 일관성</td><td>25장 × 질문 4종</td><td class="mono">진단/병명/증상 0.92 · 방제 0.80</td></tr>
+            <tr><td>교차 데이터셋</td><td>다른 출처 같은 병해</td><td class="warn-cell">0.155 — 일반화 실패</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note warn">
+        <span class="i">⚠️</span>
+        <div>가장 중요한 결과는 <b>교차 데이터셋 0.155</b>입니다. 동일 분포 92%가 곧 실사용 성능이 아니라는 뜻이며,
+        쓸 만한 모델을 얻으려면 다양한 출처의 데이터가 반드시 필요합니다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Reference ==================== -->
+<section class="page" id="page-ref">
+  <div class="pw doc">
+    <div class="doc-h">
+      <div class="eyebrow">Reference</div>
+      <h1>참고 자료</h1>
+      <p class="lead">이 시스템이 사용한 모델·프레임워크·데이터·정보 출처입니다.</p>
+    </div>
+
+    <div class="sec">
+      <div class="reflist">
+        <div class="ref"><div class="rn">01</div><div class="rb">
+          <h3>Qwen2.5-VL — Vision-Language Model</h3>
+          <p>병명 판단에 사용한 base 시각언어모델. 7B-Instruct를 LoRA로 파인튜닝.</p>
+          <div class="id">Qwen/Qwen2.5-VL-7B-Instruct · Alibaba Qwen Team</div></div></div>
+
+        <div class="ref"><div class="rn">02</div><div class="rb">
+          <h3>LLaMA-Factory — LoRA 파인튜닝 프레임워크</h3>
+          <p>VLM 파인튜닝(비전 타워 동결 + LLM LoRA)에 사용.</p>
+          <div class="id">github.com/hiyouga/LLaMA-Factory</div></div></div>
+
+        <div class="ref"><div class="rn">03</div><div class="rb">
+          <h3>multilingual-e5-large — 문장 임베딩</h3>
+          <p>지식베이스 RAG의 이름 해석·문장 재랭킹에 사용한 다국어 임베딩 모델.</p>
+          <div class="id">intfloat/multilingual-e5-large · sentence-transformers</div></div></div>
+
+        <div class="ref"><div class="rn">04</div><div class="rb">
+          <h3>교차 검증용 외부 데이터 (Mendeley Data)</h3>
+          <p>학습에 쓰지 않은 다른 출처의 공개 감귤 병해 사진(약 758장). 일반화 성능 교차 검증에 사용.</p>
+          <div class="id">Mendeley Data — Citrus disease image dataset</div></div></div>
+
+        <div class="ref"><div class="rn">05</div><div class="rb">
+          <h3>병해충 지식베이스 · 방제약제 정보</h3>
+          <p>학명·증상·방제·약제 원문의 근거. 등록 약제·사용 시기는 농약안전정보시스템에서 확인.</p>
+          <div class="id">citrus_PD_ver3.md · 농약안전정보시스템(RDA)</div></div></div>
+
+        <div class="ref"><div class="rn">06</div><div class="rb">
+          <h3>수행 기관</h3>
+          <p>한국전자기술연구원(KETI) · 에코브레인 — CEDP 연구개발 과제.</p>
+          <div class="id">KETI × 에코브레인 · CEDP R&D</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- 지식베이스 상세 모달 -->
+<div class="modal" id="kbmodal" aria-hidden="true">
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="kbmTitle">
+    <div class="mh">
+      <span class="tag kb">🔒 지식베이스</span>
+      <h3 id="kbmTitle"></h3>
+      <button class="x" id="kbmClose" type="button" aria-label="닫기">✕</button>
+    </div>
+    <div class="mb" id="kbmBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script id="kbdata" type="application/json">{"궤양병":"- 학명: Xanthomonas axonopodis pv.citri(Hasse)Vaut.\n- 영명: Canker\n\n### 형태/병징\n\n- 잎 , 가지, 열매에 발생하며 반점 형태로 과실 외관을 해치고 새순인 경우 순 전체가 죽고 과실은 낙과될 수 있다.\n- 감염 7 ~ 10일 후에 첫 병징이 보이기 시작하며 초기에는 황화된 작은 반점으로부터 시작하여 점차 모양이 커지고 잎의 뒷면이 부풀어 오르며 나중에 이 부분이 코르크화 되어 황갈색 분화구 모양이 된다.\n- 새순이나 어린 과실에 침입했을 경우 병반크기는 이 후에 감염된 것보다 크고 비대기 이후에 감염된 것들은 병반 부위가 착색이 느려지고 곤충에 의해 흡즙된 것과 같은 모양이 된다.\n\n### 발생생태 및 피해\n\n- 궤양병은 잎이 굳기 전, 낙화 후 3개월까지가 병에 가장 약한 시기이며 강우로 인해 습한 상태가 지속될 경우 전년도에 감염된 병반으로부터 세균액이 흘러나와 새잎으로 전염되며 여기에서 과실로 병이 옮겨가게 된다.\n- 궤양병균은 식물체의 기공, 태풍 등 강한 바람이나 해충(귤굴나방 등)에 의한 상처를 통해서 침입하기 때문에, 발병이 염려되는 과원은 귤굴나방 방제를 철저히 해야 된다.\n\n### 방제 및 과원관리\n\n- 궤양병 첫 방제 시기는 5월 중·하순경이며 봄순에 병이 발생했을 경우 6월 하순 ~ 7월 상순, 8월 상·중순경에 추가 방제한다.\n- 가급적 항생제 사용은 자제하며 태풍 내습 전에 약제를 살포 해야 하며 밀식된 과원은 통풍이 잘되도록 간벌하고, 수확이나 전정할 때 병든 가지 등은 제거해야 한다.\n- 약제 살포 이전에 감염된 가지와 잎 등을 사전에 제거하여 주는 것이 과원 관리의 기본이다.\n\n### 방제약제\n\n1. 약제명: 가스란(수)\n   - 계통: 항생제\n   - 성분: 코퍼옥시 클로라이드· 가스가마이신\n   - 동시방제 병해충: 궤양병 더뎅이병\n2. 약제명: 네오보르도(수)\n   - 계통: 항생제\n   - 성분: 코퍼설페이트 베이식\n   - 동시방제 병해충: 궤양병 더뎅이병\n3. 약제명: 코사이드, 쿠퍼, 쿠퍼사이드(수), 코사이드옵티(입상)\n   - 성분: 코퍼하이드록 사이드\n   - 동시방제 병해충: 궤양병 더뎅이병\n4. 약제명: 보르도피쳐(입)\n   - 동시방제 병해충: 궤양병 더뎅이병\n5. 약제명: 새빈나(액상)\n   - 성분: 트리베이식코 퍼설페이트\n6. 약제명: 타미나(수)\n   - 계통: 항생제\n   - 성분: 코퍼하이드록 사이드· 스트렙토마이신\n   - 동시방제 병해충: 궤양병\n7. 약제명: 탐나라(수)\n   - 계통: 항생제\n   - 성분: 큐프러스옥 사이드· 스트렙토마이신\n   - 동시방제 병해충: 궤양병\n8. 약제명: 델란케이(수)\n   - 계통: 귀콘계\n   - 성분: 코퍼옥시클로 라이드· 디티아논\n   - 동시방제 병해충: 궤양병 더뎅이병 검은점무늬병\n9. 약제명: 아그렙토· 부라마이신· 농용신(수)\n   - 계통: 귀콘계\n   - 성분: 스트렙토마이신\n   - 동시방제 병해충: 궤양병\n10. 약제명: 아그리 마이신(수)\n   - 계통: 귀콘계\n   - 성분: 옥시테트라 사이클린· 스트렙토마이신 황산염\n   - 동시방제 병해충: 궤양병\n11. 약제명: 젠토마이신(수)\n   - 계통: 귀콘계\n   - 동시방제 병해충: 궤양병","더뎅이병":"- 학명: Elsinoe fawcettii Bitancourt&Jenkins\n- 영명: Scab diseases\n\n### 형태/병징\n\n- 잎에는 병원균 침입 3일 후부터 병징이 나타나며 초기 증상은 파리똥 같은 작은 반점이 생기고 그 주위가 황화되며 병이 진전됨에 따라 차츰 반점이 커지고 돌출하여 회갈색이 된다.\n- 심하면 잎이나 열매가 기형이 되며 후기 감염시 부스럼 또는 딱지형 병반으로 변하게 된다.\n\n### 발생생태 및 피해\n\n- 병원균의 발아적온은 20 ~ 28℃이며, 병원균은 가지나 잎의 병반에서 월동을 하고 최소한 1 ~ 2시간 동안 병반 부위가 젖었을 때 포자가 발아하여 감염된다.\n- 잎에는 발아기때부터 중간정도 성장했을 때 감염되기 쉬우며 잎이 완전히 자라 굳어지면 병이 전혀 발생하지 않는다.\n- 열매에는 꽃잎이 떨어진 후 1 ~ 2개월까지가 잘 감염되고 낙화 3 ~ 4개월 후에라도 조건만 만족되면 병이 발생될 수 있고 균의 특성상 발병조건이 되면 짧은 시간내에 병이 발생할 수가 있어 항상 주의를 해야 한다.\n\n### 방제 및 과원관리\n\n- 전년도 감염된 잎이나 가지의 병반에서 이듬해 새로운 병원균이 생성되기 때문에 수확시나 전정시 전염원을 최대한 제거하는 것이 중요하다.\n- 초기 약제 살포시기는 발아초기 비가 오기 전에 적용약제를 살포해야 한다.\n- 발생이 많은 과원은 4월 하순경 1차 약제방제 (※ 더뎅이병 유사증상 유의)\n- 더뎅이병 발생이 염려되는 지역은 낙화기 이전에 구리제를 살포해주는 것이 더뎅이병 뿐만 아니라 궤양병 방제에도 유리하다. 더뎅이병 유사증상\n- ※ 더뎅이병 유사증상 판별\n- 유사증상 : 대 부분 오목 또는 볼록한 부위에 검은점이 있으며 볼록한 부위가 비교적 완만함\n- 더뎅이병 : 오 목하거나 볼록한 부분에 회갈색의 딱지가 있고 볼록한 부위끝이 날카로움\n\n### 방제약제\n\n1. 약제명: 네오보르도(수)\n   - 성분: 코퍼설페이트 베이식\n   - 동시방제 병해충: 더뎅이병 궤양병\n2. 약제명: 보르도피쳐 (입상)\n   - 동시방제 병해충: 더뎅이병 궤양병\n3. 약제명: 새빈나(액)\n   - 성분: 트리베이식 코퍼셀페이트\n   - 동시방제 병해충: 더뎅이병 궤양병\n4. 약제명: 코사이드, 쿠퍼, 쿠퍼사이드 (수), 코사이드옵티 (입상)\n   - 성분: 코퍼하이드 록사이드\n   - 동시방제 병해충: 더뎅이병 궤양병\n5. 약제명: 다코닐(수), 다코닐에이스 (액상)\n   - 성분: 클로로탈로닐\n   - 동시방제 병해충: 더뎅이병\n6. 약제명: 벤레이트· 동부베노밀· 아그로텍베노밀· 삼공베노밀· 동방베노밀(수)\n   - 성분: 베노밀\n   - 동시방제 병해충: 더뎅이병\n7. 약제명: 델란, 경농디치, 아그로텍디치(수)\n   - 성분: 디티아논\n   - 동시방제 병해충: 더뎅이병 검은점무늬병 잿빛곰팡이병\n8. 약제명: 델란(액상)\n   - 동시방제 병해충: 더뎅이병 검은점무늬병\n9. 약제명: 델란케이(수)\n   - 계통: 무기 동계\n   - 성분: 코퍼옥시클로 라이드· 디티아논\n   - 동시방제 병해충: 더뎅이병 궤양병 검은점무늬병\n10. 약제명: 델란티(수)\n   - 계통: 카바메 이트계\n   - 성분: 디티아논·티오파 네이트메틸\n   - 동시방제 병해충: 더뎅이병 검은점무늬병\n11. 약제명: 살림꾼 (액상)\n   - 계통: 카바메 이트계\n   - 성분: 메트코나졸\n   - 동시방제 병해충: 더뎅이병 잿빛곰팡이병\n12. 약제명: 푸르겐(수), 푸름이, 로티플(액상) 보가드(입상)\n   - 계통: 카바메 이트계\n   - 성분: 디페노코나졸\n   - 동시방제 병해충: 더뎅이병\n13. 약제명: 확시란(수)\n   - 계통: 카바메 이트계\n   - 성분: 이미벤코나졸\n   - 동시방제 병해충: 더뎅이병 잿빛곰팡이병\n14. 약제명: 실바코플러스 (액상)\n   - 계통: 카바메 이트계\n   - 성분: 테부코나졸\n   - 동시방제 병해충: 더뎅이병\n15. 약제명: 삼공헥사코나졸, 한빛(액상)\n   - 계통: 카바메 이트계\n   - 성분: 헥사코나졸\n   - 동시방제 병해충: 더뎅이병\n16. 약제명: 삼진왕(미탁)\n   - 계통: 구아 니딘계\n   - 성분: 디페노코나졸· 이미녹타딘트리 아세테이트\n   - 동시방제 병해충: 더뎅이병 잿빛곰팡이병\n17. 약제명: 바이블(수)\n   - 계통: 디니트 로아니 린계\n   - 성분: 디페노코나졸· 플루아지남\n   - 동시방제 병해충: 더뎅이병 검은점무늬병\n18. 약제명: 포커스(액상)\n   - 계통: 카바메 이트계\n   - 성분: 디페노코나졸· 티오파네이트메틸\n   - 동시방제 병해충: 더뎅이병\n19. 약제명: 썬업, 포리람 (입상)\n   - 계통: 카바메 이트계\n   - 성분: 메티람\n   - 동시방제 병해충: 더뎅이병 검은점무늬병\n20. 약제명: 안트라콜(수) 프로피(수)\n   - 계통: 카바메 이트계\n   - 성분: 프로피네브\n   - 동시방제 병해충: 더뎅이병 검은점무늬병\n21. 약제명: 어바우트(수) 프로랭스(수)\n   - 성분: 프로피네브\n   - 동시방제 병해충: 더뎅이병 검은점무늬병\n22. 약제명: 스트로비(액상)\n   - 성분: 크레속심메틸\n   - 동시방제 병해충: 더뎅이병 검은점무늬병\n23. 약제명: 해비치(입상)\n24. 약제명: 카브리오(유)\n   - 성분: 피라클로스 트로빈\n   - 동시방제 병해충: 더뎅이병 검은점무늬병 잿빛·녹색· 푸른곰팡이병\n25. 약제명: 프린트(액상)\n   - 성분: 트리플록시 스트로빈\n   - 동시방제 병해충: 더뎅이병 검은점무늬병 잿빛곰팡이병\n26. 약제명: 에이플(입상)\n   - 동시방제 병해충: 더뎅이병 검은점무늬병\n27. 약제명: 아미스타탑 (액상)\n   - 계통: 트리아 졸계\n   - 성분: 아족시스트로빈 ·디페노코나졸\n   - 동시방제 병해충: 더뎅이병\n28. 약제명: 벨리스플러스 (입상)\n   - 계통: 아닐라 이드계\n   - 성분: 보스칼리드·피 라클로스트로빈\n   - 동시방제 병해충: 더뎅이병 잿빛곰팡이병\n29. 약제명: 톱신엠· 톱네이트-엠(수)\n   - 계통: 아닐라 이드계\n   - 성분: 티오파네이 트메틸\n   - 동시방제 병해충: 더뎅이병\n30. 약제명: 동부·아그로텍· 경농옥시동(수)\n   - 계통: 아닐라 이드계\n   - 성분: 옥시코퍼\n   - 동시방제 병해충: 더뎅이병\n31. 약제명: 후론사이드(수)\n   - 계통: 아닐라 이드계\n   - 성분: 플루지아남\n   - 동시방제 병해충: 더뎅이병 귤응애, 귤녹응애, 잿빛곰팡이병\n32. 약제명: 유닉스(입상)\n   - 계통: 아닐라 이드계\n   - 성분: 사이프로디닐\n   - 동시방제 병해충: 더뎅이병 잿빛곰팡이병","검은점무늬병":"- 학명: Diaporthe citri F. A. Wolf\n- 영명: Melanose\n\n### 형태/병징\n\n- 잎에는 5월초, 중순경 잎이 굳어지기 전에 감염되기 시작하여 전형적인 검은점이 박히는데 심할 경우 잎이 황화되고 심하게 뒤틀린다.\n- 병원균 농도가 높을 경우 검붉은 딱지, 또는 부스럼 같은 모양이 되며 병원균이 침입한 식물의 표피세포는 그 침입 부위로부터 검은점이 박혀있고 심하면 딱딱해진다.\n- 잎의 병반에서는 전염원이 형성되지 못하기 때문에 병을 전파시키지 못하며 줄기의 경우 신초나 녹지(綠枝)에 5월초,중순경 이후로 감염되기 시작하며 다른 부위와는 다르게 침입부위에 균이 살아있는 경우가 많다. 검은점무늬병 잎의 병징 발생생태\n- 포자가 식물조직을 침입하기 위해서는 24 ~ 28℃에서 8시간, 20℃에서 12시간의 이상의 습윤조건이 필요하다.\n- 병포자는 과원에 방치해둔 죽은 가지에서 생겨난 병자각(번식기관)에서 생성되며 빗물과 함께 주변에 퍼진다. 병 발생 정도는 과원에 남아있는 죽은 가지의 양, 과실의 크기, 강우나 이슬에 의한 습윤기간에 따라 다양하다.\n- 죽은 가지와 전정하여 버려진 가지에 병원균이 정착하고 2 ~ 3개월 후면 포자를 형성하여 전염원이 되며 약 1년 정도 포자생성이 지속된다.\n- 침입한 병원균은 죽지 않고 살아있는 경우가 많으며 포자가 열매나 잎을 침입하면 기주식물은 병원균에 대한 방어작용으로 항균물질을 분비하여 침입한 병원균을 죽인 반응로서 검은 점이 형성되는 것으로 알려져 있다. 노지감귤 검은점무늬병 검은점무늬병(니괴형) 극조생 검은점무늬병 검은점무늬병 병반\n\n### 방제 및 과원관리\n\n- 장마기(6월 하순 ~ 7월 중순)에 70%이상이 감염되기 때문에 이시기 방제가 가장 중요하다.\n- 약제는 비가오기 전에 살포하는 것이 예방효과가 높고, 누적강수량이 200 ~ 250mm마다 1회씩, 연간 4 ~ 5회 약제를 살포한다.\n- 비가 오기 전에 약제 방제를 하지 못한 경우는,비가 그친 후 48시간 이내에 방제를 실시한다.\n- 강우 후나 아침에 이슬이 맺힌 후 물기가 빨리 마를 수 있도록 통풍이 좋고 햇빛이 잘 들도록 해주며, 이를 위하여 간벌을 실시하고 방풍수를 낮게 관리해 주는 것이 병 발생을 줄일 수 있는 요소이다.\n- 특히 정지전정한 가지를 과수원에 놔두지 말고 죽은 가지를 제거해주는 것도 예방을 위해 중요하다.\n\n### 방제약제\n\n1. 약제명: 디니트 로아니 린계\n   - 계통: 유기 유황계\n   - 성분: 바이블(수)\n   - 동시방제 병해충: 디페노코나졸· 플루아지남\n   - 주의사항: 검은점무늬병 더뎅이병","녹색곰팡이병ㆍ푸른곰팡이병":"- 학명: Penicillium digitatum(Pers.:Fr.)Saccardo·Penicillium italicum Wehmer\n- 영명: Green mold·Blue mold\n\n### 형태/병징\n\n- 녹색곰팡이병은 수확 후 가장 문제시되는 병해로써 감염부위에서 수백만개의 포자를 형성하여 비산한다.\n- 초기에 수침상의 병반이 생기고 확대되면서 중심 부위에 하얀색 균사가 생기며 점차 포자들이 형성되기 시작하여 연두색 또는 녹색이 첨가된 올리브색의 포자로 뒤덮히고 가장자리는 하얀띠를 형성한다.\n- 푸른곰팡이병은 녹색곰팡이병과 비슷하지만 급속하게 확산되지 않으며 금방 포자가 형성되어 청색의 포자로 뒤덮히고 시간이 지나면 회청색으로 변한다.\n- 가장자리에 흰색의 띠가 형성되는 것은 녹색곰팡이병과 유사하지만 그 폭은 상당히 좁다. 녹색곰팡이병 푸른곰팡이병 발생생태\n- 녹색곰팡이병은 상처를 통해 공기중에 있는 포자로 1차 감염되며 저온장해, 과육붕괴 등과 같은 생리적 장해를 통해서도 쉽게 감염된다.\n- 균사생장 최적온도와 병 발생 최적온도는 25℃내외로써 10 ~ 30℃에서는 여러 곰팡이 병원균들 중에서 가장 강력한 병원력을 지니지만 10℃이하나 30℃이상에서는 병 진전이 느린 편이다.\n- 푸른곰팡이병의 병 발생적온은 20 ~ 25℃이며, 10℃이하에서는 녹색곰팡이병보다 발병이 심하다. 따라서 상온저장의 경우 1 ~ 2월경에 많이 나타난다.\n\n### 방제 및 과원관리\n\n- 상처과가 생기지 않도록 주의해야 하며 상처과를 저장해서도 안된다. 또한 저장 중 감염되지 않도록 저장전에 저장고를 소독해 주는 것이 좋다.\n\n### 방제약제\n\n1. 약제명: 스포르곤 (입상)\n   - 성분: 프로클로라즈 망가니즈\n   - 동시방제 병해충: 녹색곰팡이병 푸른곰팡이병 저장병\n2. 약제명: 머니업(수)\n   - 동시방제 병해충: 녹색곰팡이병 푸른곰팡이병\n3. 약제명: 카브리오(유)\n   - 성분: 피라클로 스트로빈\n   - 동시방제 병해충: 녹색곰팡이병 푸른곰팡이병 더뎅이병 검은점무늬병 잿빛곰팡이병","잿빛곰팡이병":"- 학명: Botrytis cinerea Pers.:Fr\n- 영명: Botrytis-induced diseases\n\n### 형태/병징\n\n- 잿빛곰팡이병은 가지에서도 발생하지만 주로 꽃이나 작은 열매에 발생한다.\n- 서늘하고 습윤한 기상조건이 되면 꽃잎을 통해 침입하여 증식하고 자라난 균사나 포자가 어린 과실을 침입하여 꽃잎과 열매를 진한 갈색으로 부패시키며 약간 건조하면 그 부위에 회녹색의 균사와 포자가 형성된다.\n- 병발생이 진전되면 가지부분까지 확산되어 가지가 마르는 경우도 있다.\n- 또한 낙화기에 발병되어 고사된 꽃잎을 통해 어린 과실에 감염되면 바람에 의해 잎이나 가지 등에 긁힌 것과 유사한 상처를 남겨 상품가치를 떨어뜨린다. 잿빛곰팡이병 감염 과실 15 발생생태\n- 잎 , 꽃, 가지, 열매 등과 같은 잔재물이나 토양속에서 균사 또는 균핵의 형태로 월동하며 바람, 물, 곤충 등에 의해 포자가 이동되며 주로 상처를 통해 침입하는 걸로 알려져 있다.\n- 꽃이 가지나 과실에 비해 조직이 연약하며 상처도 많이 생길 수 있기 때문에 주된 침입구가 되는 꽃을 통해서 과실과 가지까지 병이 진전된다. 잿빛곰팡이병 감염 과실 잿빛곰팡이병 감염 줄기 마름증상 낙화기 이후에 감염된 과실\n\n### 방제 및 과원관리\n\n- 꽃이 약 70%정도 낙화되었을 때 약제를 살포해 준다.\n- 일단 발병이 시작되면 빠르게 진전되어 방제가 어렵고 기온이 선선하고 습윤한 조건이 계속되면 농약을 살포해도 방제가 되지 않는 경우가 많기 때문에 예방이 중요하다.\n- 환기를 철저히 하여 식물체 표면을 건조한 상태로 유지하도록 하고 약제를 살포시에는 오전 중에 살포하여 오후에는 약액이 완전히 마르도록 한다.\n- 잿빛곰팡이병은 약제 내성이 강하기 때문에 이전에 사용하지 않았던 약제를 이용하여 방제한다.\n\n### 방제약제\n\n1. 약제명: 델란, 경농디치, 아그로텍디치(수)\n   - 성분: 디티아논\n   - 동시방제 병해충: 잿빛곰팡이병 검은점무늬병 더뎅이병\n2. 약제명: 매카니(유현탁)\n   - 계통: 퀴논계\n   - 성분: 디티아논·피라 클로스트로빈\n   - 동시방제 병해충: 잿빛곰팡이병 더뎅이병\n3. 약제명: 벨리스플러스 (입상)\n   - 계통: 아닐라 이드계\n   - 성분: 보스칼리드· 피라클로 스트로빈\n   - 동시방제 병해충: 잿빛곰팡이병 더뎅이병\n4. 약제명: 벨쿠트(수)\n   - 계통: 아닐라 이드계\n   - 성분: 이미녹타딘트리 스알베실레이트\n   - 동시방제 병해충: 잿빛곰팡이병 더뎅이병 저장병\n5. 약제명: 부티나탈렌트 (액상)\n   - 계통: 아닐라 이드계\n   - 동시방제 병해충: 잿빛곰팡이병\n6. 약제명: 사파이어 (액상)\n   - 계통: 아닐라 이드계\n   - 성분: 플루디옥소닐\n   - 동시방제 병해충: 잿빛곰팡이병\n7. 약제명: 살림꾼(액상수)\n   - 계통: 아닐라 이드계\n   - 성분: 메트코나졸\n   - 동시방제 병해충: 잿빛곰팡이병 더뎅이병\n8. 약제명: 확시란(수)\n   - 계통: 아닐라 이드계\n   - 성분: 이미벤코나졸\n   - 동시방제 병해충: 잿빛곰팡이병 더뎅이병\n9. 약제명: 삼진왕(미탁)\n   - 계통: 구아니 딘계\n   - 성분: 디페노코나졸· 이미녹타딘트리 아세테이트\n   - 동시방제 병해충: 잿빛곰팡이병 더뎅이병\n10. 약제명: 유닉스(입상)\n   - 계통: 구아니 딘계\n   - 성분: 사이프로디닐\n   - 동시방제 병해충: 잿빛곰팡이병 더뎅이병\n11. 약제명: 깨끄탄(수)\n   - 계통: 구아니 딘계\n   - 성분: 카벤다짐· 디에토펜카브\n   - 동시방제 병해충: 잿빛곰팡이병\n12. 약제명: 후론사이드(수)\n   - 계통: 구아니 딘계\n   - 성분: 플루아지남\n   - 동시방제 병해충: 잿빛곰팡이병 귤응애, 더뎅이병 귤녹응애","수지병":"- 학명: Diaporthe citri F. A. Wolf\n- 영명: Gummosis\n\n### 형태/병징\n\n- 나무전체 또는 줄기부분이 갑자기 고사하여 열매와 잎이 남아있는 채로 말라 버린다.\n- 전정한 부위로부터 검붉게 썩어 들어가는 경우도 있다.\n- 병부위는 주로 주간, 가지가 갈라지는 지점, 전정부위, 냉해나 강한 햇빛에 의해 피해를 받은 부분 등이다.\n- 병부위를 칼로 벗겨보면 표피와 목질부가 썩어있고 건전한 부위와의 경계가 뚜렷하여 마치 띠를 형성한 것처럼 보인다. 수지병 피해 발생생태\n- 전정한 부위를 통해서도 침입할 수 있으며 하우스재배에서 극단적인 관수나 과도한 결실로 인하여 수세가 약해졌을 때 발생할 수 있다. 수지병 피해 수지병에 의한 고사\n\n### 방제 및 과원관리\n\n- 방제는 수세를 강하게 유지함으로써 병원균 침입을 사전에 봉쇄하는 것이 중요하다.\n- 하우스재배에서의 과다결실 및 수분스트레스로 수세가 급격히 저하하지 않도록 하고 수확 후 수세를 회복시키는 것이 무엇보다 효과적이다.\n- 병든 부위 및 죽은 조직은 칼로 완전히 도려내어 도포제를 발라주도록 한다.\n\n### 방제약제\n\n1. 약제명: 톱신페스트 영일지오판 (도포제)\n   - 성분: 티오파네 이트메틸\n   - 동시방제 병해충: 수지병","탄저병":"- 학명: Colletotrichum gloeosporioides (Penz.) Penz. & Sacc.\n- 영명: Anthracnose\n\n### 형태/병징\n\n- 잎, 가지, 과실에 두루 발생한다. 잎에서는 갈색~회백색의 원형 또는 부정형 병반이 생기고, 병반이 오래되면 표면에 검은색의 작은 점(분생포자층)이 무리지어 나타난다.\n- 가지에서는 마른 부위에서 시작해 회백색으로 말라 죽는 가지마름 증상이 나타나며, 심하면 가지 전체가 고사한다.\n- 과실에서는 표면이 움푹 들어간 갈색 병반이 생기고, 빗물을 따라 흘러내린 듯한 눈물 자국 모양의 부패(tear-stain)로 진전되어 저장 중 부패의 원인이 된다.\n\n### 발생생태 및 피해\n\n- 병원균은 병든 가지, 낙엽, 이병 과실에서 균사나 분생포자 형태로 월동하며, 봄부터 여름철 강우 시 분생포자가 빗물에 씻겨 전반된다.\n- 장마철 고온다습한 조건에서 급격히 번지며, 상처 부위나 동해·풍해로 약해진 조직, 수세가 쇠약한 나무에서 특히 심하게 발생한다.\n- 결실 과다, 영양 불균형, 배수 불량 등으로 나무가 약해지면 피해가 커진다.\n\n### 방제 및 과원관리\n\n- 병든 가지와 낙엽, 이병 과실을 제거·소각하여 전염원을 줄인다.\n- 적정 시비와 결실 조절로 수세를 튼튼히 유지하고, 전정으로 통풍과 채광을 개선한다.\n- 장마 전후로 예방적 약제를 살포하며, 태풍·서리 등으로 인한 상처를 최소화한다.\n\n### 방제약제\n\n- 감귤 탄저병 방제에는 만코제브 등 보호살균제 계통과 아졸계·스트로빌루린계 침투성 살균제가 이용된다. 구체적인 등록 약제와 사용 시기·희석배수는 농약안전정보시스템(농촌진흥청)의 최신 등록 정보를 확인하여 사용한다.","검은무늬병":"- 학명: (동정 필요 / 미확정)\n- 영명: Black blotch (가칭)\n\n### 형태/병징\n\n- 잎과 과실에 검은색~흑갈색의 반점(무늬)이 형성되는 병해로 보고된다. 과실 표면에 크고 작은 검은 무늬가 생겨 외관 상품성을 떨어뜨린다.\n- (주의) 국내에서 '검은무늬병'은 '검은점무늬병(Diaporthe citri, melanose)'과 명칭이 혼용되기도 하므로, 실제 병원균 동정과 병명 확정에는 전문가 확인이 필요하다.\n\n### 발생생태 및 피해\n\n- 병원균은 병든 가지나 낙엽 등 이병 잔재물에서 월동하며, 강우가 잦고 습한 조건에서 포자가 전반되어 발생이 늘어난다.\n- 수세가 약하거나 통풍·채광이 나쁜 과원에서 피해가 커진다.\n\n### 방제 및 과원관리\n\n- 이병 가지·낙엽을 제거하고 과원 위생을 관리한다.\n- 통풍과 채광이 잘 되도록 전정하고, 강우 전후 예방적 약제 살포로 발생을 억제한다.\n\n### 방제약제\n\n- 검은무늬병의 정확한 병원균 동정 후, 해당 병해에 등록된 약제를 농약안전정보시스템에서 확인하여 사용한다. 명칭이 혼용될 수 있어 등록 약제 확인 시 주의가 필요하다.","소립검은점무늬병":"- 학명: Diaporthe medusaea Nitschke Alternaria citri Ellis & N.Pierce\n- 영명: Melanose-like blemish\n\n### 형태/병징\n\n- 보통 0.02 ~ 0.08mm정도의 작고 검은 점들이 과피의 유포 사이에 발생하며 심할 경우 그물망과 같은 모양이 된다.\n- 착색전에는 병징이 거의 눈에 들어오지 않다가 착색이 시작되면서 감염부위는 착색이 지연되어 푸른색이 남아있다.\n- 대부분의 경우 착색이 진전됨에 따라 점차 푸른색이 없어지지만 심할 경우 수확시까지 착색이 안되고 그물망을 형성한 검은점 증상들로 상품성을 떨어뜨릴 수 있다.\n\n### 발생생태 및 피해\n\n- 6 ~ 7월, 8 ~ 9월에 감염되어 피해를 주고 있으며 죽은가지 등의 식물 잔재물에서 월동을 하고 강우시 다량의 포자가 형성되어 전염원이 되며, 방제방법은 검은점무늬병과 동일하다.","황반병":"- 학명: Mycosphaerella citri Whiteside\n- 영명: Greasy spot\n\n### 형태/병징\n\n- 초기에는 잎의 앞면에 노란색의 얼룩 반점이 생기고 그주위는 황화되어 노랗게 변한다. 잎의 뒷면에는 갈색의 화상을 입은 것과 같은 조직이 되며 그 주위는 약간 부풀어 오르고 황화된다.\n- 시간이 흐를수록 병반 주위의 황화현상은 줄어들고 잎뒷면의 병반은 기름에 절인 조직과 같이 되고 그 색깔도 짙은 갈색 또는 검은색으로 변한다.\n- 대부분의 병이 걸린 잎들은 병반이 검정색으로 변하기 전에 낙엽된다.\n- 과실의 경우에는 진한 갈색 또는 검정색의 작은 반점들이 존재하며 그 주위는 숙기가 지연되어 푸른색이 남아 있어 소립검은점무늬병과 유사한 병징을 보이는 것으로 알려져 있다.\n\n### 발생생태 및 피해\n\n- 병에 걸려 떨어진 잎에서 생성된 자낭포자가 주 전염원이 된다. 이들 포자가 식물체의 표면에서 발아한 균사들은 기공을 통해서 기주체내로 침입한다.\n- 가온하우스인 경우 수확 후 새순이 나오고 녹화되기 전에 기공을 통하여 침입하고 약 3개월후 병징이 나타나기 시작하여 이듬해 1 ~ 2월에 낙엽이 되기 시작한다.\n- 자낭포자의 발아 및 균사의 생장 그리고 기공을 통한 침입을 위한 최적조건은 25℃이상의 고온다습한 기상조건이다. 황반병 병징 18 황반병나무 황반병 감염나무\n\n### 방제 및 과원관리\n\n- 병에 걸린 낙엽들을 제거하는 것이 전염을 줄일 수 있는 방법이며 가장 효과적인 약제는 구리제이지만 하우스 재배인 경우 약해의 위험이 있기 때문에 주의해야 한다.\n- 노지인 경우는 발아기에서 잎이 녹화되기 전에 구리제를 한번만 살포해도 예방이 되며 약제 살포시 잎의 뒷면에 약이 완전히 묻도록 살포해야 한다.","그을음병":"- 학명: Capnodium citri Berk. & Desm.\n- 영명: Sooty mold\n\n### 형태/병징\n\n- 진딧물, 깍지벌레, 귤가루이 등이 기생하는 나무의 잎, 줄기, 열매에 발생한다.\n- 증상은 당분이 들어있는 액체 주위로 검은 그을음이 형성된다.\n- 그을음 증상은 잎의 뒷면보다 앞면에 형성되며 균사들은 물로 쉽게 씻겨지지만 때에 따라서 심할 경우 제거하기가 어렵다.\n- 그을음병은 직접 기주 조직을 침입하지 않지만 광합성을 방해하여 과실의 성숙과 착색을 지연 시키고 상품가치를 떨어뜨린다.\n\n### 방제 및 과원관리\n\n- 그을음 증상을 야기시키는 진딧물, 깍지벌레, 귤가루이 등 해충을 방제하면 그을음병도 자연히 소멸된다.","배꼽썩음병":"- 학명: Alternaria citri Ellis & N. Pierce\n\n### 형태/병징\n\n- 만감류인 경우 9 ~ 10월경에 배꼽 부위가 노랗게 변하여 낙과되는 경우가 있고 또한 수확기에 배꼽주위가 부패하는 경우가 있다.\n- 개화 후 화주를 통하여 병원균이 침입하는 것으로 여겨진다.\n- 대부분은 화주가 탈락하기 전에 감염되어 낙과되지만 그렇지 않은 경우는 화주가 탈락한 부위 23 (배꼽)에 병원균이 잠복해 있다가 과실이 어느정도 성장한 후 병 저항력이 약화되고 주위 환경이 병발생에 좋은 조건이 되면 침입하게 된다.\n- 전년도에 발생이 있는 과원은 낙화기때 살균제를 살포해 주는 것이 좋다.","온주위축병":"- 학명: Satsuma dwarf virus(SDV)\n- 영명: Satsuma dwarf\n\n### 형태/병징\n\n- 봄순이 숟가락모양 등으로 기형이 되고 건전잎보다 작아진다.\n- 증상이 심해지면 마디 사이가 짧아지지만 25℃이상에서는 병징이 발현되지 않는다.\n- 전체적으로 수세가 약해지고 수량이 감소한다.\n- 이들 증상은 주야간 온도차가 심할 경우 발생하는 기형잎 그리고 제초제 피해에 의한 기형잎 등과도 매우 유사하다. 발생생태\n- 접목에 의해서 전염되며 토양 매개체에 의해서도 매개되지만 그 매개체는 확실히 밝혀져 있지 않다.\n\n### 방제 및 과원관리\n\n- 건전한 접수를 사용하며 방풍수로 아왜나무를 사용하지 않는다.\n- 전정가위, 전정톱은 락스물에 소독하여 사용한다.","모자이크병":"- 학명: Citrus mosaic virus(CiMV)\n- 영명: Mosaic\n\n### 형태/병징\n\n- 착색이 시작되면서 짙은 녹색의 얼룩무늬 반점이 나타나기 시작하며, 시간이 경과하여 착색이 완료되는 시점에서는 얼룩무늬반점이 사라지고 그 부분의 유포가 갈변되어 함몰되기도 한다.\n- 병에 걸린 과실은 표피가 딱딱해지고 얼룩무늬반점 때문에 상품이 되지 못한다. 모자이크바이러스피해 잎 모자이크바이러스 과실피해 모자이크바이러스\n\n### 방제 및 과원관리\n\n- 건전한 접수를 사용하며 방풍수로 아왜나무를 사용하지 않는다.\n- 전정가위, 전정톱은 락스물에 소독하여 사용한다. 28 귤응애 귤애가루깍지벌레 귤녹응애 썩덩나무노린재 차먼지응애 풀색노린재 차응애(간자와응애) 감귤꽃혹파리 조팝나무진딧물 귤굴나방 목화진딧물 네눈쑥가지나방 애넓적밑빠진벌레 왕담배나방 꽃노랑총채벌레 차잎말이나방 볼록총채벌레 귤가루이 화살깍지벌레 초록애매미충 이세리아깍지벌레 명주달팽이 루비깍지벌레","귤응애":"- 학명: Panonychus citri McGregor\n- 영명: Citrus red mite\n\n### 형태/병징\n\n- 귤응애는 알 → 유충 → 전약충 → 후약충 → 성충의 순으로 발육한다.\n- 암컷 성충의 몸길이는 약 0.45 ~ 0.5mm의 크기로 진한 짙은 적색이며, 수컷 성충은 0.4mm 정도의 크기로 암컷보다 작다.\n- 알에서 부화한 유충은 다리가 3쌍이고 전약충 이후에는 4쌍의 다리를 갖는다. 귤응애 알 귤응애 알 및 성충 귤응애 성충\n\n### 발생생태 및 피해\n\n- 귤응애는 연간 약 8 ~ 14세대 발생하며, 기온이 8℃이상이 되어야 발육이 가능하므로 겨울철에는 거의 발육하지 않는다.\n- 발생은 지역 및 월동량에 따라 차이는 있으나 일반적으로 5 ~ 6월과 10 ~ 11월 2회의 발생피크를 보인다.\n- 저온기(겨울, 봄)에는 주로 잎의 뒷면을 서식장소로 선호하며 고온기(여름, 초가을)에는 주로 잎의 앞면을 선호한다.\n\n### 방제 및 과원관리\n\n- 고온건조한 날씨가 계속될 때 발생이 많으며, 약제 방제효율을 높이기 위해 예찰 후 잎당 2마리가 넘지 않았을 때 약제를 살포해야 한다.\n- 약제 저항성이 쉽게 유발되므로 동일 계통 약제의 연용 및 혼용은 피하고 계통이 다른 약제를 번갈아 살포한다.\n- 월동기 방제 : 3월 중순 기계유유제로 깍지벌레 등과 동시 방제한다. 생육기 방제 : 4 월이후 잎당 1마리 이상 발생시, 여름철에는 잎당 2마리 이상 발생시 약제 살포한다.\n\n### 방제약제\n\n1. 약제명: 기계유(유)\n   - 동시방제 병해충: 응애류 깍지벌레\n2. 약제명: 가네마이트 (액상)\n   - 성분: 아세퀴노실\n   - 동시방제 병해충: 귤응애\n3. 약제명: 피라니카 (수, 유)\n   - 성분: 테부펜피라드\n   - 동시방제 병해충: 귤응애\n4. 약제명: 아크라마이트 (액상)\n   - 성분: 비페나제이트\n   - 동시방제 병해충: 귤응애\n5. 약제명: 쌍두마차 (액상)\n   - 계통: 옥사졸 린계\n   - 성분: 비페나제이트· 에톡사졸\n   - 동시방제 병해충: 귤응애\n6. 약제명: 코드윈(액상)\n   - 계통: 테트로 닉에시 드계\n   - 성분: 비페나제이트· 스피로메시펜\n   - 동시방제 병해충: 귤응애\n7. 약제명: 주움(액상)\n   - 성분: 에톡사졸\n   - 동시방제 병해충: 귤응애\n8. 약제명: 엔비도(액상)\n   - 성분: 스피로디 클로펜\n   - 동시방제 병해충: 귤응애 귤녹응애 차먼지응애\n9. 약제명: 지존(액상)\n   - 성분: 스피로메시펜\n   - 동시방제 병해충: 귤응애\n10. 약제명: 마이탁(유)\n   - 성분: 아미트라즈\n   - 동시방제 병해충: 귤응애 녹응애\n11. 약제명: 올스타(유)\n   - 성분: 아바멕틴\n   - 동시방제 병해충: 귤응애\n12. 약제명: 보라매(유) 응애단(유)\n   - 성분: 페나지퀸\n   - 동시방제 병해충: 귤응애\n13. 약제명: 응애도사 (액상)\n   - 계통: 치아 졸리 딘계\n   - 성분: 페나자퀸· 헥시티아족스\n   - 동시방제 병해충: 귤응애\n14. 약제명: 오마이트 (수, 액상)\n   - 계통: 치아 졸리 딘계\n   - 성분: 프로파자이트\n   - 동시방제 병해충: 귤응애\n15. 약제명: 다니톨(유)\n   - 계통: 치아 졸리 딘계\n   - 성분: 펜프로파트린\n   - 동시방제 병해충: 귤응애 귤굴나방\n16. 약제명: 산마루(수)\n   - 계통: 치아 졸리 딘계\n   - 성분: 피리다벤\n   - 동시방제 병해충: 귤응애 귤녹응애 차먼지응애\n17. 약제명: 프릭트란 영일싸이틴 응골로(수)\n   - 계통: 치아 졸리 딘계\n   - 성분: 사이헥사틴\n   - 동시방제 병해충: 귤응애\n18. 약제명: 밀베노크(유)\n   - 계통: 치아 졸리 딘계\n   - 성분: 밀베멕틴\n   - 동시방제 병해충: 귤응애\n19. 약제명: 쇼크(액상)\n   - 계통: 치아 졸리 딘계\n   - 성분: 사이에 노피라펜\n   - 동시방제 병해충: 귤응애\n20. 약제명: 선캡(액상)\n   - 계통: 치아 졸리 딘계\n   - 성분: 클로르페나피르· 사이에노피라펜\n   - 동시방제 병해충: 귤응애\n21. 약제명: 집중마크 (액상)\n   - 계통: 치아 졸리 딘계\n   - 성분: 사이에노피라펜 ·플루페녹수론\n   - 동시방제 병해충: 귤응애 자나방류","귤녹응애":"- 학명: Aculops pelekassi Keifer\n- 영명: Pink citrus rust mite\n\n### 형태/병징\n\n- 암컷성충의 몸길이는 약 0.12 ~ 0.15mm, 폭은 약 0.04mm로 육안으로 확인하는 것은 불가하다.\n- 성충은 약간 붉은 색을 띠며, 유충은 성충보다 붉은색이 약하거나 백색으로 보인다. 몸의 모양은 삼각형으로 뒤쪽으로 갈수록 가늘어지는 모양을 하고 있고 2쌍의 다리를 가지고 있다.\n- 알은 노란색을 띠며, 크기는 0.03 ~ 0.04mm이고 구형이며 반투명하다.\n\n### 발생생태 및 피해\n\n- 연간 15 ~ 20세대 발생하고 단위생식을 한다.\n- 주로 잎의 뒷면이나 수관 내부와 아랫부분에 발생이 많고 과일이나 잎의 움푹한 곳에 알을 낳으며 부화 유충은 주로 새온 나온 잎에서 생활한다.\n- 고온건조한 조건에서 많이 발생하고 잎에서는 5월 하순경 ~ 6월 중하순경에 밀도가 높고, 과실에서는 7월 상순경 ~ 8월 중순경에 발생 최성기를 보이며 가을철의 기온이 높은 경우에는 8월 중순 이후에도 밀도가 높아질 수 있다.\n- 잎 , 가지, 과실을 주로 가해하는데 잎이 피해를 받으면 흑갈색의 주름이 생기고 생장이 정지되며, 피해가 심한 경우 기형이 되기도 한다.\n- 과실이 피해를 받으면 변색되는데, 어린 과실은 회백색으로 되며, 큰 과실이 피해를 받으면 회갈색이나 흑갈색으로 변색된다.\n\n### 방제 및 과원관리\n\n- 성충이라도 크기가 작아서 보이지 않으므로 예찰이 어렵기 때문에 예방 위주로 약제를 살포 하는 것이 좋으며 6월 하순이후 8월 말까지 1 ~ 2회 방제를 실시한다.\n\n### 방제약제\n\n1. 약제명: 다이센엠-45(수) 성보·영일· 동방·선문만코지\n   - 성분: 만코제브\n   - 동시방제 병해충: 귤녹응애 검은점무늬병\n2. 약제명: 후론사이드(수)\n   - 성분: 플루아지남\n   - 동시방제 병해충: 귤녹응애 잿빛곰팡이병 더뎅이병\n3. 약제명: 엔비도(액상)\n   - 성분: 스피로디클로펜\n   - 동시방제 병해충: 귤녹응애 귤응애 차먼지응애\n4. 약제명: 산마루(수)\n   - 성분: 피리다벤\n   - 동시방제 병해충: 귤녹응애 귤응애 차먼지응애","차먼지응애":"- 학명: Polyphagotarsonemus latus Banks\n- 영명: Broad mite\n\n### 형태/병징\n\n- 암컷 성충의 몸길이가 0.2 ~ 0.25mm정도로 매우 작고 몸색이 담황갈색이므로 육안으로 보았을 때는 과실에 먼지가 낀 것처럼 보인다.\n- 수컷성충은 암컷보다 작으며 마름모꼴이다.\n- 알은 육안 관찰이 불가능할 정도로 매우 작으며 타원형의 돔모양으로 투명하고 표면에 흰 점 모양의 돌기 같은 것이 많이 있다. 차먼지응애 차먼지응애 피해잎\n\n### 발생생태 및 피해\n\n- 연간 15 ~ 20세대 발생한다. 알에서 성충까지는 약 7일정도 소요된다.\n- 잎 , 가지, 과실에 발생하는데 주로 어릴 때 피해를 주며 가해 후 1개월 정도 되어야 피해증상이 나타난다.\n- 고온다습한 조건에서 발생이 많으며, 노지에서는 여름철에 발생이 많고 주로 8월 이후에 피해가 나타난다.\n- 과실 피해증상은 회색의 미세한 그물망으로 덮힌 것처럼 보이는데 상처가 얇아서 잘 긁어진다.\n\n### 방제 및 과원관리\n\n- 유기농법이나 무농약 재배과원 그리고 하우스 감귤원에서 주로 발생한다.\n- 신초 발생전 기계유유제(수세가 양호한 경우)등을 이용하여 초기 밀도를 억제시키는 것이 좋다.\n- 장마 후반기(7월상·중순경)이후 1 ~ 2회 약제 살포하며 특히 전년도 발생한 과원은 약제방제가 필요하다.\n\n### 방제약제\n\n1. 약제명: 엔비도(액상)\n   - 성분: 스피로디 클로펜\n   - 동시방제 병해충: 차먼지응애 귤녹응애 귤응애\n2. 약제명: 산마루(수)\n   - 성분: 피리다벤\n   - 동시방제 병해충: 차먼지응애 귤녹응애 귤응애","차응애(간자와응애)":"- 학명: Tetranychus kanzawai Kishida\n- 영명: Kanzawa spider mite\n\n### 형태/병징\n\n- 암컷 성충의 몸길이는 약 0.4 ~ 0.5mm이며 몸색은 짙은 적색 또는 선홍색으로 외관상 귤응애와 구별하기가 쉽지 않다.\n- 수컷 성충의 몸길이는 약 0.3mm정도로 약충과 비슷하며 몸색은 황색 또는 적색을 띤다.\n- 유충과 약충의 몸길이는 각각 0.2mm, 0.3mm정도이고 몸색은 담색이며, 검은점무늬가 등판의 양쪽에 두 개가 있어서 얼룩져 보이므로 점박이응애와 흡사하다. 차응애 알 차응애 성충\n\n### 발생생태 및 피해\n\n- 강우가 적고 건조하기 쉬운 곳과 신초 발생이 많은 곳에서 많이 발생한다.\n- 과원내에 클로버나 살갈퀴 등과 같은 콩과식물이 있을 때 많이 발생하며 발육적온은 17 ~ 28℃이고 유충에서 성충까지의 발육기간은 5 ~ 10일이다.\n- 감귤나무에서 월동하는 일은 거의 없고 주변 기주식물에서 월동한 후 봄순 발생기에 감귤 나무로 이동한 후 수세대 동안 증식하여 가해하고 신초가 굳어지면 잡초로 이동한다.\n- 노지감귤원에서는 봄잎이 생장하는 4 ~ 6월이 주 발생시기이며, 대부분 잎의 뒷면에서 증식 하며 가해한다.\n- 차응애는 신초가 나오는 시기에 발생하였다가 신초가 굳어지면 잡초 등으로 이동하므로 대량 발생이 아니면 방제를 하지 않아도 된다.\n- 주변 잡초가 주 발생원 되므로 신초가 자라기 전에 잡초를 제거해 주는 것이 좋으며 약제 저항성이 높지 않으므로 귤응애 약제 중에서 선택 살포해 준다.","조팝나무진딧물":"- 학명: Aphis cirtricola van der Goot\n- 영명: Spiraea aphid\n\n### 형태/병징\n\n- 무시(날개없는) 성충은 몸길이가 1.5 ~ 1.8mm로 녹색 또는 황녹색을 띠며, 유시(날개 있는) 성충은 머리와 가슴은 검고 배는 녹색이다.\n- 약충은 대부분 황녹색을 띤다. 조팝나무진딧물 성충 조팝나무진딧물\n\n### 발생생태 및 피해\n\n- 발육기간이 짧아서 연간 수세대 발생하는데 감귤나무에서 월동하는 경우는 드물며 10월 이후에 주 기주식물인 조팝나무로 이동하여 산란하고 알로 월동한다.\n- 감귤원 주변에서 월동한 알이 봄에 부화한 후 감귤원에 봄순이 발생하기 시작 하면서 유시 암컷성충이 감귤원으로 날아와 증식하며 가해한다.\n- 봄순에서는 5월 하순 ~ 6월 상순, 여름순에서는 7월 하순 ~ 8월 상순에 밀도가 높다.\n- 먹이가 충분한 시기(4월 ~ 10월)에는 암수 구분이 없이 무성생식을 하며, 월동시기가 되면 암수가 구분되어 교미한 후 산란하는데 암컷 한 마리가 평생동안 약 60마리 정도의 새끼를 낳는다.\n- 잎또는 가지가 피해를 받으면 그을음이 발생하며, 잎이 말리거나 기형이 되어 생육이 불량 해진다.\n- 밀도가 매우 높을 경우에는 착과가 불량해질 수도 있고, 그을음으로 인한 동화작용 저해와 과실의 상품성을 저하시킬 수 있다. 39 조팝나무진딧물 피해잎\n\n### 방제 및 과원관리\n\n- 예방차원에서의 방제보다는 직접적인 살충효과를 위한 방제를 해야 높은 효과를 얻을 수 있다.\n- 봄순에서는 5월 상순 ~ 6월 중순이므로 발생초기에 약제를 살포한다.\n\n### 방제약제\n\n1. 약제명: 강타자 진굴탄 타사자골드(유)\n   - 계통: 합성피 레스로 이드계\n   - 성분: 클로르피리 포스·알파사 이퍼메트린\n   - 동시방제 병해충: 진딧물 (조팝나무진딧물) 귤굴나방\n2. 약제명: 로드(수)\n   - 계통: 합성피 레스로 이드계\n   - 성분: 에토펜프록스· 펜토에이트\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 꽃노랑총채벌레\n3. 약제명: 강탄(수)\n   - 계통: 이미다 졸리딘 계\n   - 성분: 클로르피리포스· 이미다클로프리드\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방\n4. 약제명: 아나콘다(수)\n   - 계통: 클로로 니코티 닐계\n   - 성분: 아세페이트· 이미다클로 프리드\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 볼록총채벌레\n5. 약제명: 야무진(수)\n   - 계통: 벤조일 페닐우 레아계\n   - 성분: 클로르피리포스 ·디플루벤주론\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 꽃노랑총채벌레\n6. 약제명: 야생마(수)\n   - 계통: 벤조일 페닐우 레아계\n7. 약제명: 데시스, 장원 선문델타린 업로드(유)\n   - 성분: 델타메트린\n   - 동시방제 병해충: 진딧물 귤굴나방\n8. 약제명: 트랜스폼 (액상)\n   - 성분: 설폭사플로르\n   - 동시방제 병해충: 조팝나무진딧물\n9. 약제명: 스트레이트 (입상)\n   - 동시방제 병해충: 조팝나무진딧물 풀색노린재 화살깍지벌레\n10. 약제명: 포워드(액상)\n   - 계통: 벤조일 하이드 라자이 드계\n   - 성분: 메톡시페노자이드 ·설폭사플로르\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 네눈쑥가지나방\n11. 약제명: 슈퍼펀치(액상)\n   - 계통: 항생제\n   - 성분: 아바멕틴· 설폭사플로르\n   - 동시방제 병해충: 조팝나무진딧물 꽃노랑총채벌레 볼록총채벌레 화살깍지벌레\n12. 약제명: 만장일치(수)\n   - 계통: 합성피 레스로 이드계\n   - 성분: 아세타미프리드 ·에토펜프록스\n   - 동시방제 병해충: 조팝나무진딧물 자나방류 애넓적밑빠진벌레\n13. 약제명: 하이캇트(액상)\n   - 계통: 합성피 레스로 이드계\n   - 성분: 델타메트린 ·티아클로프리드\n   - 동시방제 병해충: 조팝나무진딧물 네눈쑥가지나방 애넓적밑빠진벌레\n14. 약제명: 메리트(수)\n   - 계통: 하이드 라자이 드계\n   - 성분: 이미다클로 프리드·메톡 시페노자이드\n   - 동시방제 병해충: 조팝나무진딧물 자나방\n15. 약제명: 바람탄(수)\n   - 계통: 치아디 아진계\n   - 성분: 아세타미프리드 ·뷰프로페진\n   - 동시방제 병해충: 조팝나무진딧물 알락하늘소 볼록총채벌레 화살ㆍ가루깍지벌레\n16. 약제명: 당찬(액상)\n   - 계통: 스피노 신계\n   - 성분: 아세타미프리드 ·스피네토람\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 네눈쑥가지나방\n17. 약제명: 유토피아(액상)\n   - 계통: 벤조일 하이드 라자이 드계\n   - 성분: 클로티아니딘· 메톡시페노자이드\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 자나방류 애넓적밑빠진벌레\n18. 약제명: 천하평정(수)\n   - 계통: 벤조일 우레아 계\n   - 성분: 아세타미프리드 ·디플루벤주론\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 네눈쑥가지나방 볼록총채벌레 애넓적밑빠진벌레\n19. 약제명: 닥터킹(수)\n   - 계통: 파이 롤계\n   - 성분: 아세타미프리드· 클로르페나피르\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방\n20. 약제명: 모스피란(수)\n   - 계통: 파이 롤계\n   - 성분: 아세타미프리드\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 꽃노랑총채벌레 가루깍지벌레\n21. 약제명: 이카루스(입상)\n   - 계통: 파이 롤계\n   - 성분: 아세타미프리드\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방\n22. 약제명: 코니도(수)\n   - 계통: 파이 롤계\n   - 성분: 이미다 클로프리드\n   - 동시방제 병해충: 조팝나무진딧물\n23. 약제명: 칼립소 (액상)\n   - 계통: 파이 롤계\n   - 성분: 티아클로프리드\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 이세리아깍지벌레 애넓적밑빠진벌레\n24. 약제명: 샤프킬 젠토스타 어택트(수)\n   - 계통: 파이 롤계\n   - 성분: 아세타미프리드\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방\n25. 약제명: 똑소리(입상)\n   - 계통: 파이 롤계\n   - 성분: 클로티아니딘\n   - 동시방제 병해충: 조팝나무진딧물 노린재류 이세리아ㆍ 화살깍지벌레\n26. 약제명: 빅카드(액상)\n   - 계통: 파이 롤계\n   - 동시방제 병해충: 조팝나무진딧물 노린재류 이세리아깍지벌레 애넓적밑빠진벌레\n27. 약제명: 아타라(입상)\n   - 계통: 파이 롤계\n   - 성분: 티아메톡삼\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 이세리아깍지벌레 꽃노랑총채벌레\n28. 약제명: 스토네트 (입상)\n   - 계통: 피레스 로이드 계\n   - 성분: 람다사이할로트린 ·티아메톡삼\n   - 동시방제 병해충: 조팝나무진딧물 자나방류 애넓적밑빠진벌레 풀색노린재\n29. 약제명: 더원(입상)\n   - 계통: 피레스 로이드 계\n   - 성분: 벤퓨라카브\n   - 동시방제 병해충: 조팝나무진딧물\n30. 약제명: 세티스 (입상)\n   - 계통: 피레스 로이드 계\n   - 성분: 플로니카미드\n   - 동시방제 병해충: 조팝나무진딧물\n31. 약제명: 오신(수)\n   - 성분: 디노테퓨란\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 노린재류\n32. 약제명: 보스(입상)\n   - 동시방제 병해충: 조팝나무진딧물 볼록총채벌레 애넓적밑빠진벌레\n33. 약제명: 귀공자(수)\n   - 계통: 벤조일 우레아 계\n   - 성분: 아세타미프리드 ·루페뉴론\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 차잎말이나방\n34. 약제명: 선두(액상)\n   - 계통: 벤조일 우레아 계\n   - 성분: 디노테퓨란· 메톡시페노자이드\n   - 동시방제 병해충: 조팝나무진딧물 자나방류\n35. 약제명: 선두플러스(입상)\n   - 계통: 벤조일 우레아 계\n   - 동시방제 병해충: 조팝나무진딧물 네눈쑥가지나방\n36. 약제명: 기사도(액상)\n   - 계통: 벤조일 우레아 계\n   - 성분: 뷰프로페진 ·설폭사플로르\n   - 동시방제 병해충: 조팝나무진딧물 볼록총채벌레 화살깍지벌레\n37. 약제명: 모카스(수)\n   - 계통: 벤조일 우레아 계\n   - 성분: 아세타미프리드 ·플루페녹수론\n   - 동시방제 병해충: 조팝나무진딧물 네눈쑥가지나방 애넓적밑빠진벌레\n38. 약제명: 슈퍼볼(액상)\n   - 계통: 벤조일 우레아 계\n   - 성분: 클로티아니딘 ·피리달릴\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 자나방류\n39. 약제명: 팡파레에스 (액상)\n   - 계통: 벤조일 우레아 계\n   - 성분: 피리플루퀴나존\n   - 동시방제 병해충: 조팝나무진딧물","목화진딧물":"- 학명: Aphis gossypii Grover\n- 영명: Melon aphid, Cotton aphid\n\n### 형태/병징\n\n- 무시(날개없는)성충은 몸길이가 1.1 ~ 1.9mm로 짙은 녹색을 띠며, 유시(날개 있는) 성충은 머리와 가슴은 검고 배는 검은색 반점을 가진 녹색 ~ 담녹색이다. 목화진딧물\n\n### 발생생태 및 피해\n\n- 연간 십 수세대 발생하며, 조팝나무진딧물과 마찬가지로 주변의 기주식물에서 알로 월동한다.\n- 감귤원 주변에서 월동한 알이 봄에 부화한 후 감귤원에 봄순이 발생하기 시작하면서 유시 암컷 성충이 감귤원으로 날아와 증식하며 가해한다.\n- 봄순에서는 5월하순 ~ 6월 상순, 여름순에서는 7월하순 ~ 8월 상순에 밀도가 가장 높다. 조팝나무진딧물 유·무시충 조팝나무진딧물\n\n### 방제 및 과원관리\n\n- 발생생태가 조팝나무진딧물과 유사하므로 조팝나무 진딧물의 방제요령에 준하여 방제한다.","애넓적밑빠진벌레":"- 학명: Epuraea domina Reitter\n- 영명: Sap beetle\n\n### 형태/병징\n\n- 성충의 몸길이는 약 2 ~ 3mm정도이며 몸색은 황갈색이고 타원형이다.\n\n### 발생생태 및 피해\n\n- 겨울에는 과원 주변 부패한 과실의 내부나 녹나무 등의 껍질 아래 등에서 성충으로 월동하며, 다른 시기에도 주로 낙과되었거나 부패한 과실에서 생활하는 것으로 알려져 있다.\n- 감귤 개화기에 꽃을 찾아오는 것은 단지 꿀을 얻기 위한 것이며, 그 외의 생태에 관한 것은 아직 밝혀져 있지 않다.\n- 과원에 낙과하여 썩은 과실이 많거나 유기물을 다량 시용하였거나 고르게 사용되지 않았을 경우 발생량이 많을 수 있다.\n- 개화기에 성충이 꽃에 날아와 꿀을 섭취하는데, 이 때 자방의 표면이 발에 의해 상처를 받아서 과실이 자란 후에는 긁힌 자국이 회백색으로 되며, 이 자국은 6 ~ 7월의 어린 과실이 바람에 의해 상처를 받은 것과 유사하다.\n\n### 방제 및 과원관리\n\n- 과원 주변에 썩은 과실 등의 부패물을 적재하거나 유기물 시용시에 한 곳에 쌓아두면 서식처를 제공하게 되므로 주의해야 한다.\n- 약제 방제할 경우 전체 꽃 중에서 약 30%정도 개화시 방제하는 것이 가장 효과적이다. 45 과원주변 썩은감귤(애넓적밑삐진벌레 서식처) 애넓적밑빠진벌레 피해과실\n\n### 방제약제\n\n1. 약제명: 치아니코 티닐계\n   - 성분: 스토네트 (입상)\n   - 동시방제 병해충: 람다사이할로트린· 티아메톡삼\n2. 약제명: 합성피레 스로이드계\n   - 성분: 만장일치(수)\n   - 동시방제 병해충: 아세타미프리드· 에토펜프록스\n3. 약제명: 벤조일하 이드라자 이드계\n   - 성분: 유토피아 (액상)\n   - 동시방제 병해충: 클로티아니딘· 메톡시페노자이드\n4. 약제명: 벤조일우 레아계\n   - 성분: 천하평정(수)\n   - 동시방제 병해충: 아세타미프리드· 디플루벤주론","꽃노랑총채벌레":"- 학명: Frankliniella occidentalis Pergande\n- 영명: Western flower thrips\n\n### 형태/병징\n\n- 암컷성충의 크기는 약 1.4 ~ 1.7mm정도이고, 몸색은 황색 ~ 갈색으로 다양하며, 수컷성충의 크기는 약 1.0 ~ 1.2mm정도이며 황색이다.\n- 성충의 다리는 3쌍이며, 날개는 2쌍의 총채모양을 하고 있고 톡톡 튀듯이 이동한다.\n- 알은 타원형으로 반투명한 백색이다.\n\n### 발생생태 및 피해\n\n- 가해작물은 감귤을 비롯하여 시설재배되고 있는 화훼류와 채소류에 발생이 많으며, 기온이 높고 건조할 경우에 발생이 많고 고온다습할 경우에는 발생량이 적다. 레드향 꽃노랑총채벌레 피해잎\n- 성충은 약 30 ~ 45일을 살면서 한 마리가 약 150 ~ 300개의 알을 낳는다.\n- 유충과 성충이 잎과 과피로부터 즙액을 흡즙하고 작은 상처를 내어 피해를 주는데 개화기에 밀도가 증가하지만 잎만 주로 가해하고 9월 이후에 다시 발생하여 하우스재배(만감류)등에 피해를 준다.\n- 피해 증상은 과실 위쪽을 중심으로 둥글게 은회색 띠가 형성되며 발생밀도가 심한 경우에는 과실의 전체에 피해 증상이 나타난다. 꽃노랑총채벌레 피해\n\n### 방제 및 과원관리\n\n- 세대가 짧아서 어느정도 밀도가 되면 약, 약충, 번데기 그리고 성충이 혼재하므로 약제를 살포하여도 땅속의 번데기나 조직속의 알은 상대적으로 생존율이 높기 때문에 발생초기에 약제를 살포해야 방제효과를 높일 수 있다.\n- 약제 살포시에는 7일 간격으로 2 ~ 3회 연속해서 살포해야 좋으며 농약에 대한 저항성이 쉽게 생기므로 계통이 다른 약제를 번갈아 살포하며 주 기주식물인 덩굴성 식물을 제거하도록 한다.\n\n### 방제약제\n\n1. 약제명: 파밤탄, 매치(유)\n   - 성분: 루페뉴론\n   - 동시방제 병해충: 꽃노랑총채벌레\n2. 약제명: 아그로톱 (액상)\n   - 계통: 천연추출물\n   - 성분: 메톡시페노자이드· 스피노자이드\n   - 동시방제 병해충: 꽃노랑총채벌레 자나방류\n3. 약제명: 검객(수)\n   - 계통: 네오니코타 노이드계\n   - 성분: 뷰프로페진· 디노테퓨란\n   - 동시방제 병해충: 꽃노랑총채벌레 화살깍지벌레\n4. 약제명: 부메랑, 촌장 올가미(입상) 올가미(액상)\n   - 성분: 스피노사드\n   - 동시방제 병해충: 꽃노랑총채벌레\n5. 약제명: 슈퍼펀치 (액상)\n   - 계통: 항생제\n   - 성분: 아바멕틴· 설폭사플로르\n   - 동시방제 병해충: 꽃노랑총채벌레 볼록총채벌레 화살깍지벌레 조팝나무진딧물\n6. 약제명: 모스피란(수)\n   - 계통: 항생제\n   - 성분: 아세타미프리드\n   - 동시방제 병해충: 꽃노랑총채벌레 조팝나무진딧물 귤굴나방 가루깍지벌레\n7. 약제명: 한주먹(액상)\n   - 계통: 항생제\n   - 성분: 이미다클로플리드· 스피노사드\n   - 동시방제 병해충: 꽃노랑총채벌레\n8. 약제명: 명중(유)\n   - 계통: 아씰우 레아계\n   - 성분: 알파사이퍼메트린· 플루페녹수론\n   - 동시방제 병해충: 꽃노랑총채벌레\n9. 약제명: 로드(수)\n   - 계통: 유기 인계\n   - 성분: 에토펜프록스· 펜토에이트\n   - 동시방제 병해충: 꽃노랑총채벌레 조팝나무진딧물 귤굴나방\n10. 약제명: 섹큐어(액상)\n   - 계통: 유기 인계\n   - 성분: 클로르페나피르\n   - 동시방제 병해충: 꽃노랑총채벌레 귤녹응애\n11. 약제명: 렘페이지(유)\n   - 계통: 유기 인계\n   - 동시방제 병해충: 꽃노랑총채벌레 볼록총채벌레\n12. 약제명: 야무진(수)\n   - 계통: 벤조일페닐 우레아계\n   - 성분: 클로르피리포스· 디플루벤주론\n   - 동시방제 병해충: 꽃노랑총채벌레 귤굴나방 조팝나무진딧물\n13. 약제명: 야생마(수)\n   - 계통: 벤조일페닐 우레아계\n14. 약제명: 아타라(입상)\n   - 계통: 벤조일페닐 우레아계\n   - 성분: 티아메톡삼\n   - 동시방제 병해충: 꽃노랑총채벌레 조팝나무진딧물 귤굴나방 이세리아깍지벌레","볼록총채벌레":"- 학명: Scirotothrips dorsalis Hood\n- 영명: Yellow tea thrips\n\n### 형태/병징\n\n- 암컷 성충의 몸길이는 0.8 ~ 1.0mm, 수컷 성충의 몸길이는 0.7 ~ 0.8mm정도로 황색이며, 더듬이 8마디중 제1마디는 황색이고 나머지는 회갈색을 띤다.\n\n### 발생생태 및 피해\n\n- 알 → 1 ~ 2령 유충 → 2단계 번데기 → 성충의 과정을 거치며 가지 사이나 땅위의 낙엽 또는 주변 덩굴성 기주식물 등에서 월동하는 것으로 알려져 있다.\n- 주로 5월부터 발생하여 7월에 밀도가 가장 높으며 10월까지 발생하여 피해를 준다.\n- 잎에서 증상은 온주밀감에서는 거의 없고 만감류에서는 어린잎이 피해 받으면 생육에 지장을 받아 기형 또는 작아진다.\n- 피해증상은 검은점무늬병 후기 증상 및 녹응애 피해증상과 매우 유사하며, 열매 배꼽부터 측면으로 회갈색 ~ 흑갈색 구름모양 또는 검붉게 그을린 증상을 보인다. 마리/트랩 연도별 볼록총채벌레 발생동향 볼록총채벌레 피해 50 천혜향 볼록총채벌레 볼록총채벌레 피해 볼록총채벌레 피해\n\n### 방제 및 과원관리\n\n- 주방제시기는 6월 중하순부터 9월 하순까지 최소 2 ~ 3방제가 필요하다. (6월 중 ~ 7월 상순, 8월 하순, 9월 중순)\n- 과원 주변 기주식물이 되는 덩굴식물의 제거가 필요하다.\n\n### 방제약제\n\n1. 약제명: 보스(입수용)\n   - 성분: 디노테퓨란\n   - 동시방제 병해충: 볼록총채벌레 조팝나무진딧물 애넓적밑빠진벌레\n2. 약제명: 슈퍼펀치 (액상)\n   - 계통: 항생제\n   - 성분: 아바멕틴· 설폭사플로르\n   - 동시방제 병해충: 볼록총채벌레 조팝나무진딧물 꽃노랑총채벌레 화살깍지벌레\n3. 약제명: 천하평정(수)\n   - 계통: 벤조일 우레아계\n   - 성분: 아세타미프리드· 디플루벤주론\n   - 동시방제 병해충: 볼록총채벌레 조팝나무진딧물 귤굴나방 네눈쑥가지나방 애넓적밑빠진벌레\n4. 약제명: 바람탄(수)\n   - 계통: 치아디 아진계\n   - 성분: 아세타미프리드· 뷰프로페진\n   - 동시방제 병해충: 볼록총채벌레 조팝나무진딧물 알락하늘소 화살깍지벌레\n5. 약제명: 스트라이크 (액상)\n   - 계통: 피롤계\n   - 성분: 클로르페나피르· 클로티아니딘\n   - 동시방제 병해충: 볼록총채벌레\n6. 약제명: 아나콘다(수)\n   - 계통: 유기 인계\n   - 성분: 아세페이트· 이미다클로프리드\n   - 동시방제 병해충: 볼록총채벌레 조팝나무진딧물 귤굴나방\n7. 약제명: 렘페이지(유)\n   - 계통: 유기 인계\n   - 성분: 클로르페나피르\n   - 동시방제 병해충: 볼록총채벌레 꽃노랑총채벌레\n8. 약제명: 기사도 (액상)\n   - 계통: 유기 인계\n   - 성분: 뷰프로페진· 설폭사플로르\n   - 동시방제 병해충: 볼록총채벌레 화살깍지벌레 조팝나무진딧물","화살깍지벌레":"- 학명: Unaspis yanonensis Kuwana\n- 영명: Arrowhead scale\n\n### 형태/병징\n\n- 암컷 성충의 몸길이는 약 3.5mm이며, 폭은 약 1.5mm정도이고 암갈색이다.\n- 외관상의 모양은 화살촉과 유사하게 생겼으며 수컷은 흰색의 면납질로 덮여있고 길이는 1mm 정도의 가늘고 길며, 성충은 날개가 달려서 자유로이 날아다닌다. 화살깍지벌레 화살깍지벌레\n\n### 발생생태 및 피해\n\n- 정상적으로 관리되고 있는 과원에서는 발생하지 않고, 무농약이나 유기농으로 재배되고 있는 과원에서 문제가 되고 있다.\n- 연간 2 ~ 3세대 발생하며, 잎과 가지 과실에 정착하여 흡즙 가해한다.\n- 과실에 기생하면 기생부위는 착색이 덜되고 나빠져서 상품가치를 떨어뜨린다. 화살깍지벌레 화살깍지벌레\n- 일단 발생하게 되면 매우 급속하게 확산되며, 고밀도로 기생하여 나무를 말라죽게 하는 가장 큰원인이 된다.\n\n### 방제 및 과원관리\n\n- 성충을 대상으로 약제를 살포하면 방제효과 낮으므로 반드시 약충 발생기에 방제를 해야 한다.\n\n### 방제약제\n\n1. 약제명: 기계유(유)\n   - 동시방제 병해충: 깍지벌레 응애류\n2. 약제명: 검객(수)\n   - 계통: 네오니코 타노이드계\n   - 성분: 뷰프로페진· 디노테퓨란\n   - 동시방제 병해충: 화살깍지벌레 꽃노랑총채벌레\n3. 약제명: 바람탄(수)\n   - 계통: 치아디 아진계\n   - 성분: 아세타미프리드 ·뷰프로페진\n   - 동시방제 병해충: 화살깍지벌레 조팝나무진딧물 알락하늘소 볼록총채벌레\n4. 약제명: 슈퍼펀치 (액상)\n   - 계통: 항생제\n   - 성분: 아바멕틴· 설폭사플로르\n   - 동시방제 병해충: 화살깍지벌레 볼록총채벌레 조팝나무진딧물 꽃노랑총채벌레\n5. 약제명: 스트레이트 (입상)\n   - 성분: 설폭사플로르\n   - 동시방제 병해충: 화살깍지벌레 조팝나무진딧물 풀색노린재\n6. 약제명: 트랜스폼 (액상)\n   - 동시방제 병해충: 화살깍지벌레 조팝나무진딧물\n7. 약제명: 똑소리 (입상)\n   - 성분: 클로티아니딘\n   - 동시방제 병해충: 깍지벌레 (화살,이세리아) 조팝나무진딧물 노린재류\n8. 약제명: 기사도 (액상)\n   - 성분: 뷰프로페진· 설폭사플로르\n   - 동시방제 병해충: 화살깍지벌레 볼록총채벌레 조팝나무진딧물","이세리아깍지벌레":"- 학명: lcerya purchasi Maskell\n- 영명: Cottonycution scale\n\n### 형태/병징\n\n- 암컷성충은 몸 크기가 약 5mm정도로 적갈색이고 몸의 주변에 광택이 나는 은색 털이 나 있으며, 몸의 끝에 1cm정도의 흰털로 덮인 알주머니를 가지고 있다.\n- 부화 직후의 약충은 암홍색이며 즙액을 흡즙한 후에는 황백색이 된다.\n\n### 발생생태 및 피해\n\n- 1 세대의 산란수는 약 500 ~ 900개, 2세대는 200 ~ 400개 정도로 매우 많으며, 알집에서 부화 약충이 밖으로 나오기까지 약 25일이 소요된다.\n- 약충 또는 성충으로 월동하며 연간 2 ~ 3세대가 발생하는데 1세대는 5월 하순 ~ 6월 상순, 2세대는 8월중·하순 ~ 9월 상순에 발생하기 시작한다.\n- 알이 부화하여 성충이 될 때까지 약 50 ~ 60일이 소요된다.\n- 식물체에 달라붙어서 구침을 찔러 넣고 수액을 빨아먹기 때문에 피해 받은 나무는 수세가 약하게 되고, 배설물에 의한 그을음 증상이 발생되고, 과실의 경우 상품가치는 떨어뜨리는 원인이 된다.\n\n### 방제 및 과원관리\n\n- 깍지벌레는 방제시기가 중요하며, 1령 약충의 발생을 확인하고 1령과 2령이 혼재하는 시기인 5 ~ 6주 후에 1차 살포한 다음, 2주 뒤에 과원을 관찰한 후 살아 있는 약충이 있을 경우에 2차 살포를 하면 방제효과를 높일 수 있다. (6월 중순, 7월 하순, 9월 하순)\n- 발생량이 많은 과원에서는 수확후 월동전이나 전정후에 기계유유제 50 ~ 60배를 살포하여 약충이 발생하기 전에 밀도를 낮추는 것이 좋다.\n\n### 방제약제\n\n1. 약제명: 기계유(유)\n   - 동시방제 병해충: 깍지벌레 응애류\n2. 약제명: 슐탄(액제)\n   - 성분: 디노테퓨란\n   - 동시방제 병해충: 이세리아깍지벌레 귤굴나방 조팝나무진딧물\n3. 약제명: 팬텀(입상)\n   - 동시방제 병해충: 이세리아깍지벌레\n4. 약제명: 홈런왕(유제)\n   - 계통: 합성피레스 로이드계\n   - 성분: 뷰프로페진· 람다사이할로트린\n   - 동시방제 병해충: 이세리아깍지벌레\n5. 약제명: 히어로(유)\n   - 계통: 아미딘계\n   - 성분: 아미트라즈· 뷰프로페진\n   - 동시방제 병해충: 이세리아깍지벌레\n6. 약제명: 깍지킬(유)\n   - 계통: 항생제\n   - 성분: 아미트라즈· 뷰프로페진\n   - 동시방제 병해충: 이세리아깍지벌레\n7. 약제명: 똑소리(입상) 빅카드(액상)\n   - 계통: 항생제\n   - 성분: 클로티아니딘\n   - 동시방제 병해충: 이세리아깍지벌레 조팝나무진딧물 노린재류\n8. 약제명: 칼립소(액상)\n   - 계통: 항생제\n   - 성분: 티아클로프리드\n   - 동시방제 병해충: 이세리아깍지벌레 조팝나무진딧물 귤굴나방 애넓적밑빠진벌레\n9. 약제명: 힘센(입상)\n   - 계통: 설폭시민계\n   - 성분: 아세타미프리드· 설폭사플로르\n   - 동시방제 병해충: 이세리아깍지벌레\n10. 약제명: 모벤토스마트 (액상)\n   - 계통: 테트라믹 에시드계\n   - 성분: 스피로테트라맷· 티아클로프리드\n   - 동시방제 병해충: 이세리아깍지벌레\n11. 약제명: 아타라(입상)\n   - 계통: 테트라믹 에시드계\n   - 성분: 티아메톡삼\n   - 동시방제 병해충: 이세리아깍지벌레 조팝나무진딧물 귤굴나방 꽃노랑총채벌레\n12. 약제명: 거포(미탁)\n   - 계통: 테트라믹 에시드계\n   - 성분: 클로르피리포스\n   - 동시방제 병해충: 이세리아깍지벌레","루비깍지벌레":"- 학명: Ceroplastes rubens Maskell\n- 영명: Pink wax scale\n\n### 형태/병징\n\n- 암컷 성충의 모양은 돔형으로 직경이 약 3 ~ 4mm정도이고, 짙은 홍색 납질로 덮여 있으며, 납질의 깍지 밑에 등적색의 몸체가 들어있다. 알은 타원형으로 암적갈색을 띠며 약충은 타원형의 편평한 모양으로 담적갈색이다.\n\n### 발생생태 및 피해\n\n- 연간 1세대 발생하며 알 → 부화약충 → 1령 → 2령 → 3령 → 성충 순으로 발육한다.\n- 일반적으로 6월 상순 ~ 8월 상순경에 약충이 발생하여 9월에 성충이 된다.\n- 수컷은 9월경에 우화하며 등홍색의 투명한 날개가 발생한 후 암컷과 교미를 하는데 교미한 다음 수컷은 죽고, 암컷은 알을 품은채로 월동에 들어간다.\n- 가지와 잎에 달라붙어 기생하면서 흡즙하여 가해한다. 발생밀도가 높을 경우에는 피해받은 가지의 생육이 불량해지며, 배설된 감로로 인해 발생하는 그을음이 가장 큰 문제이다. 루비깍지벌레 루비깍지벌레 발생정도 방제\n- 약제를 정상적으로 살포하는 농가에서는 발생하지 않으며, 유기농법이나 무농약재배 과원에서 간혹 발생하므로 관행과원에서는 방제를 요하지 않는다.\n- 루비깍지벌레는 연1회 발생하며, 성충에 대해서는 약제의 효과가 낮으므로 방제가 필요한 경우에는 반드시 유충이 많은 시기에 약제를 살포해야 방제효과를 높일 수 있다.","귤애가루깍지벌레":"- 학명: Pseudococcus cryptus Hempel\n- 영명: Citriculus mealybug\n\n### 형태/병징\n\n- 암컷성충은 장타원형으로 몸길이가 약 2.5 ~ 3.0mm정도이고 몸 전체가 흰색 납물질로 덮여 있어서 흰색으로 보이지만 실제의 몸색은 황색이며, 흰 솜 같은 알주머니를 만든다.\n- 몸의 끝에 두 개의 긴 돌기가 달려 있으며, 알은 옅은 황색으로 덩어리로 산란한다.\n\n### 발생생태 및 피해\n\n- 연간 2 ~ 3세대 발생하며, 잎의 움푹 패인 곳이나 가지의 갈라진 곳 등에서 주로 서식한다.\n- 여름철에 알이 부화하여 성충이 되기까지는 약 6주가 소요된다. 기상에 따라 차이가 있으나 일반적으로 5월 하순경에 1세대 부화약충이 발생하며 8월 상순경에 2세대 약충이 발생한다.\n- 피해를 받으면 수세가 약해지고 잎은 누렇게 되거나 말려서 오그라들며, 배설물에 의한 그을음 증상이 심하게 발생하여 동화작용을 저해하고 과실의 상품가치를 떨어뜨린다. 귤애가루깍지벌레 및 그을음 증상\n\n### 방제 및 과원관리\n\n- 주로 집단으로 뭉쳐서 서식하므로 밀도가 높아지면 약제의 침투가 어려워 약제를 살포해도 방제효과가 낮으므로 발생초기에 방제를 해야 한다.\n- 밀집되어 발생하므로 1회 방제로 높은 방제효과를 얻을 수 없으므로 2주 간격으로 2회 정도 살포해야 완전하게 방제할 수 있다.\n- 시설내에서는 수확한 이후 전정을 마친 후 약제를 살포하는 것이 가장 효율적이다.\n\n### 방제약제\n\n1. 약제명: 기계유(유)\n   - 동시방제 병해충: 깍지벌레 응애류\n2. 약제명: 모스피란(수)\n   - 성분: 아세타미프리드\n   - 동시방제 병해충: 가루깍지벌레 귤굴나방 조팝나무진딧물 꽃노랑총채벌레\n3. 약제명: 바람탄(수)\n   - 계통: 클로로니 코티닐계\n   - 성분: 아세타미프리드· 뷰프로페진\n   - 동시방제 병해충: 화살깍지벌레 조팝나무진딧물 알락하늘소 볼록총채벌레\n4. 약제명: 매머드(액상)\n   - 계통: 네오니코티 노이드계\n   - 성분: 뷰프로페진· 클로티아니딘\n   - 동시방제 병해충: 깍지벌레류\n5. 약제명: 온누리(수)\n   - 계통: 벤조일하이 드라진계\n   - 성분: 뷰프로페진· 테부페노자이드\n   - 동시방제 병해충: 깍지벌레류 (귤애가루깍지벌레)\n6. 약제명: 모벤토(액상)\n   - 계통: 벤조일하이 드라진계\n   - 성분: 스피로테르라맷\n   - 동시방제 병해충: 귤애가루깍지벌레 조팝나무진딧물","썩덩나무노린재":"- 학명: Halyomorpha halys Stal\n- 영명: Brown marmorated stink bug\n\n### 형태/병징\n\n- 성충의 몸 길이는 16mm정도로 암갈색이고, 약충은 약 14mm정도의 둥글고 납작하며 암갈색이다.\n- 알은 원통형 1.2mm정도이며, 무더기로 산란한다.\n\n### 발생생태 및 피해\n\n- 주로 큰 나무의 껍질 속에서 성충으로 월동하며 연간 1 ~ 2회 발생한다.\n- 고온건조시 발생이 많고 고온다습시 발생량이 적다. 알은 25 ~ 26개 정도씩 낳고 부화한 약충은 집단생활을 하며, 성충이 되면 한낮에는 그늘에 숨어 있다가 이른 아침이나 저녁에 주로 가해하며 9 ~ 10월에 피해가 크다.\n- 구침으로 과실의 즙액을 흡즙하여 가해하는데, 착색이 빠른 품종일수록 피해가 많다.\n- 피해 받은 과실은 과피에 흑색 ~ 갈색의 반점이 생기며, 과육부분은 스폰지 모양이 되어 착색이 나쁘게 되고, 심하면 기형이 된다.\n\n### 방제 및 과원관리\n\n- 노린재는 한낮에는 그늘에 숨어있다가 기온이 높지않은 아침이나 저녁무렵에 가해하므로 페로몬 트랩을 이용하여 예찰한다.","풀색노린재":"- 학명: Nezara antennata Scott\n- 영명: Far eastern green stink bug\n\n### 형태/병징\n\n- 성충의 크기는 약 12 ~ 16mm정도로 광택이 있는 녹색이고 약충의 크기는 약 14mm정도의 둥글고 납작하며, 검은색이다.\n- 알은 원통형으로 크기는 약 1.2mm정도로 표면은 매끄럽고 엷은 황색이다.\n\n### 발생생태 및 피해\n\n- 연간 2회 발생하며 성충으로 월동한 후 5월경 부터 월동성충이 나타나 짝짓기 한 후 산란하는데 알기간은 4 ~ 5일이며, 약충기간은 약 20 ~ 30일이다.\n- 잡식성으로 채소 및 두류 등 각종 작물과 배, 사과, 감귤등의 과수를 가해한다.\n- 고온건조할 때 증식율이 높고 과원에 채소나 두과 작물이 심어져 있거나 방풍수로 둘러싸여 통풍이 잘 안되는 곳은 좋은 서식처가 되기 때문에 발생이 많다.\n- 피해는 썩덩나무노린재의 피해증상과 같다. 방제 및 과원관리\n\n### 방제약제\n\n1. 약제명: 오신(수)\n   - 성분: 디노테퓨란\n   - 동시방제 병해충: 노린재류 귤굴나방 조팝나무진딧물\n2. 약제명: 스토네트 (입상)\n   - 계통: 치아니코 티닐계\n   - 성분: 람다사이할로트린· 티아메톡삼\n   - 동시방제 병해충: 풀색노린재 조팝나무진딧물 자나방류 애넓적밑빠진벌레\n3. 약제명: 스트레이트 (입상)\n   - 계통: 치아니코 티닐계\n   - 성분: 설폭사플로르\n   - 동시방제 병해충: 풀색노린재 조팝나무진딧물 화살깍지벌레\n4. 약제명: 세베로 샷건(유)\n   - 계통: 치아니코 티닐계\n   - 성분: 에토펜프록스\n   - 동시방제 병해충: 노린재류\n5. 약제명: 똑소리 (입상) 빅카드(액상)\n   - 계통: 치아니코 티닐계\n   - 성분: 클로티아니딘\n   - 동시방제 병해충: 노린재류 조팝나무진딧물 이세리아깍지벌레\n6. 약제명: 충자비(유)\n   - 계통: 치아니코 티닐계\n   - 성분: 펜토에이트\n   - 동시방제 병해충: 노린재류","감귤꽃혹파리":"- 학명: Contarnia okadai Myioshi\n- 영명: Citrus flower-bud midge\n\n### 형태/병징\n\n- 성충의 몸길이가 1.5mm정도로 담갈색이고, 유충은 1mm정도의 크기로 유백색 또는 선홍색의 방추형 모양이다.\n- 번데기는 담갈색의 원통형 모양이다. 감귤꽃혹파리 유충\n\n### 발생생태 및 피해\n\n- 연간 1세대 발생한다. 월동유충은 4월경에 지표면 근처에서 번데기가 되고 4 ~ 5월경에 우화하여 성충이 된 후 꽃봉오리에 산란한다.\n- 부화한 유충은 꽃봉오리 내부의 기관을 섭식하다가 낙화된 다음부터 이듬해 4월까지 유충 형태로 토양중에서 생활한다. 감귤꽃혹파리 피해\n- 상온에서 알기간은 4 ~ 5일이며, 1·2령기의 유충은 2 ~ 3일 경과 후 3령 유충이 되고 이후 약 12주간 섭식 한 후 성숙유충이 된다.\n- 성충이 꽃봉오리 내부에 산란하며, 부화한 유충이 꽃의 내부기관을 가해하므로 피해 받은 꽃봉오리는 기형화되고 내부가 부패되어 갈변되면서 떨어진다.\n\n### 방제 및 과원관리\n\n- 개화량이 적은 해에 이 해충의 발생이 많은 경우에는 피해가 클 수 있으므로 세심히 예찰한 후 적용약제를 살포한다.","귤굴나방":"- 학명: Phyllocnistis citrella Stainton\n- 영명: Citrus leafminer\n\n### 형태/병징\n\n- 성충의 몸길이는 약 2mm, 날개편 길이는 5mm정도로 머리와 가슴은 은백색이며, 겹눈은 검고 담갈색이다. 유충은 담황색으로 반투명하고 납작하며, 머리는 삼각형이고 다 자란 유충은 길이가 약 3.5 ~ 4mm정도이다.\n- 번데기 길이가 약 2.4mm정도이며, 끝이 뽀족하고 갈색의 자모가 1개 있다.\n\n### 발생생태 및 피해\n\n- 번데기와 성충태로 월동하며 연간 5 ~ 7세대 발생한다. 성충은 감귤 잎의 뒷면에서 월동한 후 감귤이 발아하면 활동을 개시한다.\n- 암컷성충은 주로 밤에 활동하면서 산란하는데 산란장소는 어린잎을 선호하며, 부화유충은 잎을 뚫어 조직을 가해하고 3령 유충을 경과하면 잎의 가장자리를 말아 그 속에서 번데기가 된다.\n- 여름과 가을철에 알이 부화하여 성충이 되기까지는 약 2주정도가 소요된다.\n- 4 월경부터 월동성충이 활동하기 시작하지만 봄에는 밀도가 높지 않으므로 봄순에서의 피해는 적고 7월 하순 이후의 여름순과 가을순에 많이 발생하여 피해를 준다.\n\n### 방제 및 과원관리\n\n- 유충이 잎속으로 굴을 파고 들어간 후에는 약제방제가 어려우므로 여름순이 발생하기 시작하는 시기에 7 ~ 10일 간격으로 살포한다.\n\n### 방제약제\n\n1. 약제명: 라이몬 (액상)\n   - 성분: 노발루론\n   - 동시방제 병해충: 귤굴나방\n2. 약제명: 데시스 장원 선문델타린 업로드(유)\n   - 성분: 델타메트린\n   - 동시방제 병해충: 귤굴나방 진딧물\n3. 약제명: 주렁(수) 충사리(수) 주렁(유) 첨병(유) 충사리(유)\n   - 성분: 람다사이할로트린\n   - 동시방제 병해충: 귤굴나방\n4. 약제명: 맨투맨(유)\n   - 성분: 베타사이플루트린\n   - 동시방제 병해충: 귤굴나방\n5. 약제명: 강심장(유)\n   - 성분: 사이퍼메트린\n   - 동시방제 병해충: 귤귤나방 진딧물\n6. 약제명: 적시타(유)\n   - 성분: 에스펜발러레이트\n   - 동시방제 병해충: 귤굴나방\n7. 약제명: 스미사이딘(수) 스미사이딘(유)\n   - 성분: 펜발러레이트\n   - 동시방제 병해충: 귤굴나방\n8. 약제명: 다니톨(유)\n   - 성분: 펜프로파트린\n   - 동시방제 병해충: 귤굴나방 귤응애\n9. 약제명: 로드(수)\n   - 계통: 유기 인계\n   - 성분: 에토펜프록스· 펜토에이트\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물 꽃노랑총채벌레\n10. 약제명: 강타자 진굴탄 태사자골드(유)\n   - 계통: 유기 인계\n   - 성분: 클로르피리포스· 알파사이퍼메트린\n   - 동시방제 병해충: 귤굴나방 진딧물 (조팝나무진딧물)\n11. 약제명: 오신(수)\n   - 계통: 유기 인계\n   - 성분: 디노테퓨란\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물 노린재류\n12. 약제명: 슐탄(액제)\n   - 계통: 유기 인계\n   - 성분: 디노테퓨란\n   - 동시방제 병해충: 귤굴나방 이세리아깍지벌레 조팝나무진딧물\n13. 약제명: 모스피란(수)\n   - 성분: 아세타미프리드\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물 꽃노랑총채벌레 가루깍지벌레\n14. 약제명: 샤프킬 젠토스타 어택트(수)\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물\n15. 약제명: 이카루스 (입상)\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물\n16. 약제명: 슈퍼볼(액상)\n   - 성분: 클로티아니딘 ·피리달릴\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물 자나방류\n17. 약제명: 칼립소(액상)\n   - 성분: 티아클로프리드\n   - 동시방제 병해충: 귤굴나방 애넓적밑빠진벌레 조팝나무진딧물 이세리아깍지벌레\n18. 약제명: 파라슈트(액상)\n   - 성분: 이미다클로프리드\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물\n19. 약제명: 천하평정 (수)\n   - 계통: 벤조일 우레아계\n   - 성분: 아세타미프리드· 디플루벤주론\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물 네눈쑥가지나방 볼록총채벌레 애넓적밑빠진벌레\n20. 약제명: 펀치볼 (입상)\n   - 계통: 벤조일하 이드라자 이드계\n   - 성분: 아세타미프리드+ 메톡시페노자이드\n   - 동시방제 병해충: 귤굴나방 네눈쑥가지나방 조팝나무진딧물\n21. 약제명: 유토피아 (액상)\n   - 계통: 벤조일하 이드라자 이드계\n   - 성분: 클로티아니딘· 메톡시페노자이드\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물 자나방류 애넓적밑빠진벌레\n22. 약제명: 당찬 (액상)\n   - 계통: 스피노 신계\n   - 성분: 아세타미프리드· 스피네토람\n   - 동시방제 병해충: 조팝나무진딧물 귤굴나방 네눈쑥가지나방\n23. 약제명: 캐치온 (액상)\n   - 계통: 옥사디 아진계\n   - 성분: 아세타미프리드· 인독사카브\n   - 동시방제 병해충: 귤굴나방 네눈쑥가지나방 조팝나무진딧물 차잎말이나방\n24. 약제명: 닥터킹 (수)\n   - 계통: 파이롤계\n   - 성분: 아세타미프리드· 클로로페나피르\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물\n25. 약제명: 아나콘다(수)\n   - 계통: 유기인계\n   - 성분: 아세페이트· 이미다클로프리드\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물 볼록총채벌레\n26. 약제명: 바이충 (유현탁)\n   - 계통: 합성피레 스로이드계\n   - 성분: 에토펜프록스· 이미다클로프리드\n   - 동시방제 병해충: 귤굴나방 네눈쑥가지나방\n27. 약제명: 야무진(수)\n   - 계통: 벤조일 페닐우 레아계\n   - 성분: 클로르피리포스· 디플루벤주론\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물 꽃노랑총채벌레\n28. 약제명: 야생마(수)\n   - 계통: 벤조일 페닐우 레아계\n29. 약제명: 노몰트(액상)\n   - 계통: 벤조일 페닐우 레아계\n   - 성분: 테플루벤주론\n   - 동시방제 병해충: 귤굴나방\n30. 약제명: 애버린(액상) 디밀린(수) 초심(수)\n   - 계통: 벤조일 페닐우 레아계\n   - 성분: 디플루벤주론\n   - 동시방제 병해충: 귤굴나방\n31. 약제명: 귀공자(수)\n   - 계통: 네오니코 티노이드계\n   - 성분: 아세타미프리드· 루페뉴론\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물 차잎말이나방\n32. 약제명: 벨스모(유)\n   - 계통: 네오니코 티노이드계\n   - 성분: 메타플루미존\n   - 동시방제 병해충: 귤굴나방 네눈쑥가지나방\n33. 약제명: 아타라(입상)\n   - 계통: 네오니코 티노이드계\n   - 성분: 티아메톡삼\n   - 동시방제 병해충: 귤굴나방 꽃노랑총채벌레 조팝나무진딧물 이세리아깍지벌레\n34. 약제명: 포워드(액상)\n   - 계통: 설폭시민계\n   - 성분: 메톡시페노자이드· 설폭사플로르\n   - 동시방제 병해충: 귤굴나방 조팝나무진딧물 네눈쑥가지나방\n35. 약제명: 원파워(입상)\n   - 계통: 스피노 신계\n   - 성분: 인독사카브· 스피노사드\n   - 동시방제 병해충: 귤굴나방 네눈쑥가지나방\n36. 약제명: 프레바톤(수)\n   - 계통: 스피노 신계\n   - 성분: 클로란트라닐리프롤\n   - 동시방제 병해충: 귤굴나방\n37. 약제명: 프레오(유탁)\n   - 계통: 스피노 신계\n   - 성분: 피리달릴\n   - 동시방제 병해충: 귤굴나방 자나방류 왕담배나방","네눈쑥가지나방":"- 학명: Ascotis selenaria Denis et Schifferemiiller\n- 영명: Mugwort looper\n\n### 형태/병징\n\n- 암컷성충의 몸길이는 약 13 ~ 17mm이고 날개편 길이는 약 45 ~ 55mm이며, 회백색 바탕에 검은 무늬가 있다.\n- 유충은 길이가 약 4 ~ 6cm정도이며 몸색은 녹색~녹갈색으로 개체에 따라 변이가 매우 크다. 네눈쑥가지나방 유충 네눈쑥가지나방 피해 과실\n\n### 발생생태 및 피해\n\n- 알 → 유충(6령) → 번데기 → 성충순으로 발육하며, 흙속에서 번데기로 월동한다. 그리고 연간 3 ~ 4회 발생하는데 감귤원에서는 봄순이 굳어질 무렵인 6월부터 발생하여 9월까지 잎과 과실을 갉아 먹고 서식한다.\n- 유충이 잎과 과실을 가해하여 피해를 주는데 구멍을 내면서 파먹지 않고 과실의 표면을 갉아 먹는다.\n- 과실이 피해를 받으면 피해 초기에는 상처 부위가 옅은 황색으로 보이지만 시간이 경과하게 되면 흑갈색의 딱지가 형성된다.\n\n### 방제 및 과원관리\n\n- 유충에 대해서는 약제의 효과가 낮으므로 과원 예찰을 잘하여 3령기가 지나지 않았을 때 적용약제를 살포해야 한다.\n\n### 방제약제\n\n1. 약제명: 미믹(액상)\n   - 성분: 테부페노자이드\n   - 동시방제 병해충: 네눈쑥가지나방\n2. 약제명: 선두플러스 (입상)\n   - 계통: 네오니코디 노이드계\n   - 성분: 디노테퓨란· 메톡시페노자이드\n   - 동시방제 병해충: 네눈쑥가지나방 조팝나무진딧물\n3. 약제명: 포워드 (액상)\n   - 계통: 설폭시민계\n   - 성분: 메톡시페노자이드· 설폭사플로르\n   - 동시방제 병해충: 네눈쑥가지나방 귤굴나방 조팝나무진딧물\n4. 약제명: 벨스모(유)\n   - 계통: 설폭시민계\n   - 성분: 메타플루미존\n   - 동시방제 병해충: 네눈쑥가지나방 귤굴나방\n5. 약제명: 제왕(액상)\n   - 계통: 설폭시민계\n   - 성분: 메톡시페노자이드· 스피네토람\n   - 동시방제 병해충: 네눈쑥가지나방\n6. 약제명: 천하평정(수)\n   - 계통: 벤조일 우레아계\n   - 성분: 아세타미프리드· 디플루벤주론\n   - 동시방제 병해충: 네눈쑥가지나방 볼록총채벌레 조팝나무진딧물 귤굴나방 애넓적밑빠진벌레\n7. 약제명: 펀치볼 (입상)\n   - 계통: 벤조일하 이드라자 이드계\n   - 성분: 아세타미프리드· 메톡시페노자이드\n   - 동시방제 병해충: 네눈쑥가지나방 귤굴나방 조팝나무진딧물\n8. 약제명: 당찬(액상)\n   - 계통: 스피노신계\n   - 성분: 아세타미프리드· 스피네토람\n   - 동시방제 병해충: 네눈쑥가지나방 조팝나무진딧물 귤굴나방\n9. 약제명: 캐치온 (액상)\n   - 계통: 옥사디아 진계\n   - 성분: 아세타미프리드 ·인독사카브\n   - 동시방제 병해충: 네눈쑥가지나방 귤굴나방 조팝나무진딧물 차잎말이나방\n10. 약제명: 바이충(유현탁)\n   - 계통: 합성피레 스로이드계\n   - 성분: 에토펜프록스· 이미다클로프리드\n   - 동시방제 병해충: 네눈쑥가지나방 귤굴나방\n11. 약제명: 바이킹(수)\n   - 계통: 합성피레 스로이드계\n   - 성분: 에토펜프록스· 인독사카브\n   - 동시방제 병해충: 네눈쑥가지나방\n12. 약제명: 원파워 (입상)\n   - 계통: 스피노신계\n   - 성분: 인독사카브· 스피노사드\n   - 동시방제 병해충: 네눈쑥가지나방 귤굴나방\n13. 약제명: 송골매(수)\n   - 계통: 요소계\n   - 성분: 인독사카브· 테플루벤주론\n   - 동시방제 병해충: 네눈쑥가지나방\n14. 약제명: 아타브론 (유)\n   - 계통: 요소계\n   - 성분: 클로르플 루아주론\n   - 동시방제 병해충: 네눈쑥가지나방 왕담배나방\n15. 약제명: 모카스(수)\n   - 계통: 요소계\n   - 성분: 아세타미프리드 ·플루페녹수론\n   - 동시방제 병해충: 네눈쑥가지나방 애넓적밑빠진벌레 조팝나무진딧물","왕담배나방":"- 학명: Helicoverpa armigera Hubner\n- 영명: Corn ear worm, Cotton ball worm, Tomato worm\n\n### 형태/병징\n\n- 성충의 몸길이는 약 15mm이고 날개편 길이는 35mm내외이며, 앞날개는 회황갈색이다. 유충은 몸길이가 약 40mm내외이며, 부화직후에는 담갈색~담녹색이고 2령기에는 황갈색을 띤다.\n- 2 령기 이후에는 보호색을 띠므로 변이가 심하며 몸에 긴 털이 많이 나 있는 것이 특징이다.\n- 산란 직후의 알은 황색이지만 부화가 가까워지면 황갈색으로 변한다.\n\n### 발생생태 및 피해\n\n- 연간2 ~ 3회 발생하며 알 → 유충(6령) → 번데기 → 성충순으로 발육한다.\n- 땅속에서 고치를 짓고 번데기로 월동한 후 이듬해 5 ~ 6월에 우화한다.\n- 성충은 10 ~ 12일정도 살면서 약 400 ~ 600개의 알을 낳는다.\n- 감귤원에서는 봄순이 굳어질 무렵인 6월부터 발생하여 9월까지 잎과 과실에 피해를 주는데, 성충의 발생 최성기는 6월 중·하순과 8월중·하순이다.\n\n### 방제 및 과원관리\n\n- 과실에 구멍을 뚫고 가해하므로 중요한 해충일 수는 있으나 실질적으로 감귤원에서의 발생량이 많지 않으므로 크게 문제가 되고 있지는 않다.\n- 약제 살포시에는 노숙유충에 대해서는 약제의 효과가 낮으므로 3령기가 지나지 않았을 때 적용약제를 살포해야 한다.\n\n### 방제약제\n\n1. 약제명: 아타브론(유)\n   - 성분: 클로르플루아주론\n   - 동시방제 병해충: 왕담배나방 네눈쑥가지나방\n2. 약제명: 알타코아(입상)\n   - 성분: 클로란트라닐리프롤\n   - 동시방제 병해충: 왕담배나방 차잎말이나방 자나방류\n3. 약제명: 프레오(유탁)\n   - 성분: 피리달릴\n   - 동시방제 병해충: 왕담배나방 귤굴나방 자나방류","차잎말이나방":"- 학명: Homona magnanima Diakonlff\n- 영명: Oriental tea tortrix\n\n### 형태/병징\n\n- 암컷 성충의 몸길이는 약 15 ~ 18mm이고 날개편 길이는 30 ~ 35mm로 전체가 회갈색이며, 수컷은 이보다 약간 작다.\n- 어린 유충은 약 8mm, 노숙유충은 약 25mm정도 이며 암녹색이며 번데기는 약 12mm정도이며 흑갈색 이다. 차잎말이나방 유충\n\n### 발생생태 및 피해\n\n- 잎의 표면에 약 50 ~ 150개의 알을 무더기로 산란하며, 잎을 거미줄로 봉한 후 그 속에서 월동하는데 주로 유충으로 월동한다.\n- 노지에서는 연간 4회 발생하는데 1회는 4월 상순에, 2회는 6 ~ 7월에, 3회는 8월에, 4회는 9 ~ 10월에 발생한다.\n- 하우스감귤원에서는 노지에 비해 온도가 높고, 밀폐된 공간이므로 분산하지 못하고 증식하므로 노지에서 보다 많은 세대가 발생한다.\n- 유충이 거미줄로 잎을 서로 붙이거나 말아서 집을 만들고 그 속에서 서식하는데 주로 밤에 나와서 주변의 잎과 과실을 가해한다.\n\n### 방제 및 과원관리\n\n- 거미줄로 잎을 말거나 잎을 서로 붙인 다음 그 속에서 생활하므로 약제를 살포해도 효과가 높지 않기 때문에 유충이 자라서 거미줄을 치고 서식처를 만들기 전에 약제를 살포해야 방제 효과를 높일 수 있다.\n\n### 방제약제\n\n1. 약제명: 앰풀리고 (액상)\n   - 계통: 합성피레 스로이드계\n   - 성분: 클로란트라닐리프롤· 람다사이할로트린\n   - 동시방제 병해충: 잎말이나방\n2. 약제명: 알리세 (입상)\n   - 계통: 옥사디 아진계\n   - 성분: 클로란트라닐리프롤· 인독사카브\n   - 동시방제 병해충: 잎말이나방","귤가루이":"- 학명: Dialeurodes citri Ashmead\n- 영명: Citrus white fly\n\n### 형태/병징\n\n- 성충의 몸길이는 약 1.2mm정도로 매우 작고 흰색 이다. 알은 길이가 약 0.3mm 정도이며 담황색으로 장타원형이다. 귤가루이 성충\n\n### 발생생태 및 피해\n\n- 상온에서의 알기간은 약 2 ~ 3주 정도이고 약충기간은 19 ~ 32일 정도이며 성충은 5월 상·중순경부터 발생하기 시작하여 피해를 주는데 봄에는 6월 상순, 여름에는 8월 상순에 밀도가 가장 높다.\n- 어린 나무나 질소질 비료를 과다하게 시용하여 신초가 불균일하게 자라는 과원이나 온도가 높고 통풍이 좋지 않은 과원에 발생이 많으며, 비가 적은 해에 많이 발생한다.\n- 주로 신엽을 가해하며 분비물로 인해 그을음이 심하게 발생하여 과실의 상품가치를 떨어뜨릴 뿐만 아니라 동화작용을 저하시켜서 수세를 약화시킨다. 귤가루이 귤가루이 몸에 병을 일으크리는 곤충병원성 미생물 (곰팡이의 일종)인 아셔소니아에 감염모습\n\n### 방제 및 과원관리\n\n- 약제를 정상적으로 살포하는 농가에서는 방제가 필요하지 않다.\n- 유기인계 약제로 방제가 가능하나, 이 해충은 월동기 방제가 중요하므로 봄 전정 이후에 기계 유유제를 살포하는 것이 좋고, 전정가지 중에 귤가루이가 기생했던 가지는 모아서 태워버려야 한다.","초록애매미충":"- 학명: Empoasca vitis Geothe\n- 영명: Small green leafhopper\n\n### 형태/병징\n\n- 성충은 몸길이가 약 3mm로 담록색이고, 알은 약 0.3mm정도의 크기로 희고 장타원형이다. 초록애매미충 성충\n\n### 발생생태 및 피해\n\n- 연간 약 7 ~ 8세대가 발생하며 약충과 성충으로 월동 하는데 옆으로 기어 움직이고 나무를 건드리면 빠르게 날아가 버리는 특성을 가지고 있다.\n- 가을철 기상이 고온다습하여 과원주변에 잡초발생이 많아 먹이가 충분할 때에 발생이 많고, 9월 이후 과실의 착색이 진행되면서 밀도가 증가하여 과실을 가해한다.\n- 피해 받은 과피 부분은 함몰된 후 갈변되며 초기에는 피해흔적의 확인이 어렵고 시간이 지남에 따라 조금씩 유황색을 띠며, 결국에는 퇴색 갈변되어 상품가치를 잃게 된다. 초록애매미충 피해\n\n### 방제 및 과원관리\n\n- 가을철 기상이 고온다습한 해에는 다발생 할 수 있으므로 예찰을 잘 해야 하며 육안에 의한 예찰이 어려우므로 극조생 온주밀감에서는 9월 이후에, 조생종에서는 10월 이후에 과원에 황색끈끈이 트랩을 설치하여 예찰하며 2마리 이상 발생시 적용약제를 살포한다.","명주달팽이":"- 학명: Acusta despecta sieboldiana Pfeiffer\n\n### 형태/병징\n\n- 성숙한 달팽이는 높이가 20mm, 직경은 25mm 내외로 옅은 회황색 또는 회갈띠을 띠고 있다.\n- 더듬이의 아래에 눈이 있는데 시력이 나빠서 몇 cm 거리의 물체만 볼 수 있다.\n- 알은 석회질로 된 껍질로 싸여 있으며, 직경이 약 1.7 ~ 2.0mm정도이다.\n\n### 발생생태 및 피해\n\n- 일반적으로 연간 1회 발생한다. 봄에 알에서 부화되어 나온 어린달팽이는 가을에는 10mm 이상의 크기가 되며 토양속에서 월동한다.\n- 알의 기간은 산란장소와 토양 조건 등에 따라서 차이가 있으나 보통 10 ~ 20일이고 알에서 깬어린 달팽이는 3개월 정도가 지나면 성숙한 달팽이가 되며, 수명은 보통 1 ~ 2년이다.\n- 달팽이의 발은 없는 것처럼 보이지만 몸의 아래쪽에 있으며, 발에 있는 분비선에서 점액을 내보내 흡착력을 높일 수 있으므로 가시가 달린 나뭇가지에 쉽게 오를 수 있다.\n- 습기가 많은 곳에서 활동하는 것을 좋아하고 너무 덮거나 추울때에는 몸속의 석회질을 분비해 입구를 막고 휴면을 하기도 한다.\n\n### 방제 및 과원관리\n\n- 명주달팽이의 방제에 있어서 가장 중요시해야 할 사항은 달팽이가 발생하지 않도록 과원을 관리해야 한다.\n- 산성토양을 교정해주고 통풍이 잘되고 햇빛이 잘 들도록 과원을 관리하여 지표면을 건조하게 해주면 발생을 억제할 수 있다.\n- 달팽이는 습기를 좋아하고 건조를 싫어하기 때문에 아침과 저녁에 주로 활동을 하며 한낮의 뜨거운 때는 거의 활동을 하지 않는다.\n- 명주달팽이는 구리성분을 싫어하기 때문에 황산동을 침지시킨 두꺼운 종이테이프나 동판을 나무의 밑둥에 감아서 나무에 올라가지 못하게 하고, 늘어진 가지를 타고 올라지 못하도록 가지를 올려주거나 제거해준다. 80 부록 1. 감귤 주요 양분결핍과 대책 2. 감귤 병해충 종합관리(IPM) 방제력 3. 친환경(무농약 이상 사용) 방제력 4. 감귤에 피해를 주는 금지병해충 안내 5. 감귤 작물보호제 작용기구 분류\n\n\n\n<!-- 아래 2개 섹션은 사진 데이터 보강용 초안(전문가 검증 필요) -->"}</script>
+<script>
+"use strict";
+
+/* ---------- 페이지(탭) 전환 ---------- */
+const PAGES = ["home","diagnose","data","kb","tech","ref"];
+function showPage(id){
+  if(!PAGES.includes(id)) id = "home";
+  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active", p.id === "page-"+id));
+  document.querySelectorAll("#nav .tab").forEach(b=>b.classList.toggle("on", b.dataset.page === id));
+  try{ history.replaceState(null, "", "#"+id); }catch(e){}
+  window.scrollTo({top:0});
+}
+document.getElementById("nav").addEventListener("click",(e)=>{
+  const b = e.target.closest(".tab"); if(b) showPage(b.dataset.page);
+});
+document.getElementById("brandHome").addEventListener("click",()=>showPage("home"));
+document.querySelectorAll("[data-goto]").forEach(x=>x.addEventListener("click",()=>showPage(x.dataset.goto)));
+showPage((location.hash || "#home").slice(1));
+
+/* ---------- 지식베이스 상세 모달 ---------- */
+const KB_DATA = (()=>{ try{ return JSON.parse(document.getElementById("kbdata").textContent); }catch(e){ return {}; } })();
+const KB_DIAG = new Set(["궤양병","더뎅이병","검은점무늬병","녹색곰팡이병ㆍ푸른곰팡이병","잿빛곰팡이병","수지병","탄저병","검은무늬병"]);
+const KB_DRAFT = new Set(["탄저병","검은무늬병"]);
+const kbmodal = document.getElementById("kbmodal");
+const kbmTitle = document.getElementById("kbmTitle");
+const kbmBody = document.getElementById("kbmBody");
+const escKb = (s)=>String(s).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function kbMdToHtml(md){
+  const out = []; let inList = false;
+  const close = ()=>{ if(inList){ out.push("</ul>"); inList = false; } };
+  for(const raw of md.split(/\r?\n/)){
+    const line = raw.replace(/\s+$/,"");
+    if(!line.trim()) continue;
+    let m;
+    if(/^##\s+/.test(line)) continue;                       // 섹션 제목은 헤더에 별도 표시
+    if((m = line.match(/^###\s+(.*)/))){ close(); out.push(`<h4>${escKb(m[1])}</h4>`); continue; }
+    if((m = line.match(/^(\s*)(?:\d+\.|[-•])\s+(.*)/))){
+      if(!inList){ out.push("<ul>"); inList = true; }
+      out.push(`<li${m[1].length >= 3 ? ' class="sub"' : ''}>${escKb(m[2])}</li>`); continue;
+    }
+    close(); out.push(`<p>${escKb(line.trim())}</p>`);
+  }
+  close(); return out.join("");
+}
+function openKb(name){
+  const md = KB_DATA[name];
+  kbmTitle.textContent = name;
+  let head = "";
+  if(KB_DRAFT.has(name)){
+    head = `<div class="note warn" style="margin:0 0 14px"><span class="i">⚠️</span>
+      <div><b>KB 초안 — 전문가 검증 전.</b> 병원균 동정·병명이 미확정일 수 있어 참고용으로만 사용하세요.</div></div>`;
+  } else if(KB_DIAG.has(name)){
+    head = `<div class="note info" style="margin:0 0 14px"><span class="i">🎯</span>
+      <div>이 병해충은 <b>AI 진단 대상 8종</b>에 포함됩니다.</div></div>`;
+  }
+  kbmBody.innerHTML = head + (md ? kbMdToHtml(md) : `<p class="metaline">등록된 상세 정보가 없습니다.</p>`);
+  kbmBody.scrollTop = 0;
+  kbmodal.classList.add("show"); kbmodal.setAttribute("aria-hidden","false");
+}
+function closeKb(){ kbmodal.classList.remove("show"); kbmodal.setAttribute("aria-hidden","true"); }
+document.querySelectorAll(".dlist").forEach(list=>list.addEventListener("click",(e)=>{
+  const b = e.target.closest(".dchip"); if(b) openKb(b.dataset.kb || b.textContent.trim());
+}));
+document.getElementById("kbmClose").addEventListener("click", closeKb);
+kbmodal.addEventListener("click",(e)=>{ if(e.target === kbmodal) closeKb(); });
+document.addEventListener("keydown",(e)=>{ if(e.key === "Escape" && kbmodal.classList.contains("show")) closeKb(); });
+
+/* ---------- 진단 상태/요소 ---------- */
+const state = { imageDataUrl:null, intent:"diagnose" };
+const el = (id)=>document.getElementById(id);
+const drop = el("drop"), fileInput = el("file"), preview = el("preview"), runBtn = el("run");
+const emptyBox = el("empty"), resultBox = el("result"), qBox = el("q");
+
+/* ---------- 렌더링 ---------- */
+const RES_LABEL = {exact:"KB 정확 일치", synonym:"동의어 매핑", partial:"부분 일치", rag:"최근접 매핑", unknown:"미확인"};
+const RES_CLASS = {exact:"exact", synonym:"syn", partial:"partial", rag:"rag", unknown:""};
+const RES_ICON  = {exact:"✓", synonym:"⇄", partial:"≈", rag:"~", unknown:"?"};
+const SECTIONS = [
+  {key:"symptoms",  name:"관찰 증상",       intents:["symptom","diagnose","name"]},
+  {key:"control",   name:"방제 및 관리",    intents:["control","diagnose"]},
+  {key:"pesticides",name:"방제약제",        intents:["control","diagnose"], list:true},
+  {key:"ecology",   name:"발생 원인·생태",  intents:["diagnose"]},
+];
+const PRIMARY_BY_INTENT = { diagnose:"symptoms", name:"symptoms", symptom:"symptoms", control:"pesticides" };
+const esc = (s)=>String(s).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(res){
+  emptyBox.style.display="none";
+  resultBox.classList.add("show");
+  if(res.name_resolution === "unknown" || !res.disease){ resultBox.innerHTML = renderUnknown(res); return; }
+
+  const info = res.info || {};
+  const draft = res.is_draft_kb;
+  const primaryKey = PRIMARY_BY_INTENT[res.intent] || "symptoms";
+
+  const sciBlock = info.scientific
+    ? `<div class="dx-sci"><span class="kbtag">🔒 KB 원문</span><span class="sci">${esc(info.scientific)}</span></div>` : "";
+  let html = `<div class="diag">
+    <span class="tag model">모델 판단</span>
+    <div class="dx">
+      <div class="dx-main">
+        <h2>${esc(res.disease)}</h2>
+        ${info.english ? `<div class="en">${esc(info.english)}</div>`:""}
+      </div>
+      ${sciBlock}
+    </div>
+    <div class="badges">
+      <span class="badge ${RES_CLASS[res.name_resolution]}">${RES_ICON[res.name_resolution]} ${RES_LABEL[res.name_resolution]}</span>
+      ${res.resolution_score!=null && res.name_resolution!=="exact"
+        ? `<span class="badge mono">유사도 ${res.resolution_score.toFixed(2)}</span>`:""}
+      <span class="badge">8종 분류</span>
+    </div>`;
+
+  if(res.resolved_from && res.name_resolution!=="exact"){
+    html += `<div class="callout map"><span class="ci">⇄</span>
+      <div>모델은 <b>${esc(res.resolved_from)}</b>(이)라고 답했고, 지식베이스에서 <b>${esc(res.disease)}</b>(으)로 정규화했습니다.</div></div>`;
+  }
+  if(draft){
+    html += `<div class="callout warn"><span class="ci">⚠️</span>
+      <div><b>KB 초안 — 전문가 검증 전.</b> ${info.scientific? "":"학명·병원균이 <b>미확정</b>이며 "}방제 정보는 참고용으로만 사용하세요.</div></div>`;
+  }
+  html += `<details class="raw"><summary>모델 원본 출력 보기 (병명만 취하고 나머지는 폐기됨)</summary>
+    <div class="rawtext">${esc(res.vlm_raw||"")}</div></details></div>`;
+
+  html += `<div class="kbwrap">
+    <div class="kbhead"><span class="tag kb">🔒 지식베이스 원문 · 검증됨</span><span class="line"></span></div>
+    <div class="kbnote">아래 정보는 전문가 지식베이스에서 그대로 조회한 것이며, <b>모델이 생성하지 않았습니다.</b></div>
+    <div class="kbgrid">`;
+
+  const ordered = [...SECTIONS].sort((a,b)=>(a.key===primaryKey?-1:b.key===primaryKey?1:0));
+  for(const sec of ordered){
+    const vals = info[sec.key] || [];
+    const isPrimary = sec.key===primaryKey;
+    if(!isPrimary && res.intent!=="diagnose" && !sec.intents.includes(res.intent)) continue;
+    let body;
+    if(vals.length===0){
+      body = `<div class="none">KB에 등록된 ${esc(sec.name)} 정보가 없습니다.</div>`;
+    } else if(sec.list){
+      body = `<div class="pills">${vals.map(v=>`<span>${esc(v)}</span>`).join("")}</div>
+        <div class="none" style="margin-top:9px; font-style:normal">※ 정확한 등록 약제·사용 시기는 농약안전정보시스템 확인.</div>`;
+    } else {
+      body = `<ul>${vals.map(v=>`<li>${esc(v)}</li>`).join("")}</ul>`;
+    }
+    html += `<div class="kbcard ${isPrimary?"primary":""}">
+      <div class="ct"><span class="n">${esc(sec.name)}</span>${isPrimary?'<span class="pr">질문에 대한 답</span>':""}</div>
+      ${body}</div>`;
+  }
+  html += `</div></div>`;
+  resultBox.innerHTML = html;
+}
+
+function renderUnknown(res){
+  const sugg = res.suggestions||[];
+  return `<div class="unknown">
+    <span class="tag model">모델 판단</span>
+    <h2>병명을 특정하지 못했습니다</h2>
+    <p>모델이 답한 <b>${esc(res.resolved_from||"알 수 없는 병명")}</b>은(는) 지식베이스 8종에 없습니다
+      (유사도 ${(res.resolution_score||0).toFixed(2)} · 임계값 미달).</p>
+    ${sugg.length?`<div style="font-size:11.5px; color:var(--muted); margin-bottom:8px; font-weight:600">유사한 후보</div>
+    <div class="sugg">${sugg.map(([n,s])=>`
+      <div class="s"><span class="name">${esc(n)}</span>
+        <span class="bar"><i style="width:${Math.round(s*100)}%"></i></span>
+        <span class="sc">${s.toFixed(2)}</span></div>`).join("")}</div>`:""}
+    <div class="callout warn" style="margin-top:15px"><span class="ci">📷</span>
+      <div>사진을 다시 촬영하거나(초점·조명·병반 근접), 전문가 확인을 권장합니다.</div></div>
+  </div>`;
+}
+
+/* ---------- 진단 (실제 API) ---------- */
+async function diagnose(){
+  if(!state.imageDataUrl){ toast("사진을 먼저 올려주세요"); return; }
+  runBtn.classList.add("loading"); runBtn.disabled = true;
+  try{
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 120000);
+    const resp = await fetch("/diagnose", {
+      method:"POST", headers:{"Content-Type":"application/json"}, signal:ctrl.signal,
+      body: JSON.stringify({
+        image_base64: state.imageDataUrl.split(",")[1],
+        question: qBox.value.trim(),
+        intent: state.intent
+      })
+    }).finally(()=>clearTimeout(t));
+    if(!resp.ok) throw new Error("서버 오류 (HTTP " + resp.status + ")");
+    const data = await resp.json();
+    if(data.ok === false) throw new Error(data.error || "진단 실패");
+    render(data);
+  }catch(err){
+    toast(err.name === "AbortError" ? "시간 초과 — 다시 시도해 주세요" : ("진단 실패: " + (err.message||err)));
+  }finally{
+    runBtn.classList.remove("loading"); runBtn.disabled = false;
+  }
+}
+
+/* ---------- 유틸·이벤트 ---------- */
+let toastT;
+function toast(msg){
+  const t = el("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("show"), 2800);
+}
+function setImage(file){
+  if(!file || !file.type.startsWith("image/")){ toast("이미지 파일만 올릴 수 있습니다"); return; }
+  const rd = new FileReader();
+  rd.onload = ()=>{ state.imageDataUrl = rd.result; preview.src = rd.result; drop.classList.add("has"); runBtn.disabled = false; };
+  rd.readAsDataURL(file);
+}
+fileInput.addEventListener("change",(e)=>{ if(e.target.files[0]) setImage(e.target.files[0]); });
+el("chgBtn").addEventListener("click",(e)=>{ e.preventDefault(); e.stopPropagation(); fileInput.value=""; fileInput.click(); });
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,(e)=>{e.preventDefault(); drop.classList.add("drag");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,(e)=>{e.preventDefault(); drop.classList.remove("drag");}));
+drop.addEventListener("drop",(e)=>{ const f=e.dataTransfer.files[0]; if(f) setImage(f); });
+
+el("chips").addEventListener("click",(e)=>{
+  const b = e.target.closest(".chip"); if(!b) return;
+  document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed","false"));
+  b.setAttribute("aria-pressed","true");
+  state.intent = b.dataset.intent; qBox.value = b.dataset.q;
+});
+qBox.addEventListener("input",()=>{
+  document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed","false"));
+  state.intent = "diagnose";
+});
+runBtn.addEventListener("click", diagnose);
+</script>
+</body>
+</html>

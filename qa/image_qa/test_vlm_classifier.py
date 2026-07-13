@@ -25,9 +25,9 @@ from eval_utils import compute_metrics, plot_confusion_matrix, print_metrics
 
 # ── 설정 ──
 MODEL_NAME = "qwen2.5vl:7b"
-RESULT_DIR = os.path.join(os.path.dirname(SCRIPT_DIR), "result_md")
-TEST_IMAGES_DIR = os.path.join(SCRIPT_DIR, "test_images")
-DATASET_ROOT = os.path.join(os.path.dirname(SCRIPT_DIR), "datasets", "Citrus")
+RESULT_DIR = os.path.join(os.path.dirname(os.path.dirname(SCRIPT_DIR)), "result_md")
+TEST_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(SCRIPT_DIR)), "data", "legacy_test_images")
+DATASET_ROOT = os.path.join(os.path.dirname(os.path.dirname(SCRIPT_DIR)), "data", "external", "mendeley_citrus")
 
 CLASS_NAMES = ["normal", "canker", "red_mite", "aphid"]
 

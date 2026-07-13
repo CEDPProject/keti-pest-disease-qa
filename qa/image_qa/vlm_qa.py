@@ -56,7 +56,7 @@ def vlm_qa_pipeline(image_path: str, user_question: str, use_rag: bool = False) 
 
 def main():
     """단독 실행 테스트"""
-    test_image = os.path.join(SCRIPT_DIR, "test_images", "잎_궤양병.jpg")
+    test_image = os.path.join(os.path.dirname(os.path.dirname(SCRIPT_DIR)), "data", "legacy_test_images", "잎_궤양병.jpg")
     if not os.path.exists(test_image):
         print("❌ 테스트 이미지가 없습니다.")
         sys.exit(1)

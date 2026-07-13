@@ -11,7 +11,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
 TEXT_QA_DIR = os.path.join(PROJECT_DIR, "text_qa")
-TEST_IMAGES_DIR = os.path.join(SCRIPT_DIR, "test_images")
+TEST_IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(SCRIPT_DIR)), "data", "legacy_test_images")
 
 results = {"method1": [], "method2": [], "method3": []}
 
@@ -180,7 +180,7 @@ for img_path, question, gt_label in test_images_m3:
 # ═══════════════════════════════════════════
 # 결과 저장
 # ═══════════════════════════════════════════
-output_path = os.path.join(PROJECT_DIR, "result_md", "ppt_examples.json")
+output_path = os.path.join(os.path.dirname(PROJECT_DIR), "result_md", "ppt_examples.json")
 with open(output_path, "w", encoding="utf-8") as f:
     json.dump(results, f, ensure_ascii=False, indent=2)
 
