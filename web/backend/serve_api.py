@@ -16,8 +16,10 @@
 import os
 import sys
 import io
+import json
 import base64
 import argparse
+import urllib.request
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, FileResponse
@@ -35,6 +37,54 @@ from classes import DRAFT_KB_LABELS, MERGED_MODEL_DIR  # noqa
 
 DEFAULT_MODEL = MERGED_MODEL_DIR
 DEFAULT_PORT = 5100
+
+# ── LLM 종합(grounded) 설정 ───────────────────────────────────────
+# 최종 답을 gemma(Ollama)로 KB 근거만 써서 자연스럽게 종합. 프론트는 원문을 토글로 병기.
+# 롤백: SYNTHESIZE = False  → synthesis 미포함 → 프론트가 기존처럼 KB 원문 파트별 표시.
+SYNTHESIZE = True
+OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_MODEL = "gemma3:4b"
+_INTENT_ASK = {
+    "diagnose": "이 감귤을 진단하고 관찰 증상과 방제 방법을 종합해서 설명해줘.",
+    "name": "이 감귤이 무슨 병인지, 어떤 특징인지 알려줘.",
+    "control": "이 병은 어떻게 방제하고 무슨 약제를 써야 해?",
+    "symptom": "이 감귤에 어떤 증상이 관찰되는지 설명해줘.",
+}
+
+
+def synthesize_answer(disease: str, info: dict, intent: str):
+    """검색된 KB 정보만 근거로 자연스러운 답변 생성(grounded). 실패 시 None → 프론트가 원문 표시."""
+    if not SYNTHESIZE:
+        return None
+    sci, eng = info.get("scientific"), info.get("english")
+    head = f"- 병명: {disease}"
+    tail = " / ".join(x for x in [f"학명 {sci}" if sci else None, f"영명 {eng}" if eng else None] if x)
+    if tail:
+        head += f" ({tail})"
+    kb = [head]
+    for key, label in [("symptoms", "증상"), ("ecology", "발생 생태"),
+                       ("control", "방제/관리"), ("pesticides", "등록 약제(예시)")]:
+        vals = info.get(key) or []
+        if vals:
+            kb.append(f"- {label}: " + (", ".join(vals) if key == "pesticides" else " / ".join(vals)))
+    prompt = (
+        "당신은 감귤 병해충 상담 도우미입니다. 아래 [지식베이스]에 있는 내용만 근거로, "
+        "농가의 질문에 자연스럽고 친절하게 3~5문장으로 답하세요.\n"
+        "[규칙] 지식베이스에 없는 사실(학명·약제 이름·수치·날짜 등)을 절대 지어내지 마세요. "
+        f"병명은 이미 '{disease}'로 확정됐습니다. 정보가 없는 항목은 언급하지 마세요.\n\n"
+        "[지식베이스]\n" + "\n".join(kb) +
+        f"\n\n[농가 질문] {_INTENT_ASK.get(intent, _INTENT_ASK['diagnose'])}\n[답변]"
+    )
+    try:
+        req = urllib.request.Request(
+            OLLAMA_URL,
+            data=json.dumps({"model": OLLAMA_MODEL, "prompt": prompt, "stream": False,
+                             "options": {"temperature": 0.3, "num_predict": 400}}).encode("utf-8"),
+            headers={"Content-Type": "application/json"})
+        return json.loads(urllib.request.urlopen(req, timeout=60).read())["response"].strip()
+    except Exception as e:
+        print(f"[serve] synthesis 실패(원문으로 폴백): {e}")
+        return None
 
 # 전역 파이프라인 (startup 시 로드)
 _pipe = None
@@ -110,7 +160,7 @@ def build_response(disease_name_from_model: str, raw: str, intent: str) -> dict:
 
     disease = res["disease"]
     info = clean_info(_kb.kb[disease])
-    return {
+    resp = {
         "ok": True,
         "disease": disease,
         "disease_key": _kb_name_to_key(disease),
@@ -122,6 +172,8 @@ def build_response(disease_name_from_model: str, raw: str, intent: str) -> dict:
         "intent": intent,
         "info": info,
     }
+    resp["synthesis"] = synthesize_answer(disease, info, intent)   # None 이면 프론트가 원문 표시
+    return resp
 
 
 def decode_image(b64: str) -> Image.Image:
@@ -135,7 +187,7 @@ app = FastAPI(title="감귤 병해충 진단 데모")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 MOCK_MODE = False
-MOCK_ROTATION = ["궤양병", "검은점무늬병", "녹색곰팡이병", "탄저병", "검은무늬병"]
+MOCK_ROTATION = ["궤양병", "검은점무늬병", "녹색곰팡이병", "탄저병", "더뎅이병"]
 _mock_i = {"n": 0}
 
 

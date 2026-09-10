@@ -245,6 +245,20 @@ details.raw .rawtext{
 .pills span{font-size:12px; padding:4px 10px; border-radius:8px; background:var(--surface);
   border:1px solid var(--border); color:var(--ink); font-weight:500}
 
+/* LLM 종합 답변 카드 + 원문 보기 토글 */
+.synth{margin-top:22px; border:1px solid var(--accent-line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow-sm); overflow:hidden}
+.synth-h{padding:11px 18px; background:var(--accent-soft); border-bottom:1px solid var(--accent-line);
+  font-size:13px; font-weight:700; color:var(--accent-text); display:flex; align-items:center; gap:6px}
+.synth-h .synth-sub{font-weight:500; color:var(--muted); font-size:12px}
+.synth-body{padding:16px 19px; font-size:14.5px; line-height:1.78; color:var(--ink)}
+.kbsrc{margin-top:14px}
+.kbsrc > summary{cursor:pointer; font-size:13px; font-weight:600; color:var(--muted); list-style:none;
+  padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface-2)}
+.kbsrc > summary::-webkit-details-marker{display:none}
+.kbsrc > summary::before{content:"▸ "; color:var(--faint)}
+.kbsrc[open] > summary::before{content:"▾ "}
+.kbsrc .kbwrap{margin-top:10px}
+
 /* ---------- 미확정(unknown) ---------- */
 .unknown{border:1px solid var(--warn-line); border-left:4px solid var(--warn); border-radius:var(--radius);
   background:var(--warn-soft); padding:19px}
@@ -504,13 +518,13 @@ details.raw .rawtext{
         <div class="arw">→</div>
         <div class="st good"><div class="v">0.941</div><div class="l">파인튜닝 후<br>동일 분포 (정확도 92%)</div></div>
         <div class="arw">→</div>
-        <div class="st bad"><div class="v">0.155</div><div class="l">다른 출처 사진<br>(교차 검증 · 무작위 수준)</div></div>
+        <div class="st"><div class="v" style="font-size:26px">0.56~0.72</div><div class="l">다른 출처 한국 감귤<br>(교차 검증 · 부분 전이)</div></div>
       </div>
-      <div class="note warn">
-        <span class="i">⚠️</span>
-        <div><b>파이프라인은 작동하지만 일반화는 실패했습니다.</b> 사진 121장으로 학습하면 같은 분포에서 92%가 나오지만,
-        다른 출처 사진에서는 15.5%로 무너집니다. 모델이 병반의 형태가 아니라 <b>학습 사진의 스타일</b>(품종·조명·배경)을 외운 것입니다.
-        <b>다양한 출처의 데이터 확보가 유일한 근본 해법</b>이며, 이것이 이 프로젝트의 핵심 결론이자 데이터 투자의 정량적 근거입니다.</div>
+      <div class="note info">
+        <span class="i">🔎</span>
+        <div><b>파이프라인이 작동하고, 실제 병징도 어느 정도 학습했습니다.</b> 사진 121장으로 학습하면 같은 분포에서 92%,
+        학습에 안 쓴 <b>다른 출처의 한국 감귤(온주밀감)</b> 사진에서도 <b>0.56~0.72</b>로 상당 부분 맞힙니다 — 사진 스타일만 외운 게 아닙니다.
+        다만 <b>다른 감귤 종(오렌지 등)·현장 사진엔 아직 약해</b>, 견고성을 높이려면 <b>다양한 출처의 데이터 확보</b>가 관건입니다.</div>
       </div>
     </div>
 
@@ -630,8 +644,9 @@ details.raw .rawtext{
       <div class="eyebrow">Dataset</div>
       <h1>감귤 병해충 사진 데이터셋</h1>
       <p class="lead">
-        감귤 병해충 <b>8개 클래스, 원본 사진 121장</b>으로 파인튜닝했습니다. 클래스 불균형이 크고 전체 규모가 작아,
-        데이터의 양과 다양성이 성능의 병목입니다. 별도 외부 공개 데이터셋으로 일반화 성능을 교차 검증했습니다.
+        감귤 병해충 <b>8개 클래스, 원본 사진 121장</b>(AI Hub <span class="kbd">노지 작물 질병 진단 이미지</span> · 농촌진흥청 구축)으로 파인튜닝했습니다.
+        클래스 불균형이 크고 규모가 작아 데이터의 양·다양성이 성능의 병목이며, 다른 출처의 한국 감귤 사진으로 일반화를 교차 검증했습니다.
+        이후 <b>정상(건강) 클래스</b>를 추가해 9클래스로 확장했습니다.
       </p>
     </div>
 
@@ -666,7 +681,7 @@ details.raw .rawtext{
       <div class="sec-h"><span class="no">02</span><h2>학습 데이터 형식</h2></div>
       <p class="prose">
         단순 이미지 분류가 아니라 <b>“이미지 + 질문 → 답변”</b> 형태의 멀티모달 QA로 구성했습니다.
-        질문 의도 <b>4종(진단 · 병명 · 방제 · 증상)</b>을 균형 있게 넣었고, 정답 답변은 모두 지식베이스(citrus_PD_ver3.md)에 grounding했습니다.
+        질문 의도 <b>4종(진단 · 병명 · 방제 · 증상)</b>을 균형 있게 넣었고, 정답 답변은 모두 전문가 지식베이스에 grounding했습니다.
       </p>
       <div class="spec">
         <div class="row"><dt>입력</dt><dd>감귤 사진 <span class="mono">+ 자연어 질문</span></dd></div>
@@ -677,12 +692,36 @@ details.raw .rawtext{
     </div>
 
     <div class="sec">
-      <div class="sec-h"><span class="no">03</span><h2>교차 검증용 외부 데이터</h2></div>
+      <div class="sec-h"><span class="no">03</span><h2>교차 검증 — 다른 출처 한국 감귤</h2></div>
       <p class="prose">
-        학습에 쓰지 않은 <b>다른 출처의 공개 감귤 병해 사진(Mendeley Data, 약 758장)</b>으로
-        일반화 성능을 별도 검증했습니다. 동일 분포 92% → 다른 출처 <b>15.5%</b>로,
-        모델이 병반 형태가 아니라 학습 사진의 스타일에 의존함을 확인했습니다(<span class="kbd">활용 기술 · 평가</span> 참고).
+        학습에 쓰지 않은 <b>다른 출처의 한국 감귤(온주밀감) 병 사진</b>(국가농작물병해충관리시스템 NCPMS · 5종 × 5장 = 25장)으로
+        일반화를 검증했습니다. 동일 분포 대비 <b>2.5-VL 0.56 / 3.5-4B 0.72</b>로 <b>상당 부분 전이</b>됩니다 —
+        사진 스타일만 외운 게 아니라 실제 병징을 학습했음을 보여줍니다.
       </p>
+      <div class="note info">
+        <span class="i">🔎</span>
+        <div>초기엔 <b>다른 감귤 종(파키스탄 오렌지/라임, Mendeley)</b>으로 검증해 무작위 수준이 나와 '일반화 실패'로 봤으나,
+        같은 <b>한국 감귤</b>로 다시 검증하니 0.56~0.72로 전이됐습니다. → 앞선 붕괴는 <b>과일 종 차이(도메인 시프트)</b> 때문이었습니다.</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">04</span><h2>정상(건강) 클래스 추가 — 9클래스</h2><span class="desc">Qwen3.5-4B 실험</span></div>
+      <p class="prose">
+        "정상 사진을 넣어도 정상이라고 안 나온다"는 문제(8클래스는 병만 학습한 closed-set이라 원리상 불가)를 해결하기 위해,
+        <b>같은 AI Hub 데이터셋의 정상 감귤 이미지(잎 20 + 열매 20 = 40장)</b>를 <b>정상</b> 클래스로 추가해 9클래스로 재학습했습니다.
+      </p>
+      <div class="spec">
+        <div class="row"><dt>정상 데이터</dt><dd>잎 20 + 열매 20 = <b>40장</b> <span class="mono">(train 30 / test 10)</span></dd></div>
+        <div class="row"><dt>정상 재현율</dt><dd><b>10 / 10 (100%)</b> — 정상 전부 "정상" 출력</dd></div>
+        <div class="row"><dt>질병 정확도</dt><dd><b>0.920 유지</b> — 기존 진단 성능 안 나빠짐</dd></div>
+        <div class="row"><dt>전체 macro-F1</dt><dd><b>0.950</b> <span class="mono">(9클래스 · ep5)</span></dd></div>
+      </div>
+      <div class="note warn">
+        <span class="i">⚠️</span>
+        <div>정상 이미지는 <b>흰배경 스튜디오</b>, 병 이미지는 field 스타일이라 <b>배경 혼입</b> 가능성이 남습니다.
+        진짜 검증은 <b>현장에서 찍은 건강한 감귤 사진</b>으로 해야 합니다.</div>
+      </div>
     </div>
   </div>
 </section>
@@ -694,7 +733,7 @@ details.raw .rawtext{
       <div class="eyebrow">Knowledge Base</div>
       <h1>병해충 지식베이스</h1>
       <p class="lead">
-        감귤 병해 <b>14종</b>과 해충 <b>23종</b>, 총 <b>37종</b>의 전문가 정리 문서(<span class="kbd">citrus_PD_ver3.md</span>)입니다.
+        감귤 병해 <b>14종</b>과 해충 <b>23종</b>, 총 <b>37종</b>을 담은 전문가 정리 문서입니다.
         진단 결과의 학명·증상·방제·약제는 모두 이 원문에서 그대로 조회되며, 모델이 생성하지 않습니다.
       </p>
     </div>
@@ -703,7 +742,7 @@ details.raw .rawtext{
       <div class="sec-h"><span class="no">01</span><h2>각 항목의 구조</h2></div>
       <p class="prose">모든 병해충 항목은 아래 형식으로 정리되어 있으며, RAG는 이 원문을 <b>섹션 검색 → 문장 재랭킹</b> 방식으로 찾아 답합니다.</p>
       <div class="kbex">
-        <div class="exh">📄 예시 — 궤양병 (citrus_PD_ver3.md)</div>
+        <div class="exh">📄 예시 — 궤양병</div>
         <div class="exb">
           <div class="k">학명 / 영명</div>
           <p><span class="mono">Xanthomonas axonopodis pv. citri</span> · Canker</p>
@@ -794,12 +833,11 @@ details.raw .rawtext{
     <div class="sec">
       <div class="sec-h"><span class="no">02</span><h2>모델 · 학습</h2></div>
       <div class="spec">
-        <div class="row"><dt>Base 모델</dt><dd>Qwen2.5-VL-7B-Instruct</dd></div>
-        <div class="row"><dt>파인튜닝</dt><dd>LoRA <span class="mono">r=16, α=32</span></dd></div>
-        <div class="row"><dt>비전 타워</dt><dd>동결 <span class="mono">(freeze) — 과적합 방지</span></dd></div>
+        <div class="row"><dt>Base 모델</dt><dd>Qwen2.5-VL-7B <span class="mono">(배포)</span> · Qwen3.5-4B <span class="mono">(비교·9클래스)</span></dd></div>
+        <div class="row"><dt>파인튜닝</dt><dd>LoRA <span class="mono">r=16, α=32</span> · 비전 타워 동결</dd></div>
         <div class="row"><dt>에폭</dt><dd>10 학습 · <span class="mono">ep5 채택</span></dd></div>
         <div class="row"><dt>RAG 임베딩</dt><dd class="mono" style="font-size:13px">intfloat/multilingual-e5-large</dd></div>
-        <div class="row"><dt>학습 프레임워크</dt><dd>LLaMA-Factory</dd></div>
+        <div class="row"><dt>학습 프레임워크</dt><dd>LLaMA-Factory <span class="mono">v0.9.6</span></dd></div>
         <div class="row"><dt>환경</dt><dd class="mono" style="font-size:13px">torch 2.6+cu124 · transformers 5.7</dd></div>
         <div class="row"><dt>GPU</dt><dd>RTX A6000 ×3</dd></div>
       </div>
@@ -810,10 +848,10 @@ details.raw .rawtext{
       <p class="prose">개발 초기에는 “VLM이 후보를 내면 RAG로 가장 근접한 것을 선택”하는 설계(A)를 시도했지만, 실제로 성능이 악화됐습니다.</p>
       <div class="tblwrap">
         <table class="tbl">
-          <thead><tr><th>설계</th><th>방식</th><th class="num">우리 test</th><th class="num">Mendeley</th><th>판정</th></tr></thead>
+          <thead><tr><th>설계</th><th>방식</th><th class="num">우리 test</th><th>환각</th><th>판정</th></tr></thead>
           <tbody>
-            <tr><td>A</td><td>VLM 후보 → RAG가 선택</td><td class="num">0.920 → 0.480</td><td class="num">0.052</td><td class="warn-cell">❌ 실패</td></tr>
-            <tr><td>B</td><td>VLM 병명 결정 → RAG는 정보만</td><td class="num">0.920</td><td class="num">0.190</td><td style="color:var(--ok-text); font-weight:700">✅ 채택</td></tr>
+            <tr><td>A</td><td>VLM 후보 → RAG가 선택</td><td class="num">0.920 → 0.480</td><td>정답→오답 11건</td><td class="warn-cell">❌ 실패</td></tr>
+            <tr><td>B</td><td>VLM 병명 결정 → RAG는 정보만</td><td class="num">0.920 유지</td><td style="color:var(--ok-text)">학명 환각 0건</td><td style="color:var(--ok-text); font-weight:700">✅ 채택</td></tr>
           </tbody>
         </table>
       </div>
@@ -833,14 +871,32 @@ details.raw .rawtext{
             <tr><td>데이터 누수</td><td>pHash 근접 중복 검사</td><td>누수 0건</td></tr>
             <tr><td>통계적 불확실성</td><td>부트스트랩 신뢰구간</td><td class="mono">95% CI [0.639, 1.000]</td></tr>
             <tr><td>의도별 일관성</td><td>25장 × 질문 4종</td><td class="mono">진단/병명/증상 0.92 · 방제 0.80</td></tr>
-            <tr><td>교차 데이터셋</td><td>다른 출처 같은 병해</td><td class="warn-cell">0.155 — 일반화 실패</td></tr>
+            <tr><td>교차 검증 (한국 감귤)</td><td>다른 출처 온주밀감 · NCPMS</td><td class="mono">2.5 0.56 · 3.5 0.72 — 부분 전이</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="note warn">
-        <span class="i">⚠️</span>
-        <div>가장 중요한 결과는 <b>교차 데이터셋 0.155</b>입니다. 동일 분포 92%가 곧 실사용 성능이 아니라는 뜻이며,
-        쓸 만한 모델을 얻으려면 다양한 출처의 데이터가 반드시 필요합니다.</div>
+      <div class="note info">
+        <span class="i">🔎</span>
+        <div>학습에 안 쓴 다른 출처의 한국 감귤에서도 <b>0.56~0.72</b>로 상당 부분 맞힙니다 → 실제 병징을 학습.
+        동일 분포 92%가 곧 실사용 성능은 아니며, 다른 종·현장 견고성을 위해 <b>데이터 다양성</b>이 관건입니다.</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="no">05</span><h2>모델 비교 · 정상 클래스</h2></div>
+      <div class="tblwrap">
+        <table class="tbl">
+          <thead><tr><th>비교</th><th class="num">2.5-VL-7B</th><th class="num">3.5-4B</th><th>메모</th></tr></thead>
+          <tbody>
+            <tr><td>동일분포 macro-F1</td><td class="num">0.792</td><td class="num">0.890</td><td>3.5 우세(절반 크기)</td></tr>
+            <tr><td>교차 (한국 감귤)</td><td class="num">0.560</td><td class="num">0.720</td><td>같은 작물에선 3.5 우세</td></tr>
+            <tr><td>9클래스(+정상)</td><td>—</td><td class="num">0.950</td><td class="mono">정상 recall 10/10 · 질병 0.92 유지</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note info">
+        <span class="i">💡</span>
+        <div>같은 조건에서 <b>3.5-4B가 2.5-VL-7B를 앞섰고</b>(더 작은데도), <b>정상 클래스</b>를 추가하니 정상 사진을 전부 "정상"으로 맞히면서 질병 성능도 유지했습니다. (배포 데모는 아직 2.5-VL 8클래스)</div>
       </div>
     </div>
   </div>
@@ -858,9 +914,9 @@ details.raw .rawtext{
     <div class="sec">
       <div class="reflist">
         <div class="ref"><div class="rn">01</div><div class="rb">
-          <h3>Qwen2.5-VL — Vision-Language Model</h3>
-          <p>병명 판단에 사용한 base 시각언어모델. 7B-Instruct를 LoRA로 파인튜닝.</p>
-          <div class="id">Qwen/Qwen2.5-VL-7B-Instruct · Alibaba Qwen Team</div></div></div>
+          <h3>Qwen VL — Vision-Language Model</h3>
+          <p>병명 판단에 사용한 base 시각언어모델. 2.5-VL-7B(배포)를 LoRA 파인튜닝, 3.5-4B(9클래스·비교)도 학습.</p>
+          <div class="id">Qwen/Qwen2.5-VL-7B-Instruct · Qwen/Qwen3.5-4B · Alibaba Qwen Team</div></div></div>
 
         <div class="ref"><div class="rn">02</div><div class="rb">
           <h3>LLaMA-Factory — LoRA 파인튜닝 프레임워크</h3>
@@ -873,19 +929,19 @@ details.raw .rawtext{
           <div class="id">intfloat/multilingual-e5-large · sentence-transformers</div></div></div>
 
         <div class="ref"><div class="rn">04</div><div class="rb">
-          <h3>교차 검증용 외부 데이터 (Mendeley Data)</h3>
-          <p>학습에 쓰지 않은 다른 출처의 공개 감귤 병해 사진(약 758장). 일반화 성능 교차 검증에 사용.</p>
-          <div class="id">Mendeley Data — Citrus disease image dataset</div></div></div>
+          <h3>학습 데이터 — AI Hub 노지 작물 질병 진단 이미지</h3>
+          <p>감귤 병해충 8클래스 121장 + 정상 이미지의 출처(농촌진흥청 구축). 정상 클래스도 같은 데이터셋에서 사용.</p>
+          <div class="id">AI Hub · 노지 작물 질병 진단 이미지 (dataSetSn=147) · RDA</div></div></div>
 
         <div class="ref"><div class="rn">05</div><div class="rb">
-          <h3>병해충 지식베이스 · 방제약제 정보</h3>
-          <p>학명·증상·방제·약제 원문의 근거. 등록 약제·사용 시기는 농약안전정보시스템에서 확인.</p>
-          <div class="id">citrus_PD_ver3.md · 농약안전정보시스템(RDA)</div></div></div>
+          <h3>교차 검증 데이터 — 국가농작물병해충관리시스템(NCPMS)</h3>
+          <p>학습에 쓰지 않은 다른 출처의 한국 감귤(온주밀감) 병 사진. 일반화 교차 검증에 사용(초기엔 Mendeley 오렌지셋으로 검증).</p>
+          <div class="id">ncpms.rda.go.kr · fruit.nihhs.go.kr · 농촌진흥청</div></div></div>
 
         <div class="ref"><div class="rn">06</div><div class="rb">
-          <h3>수행 기관</h3>
-          <p>한국전자기술연구원(KETI) · 에코브레인 — CEDP 연구개발 과제.</p>
-          <div class="id">KETI × 에코브레인 · CEDP R&D</div></div></div>
+          <h3>병해충 지식베이스 · 방제약제 정보</h3>
+          <p>학명·증상·방제·약제 원문의 근거. 등록 약제·사용 시기는 농약안전정보시스템에서 확인.</p>
+          <div class="id">전문가 지식베이스 · 농약안전정보시스템(RDA)</div></div></div>
       </div>
     </div>
   </div>
@@ -1033,7 +1089,7 @@ function render(res){
   html += `<details class="raw"><summary>모델 원본 출력 보기 (병명만 취하고 나머지는 폐기됨)</summary>
     <div class="rawtext">${esc(res.vlm_raw||"")}</div></details></div>`;
 
-  html += `<div class="kbwrap">
+  let kbHtml = `<div class="kbwrap">
     <div class="kbhead"><span class="tag kb">🔒 지식베이스 원문 · 검증됨</span><span class="line"></span></div>
     <div class="kbnote">아래 정보는 전문가 지식베이스에서 그대로 조회한 것이며, <b>모델이 생성하지 않았습니다.</b></div>
     <div class="kbgrid">`;
@@ -1052,11 +1108,23 @@ function render(res){
     } else {
       body = `<ul>${vals.map(v=>`<li>${esc(v)}</li>`).join("")}</ul>`;
     }
-    html += `<div class="kbcard ${isPrimary?"primary":""}">
+    kbHtml += `<div class="kbcard ${isPrimary?"primary":""}">
       <div class="ct"><span class="n">${esc(sec.name)}</span>${isPrimary?'<span class="pr">질문에 대한 답</span>':""}</div>
       ${body}</div>`;
   }
-  html += `</div></div>`;
+  kbHtml += `</div></div>`;
+
+  // [LLM 종합] 백엔드가 synthesis 를 주면: 자연스러운 종합 답변 + 'KB 원문 보기' 토글.
+  //           없으면(롤백/오프): 기존처럼 KB 원문을 그대로 표시.
+  if(res.synthesis){
+    html += `<div class="synth">
+      <div class="synth-h">💬 종합 답변<span class="synth-sub"> · 지식베이스 근거로 정리</span></div>
+      <div class="synth-body">${esc(res.synthesis).replace(/\n/g,"<br>")}</div>
+    </div>
+    <details class="kbsrc"><summary>📄 지식베이스 원문 보기 (검증용)</summary>${kbHtml}</details>`;
+  } else {
+    html += kbHtml;
+  }
   resultBox.innerHTML = html;
 }
 

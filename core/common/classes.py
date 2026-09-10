@@ -49,11 +49,11 @@ CLASSES = {
     "검은점무늬병": {"key": "black_spot",  "kb_section": "검은점무늬병"},
     "녹색곰팡이병": {"key": "green_mold",  "kb_section": "녹색곰팡이병ㆍ푸른곰팡이병"},
     "탄저병":       {"key": "anthracnose", "kb_section": "탄저병"},        # KB 보강 섹션(초안)
-    "검은무늬병":   {"key": "black_blotch","kb_section": "검은무늬병"},     # KB 보강 섹션(초안)
 }
+# 검은무늬병(black_blotch) 제외: 병원균 동정 미확정 + 검은점무늬병과 명칭 혼용 → 클래스에서 제거
 
 # 역매핑 (키 → 한글 라벨)
 KEY_TO_LABEL = {v["key"]: k for k, v in CLASSES.items()}
 
 # 전문가 검증 필요(초안 KB) 클래스
-DRAFT_KB_LABELS = {"탄저병", "검은무늬병"}
+DRAFT_KB_LABELS = {"탄저병"}

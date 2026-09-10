@@ -9,10 +9,10 @@ import sys
 from sklearn.metrics import f1_score, accuracy_score, classification_report, confusion_matrix
 
 CLASS_KEYS = ["canker", "scab", "gray_mold", "gummosis",
-              "black_spot", "green_mold", "anthracnose", "black_blotch"]
+              "black_spot", "green_mold", "anthracnose"]
 KEY_KO = {"canker": "궤양병", "scab": "더뎅이병", "gray_mold": "잿빛곰팡이병",
           "gummosis": "수지병", "black_spot": "검은점무늬병", "green_mold": "녹색곰팡이병",
-          "anthracnose": "탄저병", "black_blotch": "검은무늬병"}
+          "anthracnose": "탄저병"}
 
 
 def evaluate(pred_path: str, title: str = "") -> dict:

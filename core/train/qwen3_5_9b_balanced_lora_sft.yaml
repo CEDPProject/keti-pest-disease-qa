@@ -1,0 +1,43 @@
+### 감귤 병해충 8클래스(질병7 + 정상) 균형 데이터셋 — Qwen3.5-9B LoRA SFT (논문 메인)
+### 4B(qwen3_5_balanced_lora_sft.yaml)와 완전히 동일한 데이터·하이퍼, 베이스 모델만 9B로 교체.
+
+model_name_or_path: Qwen/Qwen3.5-9B
+image_max_pixels: 262144          # 512x512 (4B와 동일)
+image_min_pixels: 50176
+trust_remote_code: true
+
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target: all
+freeze_vision_tower: true
+freeze_multi_modal_projector: true
+
+dataset: citrus_balanced
+dataset_dir: /home/jhlee/CLUST_KETI/keti-pest-disease-qa/data/vlm_finetune_balanced
+template: qwen3_5_nothink
+cutoff_len: 2048
+overwrite_cache: true
+preprocessing_num_workers: 8
+dataloader_num_workers: 4
+
+output_dir: /home/jhlee/CLUST_KETI/keti-pest-disease-qa/models/qwen3_5_9b_balanced_lora
+logging_steps: 10
+save_steps: 233          # 1 에폭 ≈ 233 step (1860 / eff.batch 8) → 에폭마다 체크포인트 (4B와 동일)
+save_total_limit: 8
+plot_loss: true
+overwrite_output_dir: true
+report_to: none
+
+per_device_train_batch_size: 2       # 4B와 동일. OOM 시에만 1로 낮추고 accum 8로 (유효배치 8 유지)
+gradient_accumulation_steps: 4       # 단일 GPU × batch2 × accum4 = effective batch 8
+gradient_checkpointing: true
+learning_rate: 1.0e-4
+num_train_epochs: 8.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000

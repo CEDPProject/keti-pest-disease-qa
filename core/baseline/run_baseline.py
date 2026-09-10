@@ -28,7 +28,7 @@ from classes import TEST_JSONL  # noqa
 RESULT_DIR = os.path.join(VLM_FT, "results")
 
 CANDIDATES = ["궤양병", "더뎅이병", "잿빛곰팡이병", "수지병",
-              "검은점무늬병", "녹색곰팡이병", "탄저병", "검은무늬병"]
+              "검은점무늬병", "녹색곰팡이병", "탄저병"]
 INSTRUCTION = (
     "당신은 감귤 병해충 진단 전문가입니다.\n"
     "다음 8가지 후보 중에서 이미지에 가장 가까운 하나로 진단하세요.\n"

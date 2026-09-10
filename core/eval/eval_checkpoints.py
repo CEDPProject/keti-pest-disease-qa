@@ -32,7 +32,7 @@ RESULT_DIR = os.path.join(VLM_FT, "results")
 CURVE_JSON = os.path.join(RESULT_DIR, "lora_epoch_curve.json")
 QUESTION = "이 감귤 사진을 보고 어떤 병해충인지 진단하고, 관찰되는 증상과 방제 방법을 알려주세요."
 CLASS_KEYS = ["canker", "scab", "gray_mold", "gummosis",
-              "black_spot", "green_mold", "anthracnose", "black_blotch"]
+              "black_spot", "green_mold", "anthracnose"]
 STEPS_PER_EPOCH = 48
 
 

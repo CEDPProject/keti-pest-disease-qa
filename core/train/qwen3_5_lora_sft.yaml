@@ -1,0 +1,48 @@
+### 감귤 병해충 QA — Qwen3.5-4B LoRA SFT (LLaMA-Factory)
+### 2.5-VL-7B 설정을 그대로 계승, 베이스 모델·template 만 교체하여 공정 비교.
+### 소량 데이터(train 384=원본96+증강288) → 비전타워 동결 + LoRA(LLM)로 과적합 완화
+
+### model
+model_name_or_path: Qwen/Qwen3.5-4B
+image_max_pixels: 589824          # 768x768 상한 (시각 토큰 억제, 2.5와 동일)
+image_min_pixels: 50176           # 224x224 하한
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target: all
+freeze_vision_tower: true         # 비전타워 동결(소량데이터 안전)
+freeze_multi_modal_projector: true
+
+### dataset
+dataset: citrus_ft
+dataset_dir: /home/jhlee/CLUST_KETI/keti-pest-disease-qa/data/vlm_finetune
+template: qwen3_5_nothink          # Qwen3.5 통합 VL, thinking 비활성(짧은 병명 분류에 적합)
+cutoff_len: 2048
+overwrite_cache: true
+preprocessing_num_workers: 8
+dataloader_num_workers: 4
+
+### output
+output_dir: /home/jhlee/CLUST_KETI/keti-pest-disease-qa/models/qwen3_5vl_lora
+logging_steps: 5
+save_steps: 48          # 1 에폭 = 48 step(train 384 / eff.batch 8) → 에폭마다 체크포인트
+save_total_limit: 12    # 에폭별 체크포인트 보존(F1 곡선 비교용)
+plot_loss: true
+overwrite_output_dir: false
+report_to: none
+
+### train
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 4    # effective batch = 8 (2.5와 동일)
+learning_rate: 1.0e-4
+num_train_epochs: 10.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000

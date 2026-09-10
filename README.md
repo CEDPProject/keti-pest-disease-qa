@@ -6,7 +6,7 @@ KETI + 에코브레인 협업 CEDP 과제.
 > **아키텍처**: 이미지 → 파인튜닝 Qwen2.5-VL이 **병명만** 결정 → RAG가 지식베이스에서 **정보 조회**
 > **핵심 원칙**: 분류는 VLM이, 지식은 KB가 담당 → 모델이 사실을 생성하지 않아 **환각 구조적 차단**
 
-📄 전체 정리: **[docs/03_vlm_finetune/SYSTEM_OVERVIEW.md](docs/03_vlm_finetune/SYSTEM_OVERVIEW.md)** · 상세 리포트: [REPORT.md](docs/03_vlm_finetune/REPORT.md)
+📄 전체 정리: **[qa_docs/documents/02_technical_docs/SYSTEM_OVERVIEW.md](qa_docs/documents/02_technical_docs/SYSTEM_OVERVIEW.md)** · 상세 리포트: [REPORT.md](qa_docs/documents/03_reports/REPORT.md)
 
 ---
 
@@ -27,17 +27,22 @@ KETI + 에코브레인 협업 CEDP 과제.
 
 ```
 keti-pest-disease-qa/
+│  ── 실행 시스템 (런타임) ──
 ├── app.py            🌐 웹 데모 진입점
-├── data/             📦 데이터 (심볼릭 링크 → 데이터 디스크)
-├── docs/             📄 모든 문서 (계획·결과·리포트)
-├── qa/               💬 기존 QA 시스템 (text_qa / image_qa)
-├── core/             🧠 VLM 파인튜닝 파이프라인 (common·data_prep·train·eval·rag·baseline)
 ├── web/              🌐 데모 웹앱 (backend/ frontend/ gradio_app.py)
-├── models/           🤖 학습 산출물 (git 제외)
-└── result_md/        📊 PPT·CSV·혼동행렬 등 산출물
+├── core/             🧠 파이프라인 (common·rag=런타임, data_prep·train·eval·baseline=빌드용)
+├── qa/               💬 지식베이스(text_qa/text_info) + 기존 QA 시스템(레거시)
+├── data/             📦 데이터 (심볼릭 링크 → 데이터 디스크)
+├── models/           🤖 학습 산출물 (qwen2_5vl_merged=서빙, 그 외=체크포인트, git 제외)
+│  ── 비런타임 자료 (한 폴더) ──
+└── qa_docs/          📁 문서·발표자료·스크립트·SW등록 (실행에 사용 안 됨)
+    ├── documents/       📄 기획·기술문서·보고서·분석·개발로그 (카테고리별)
+    ├── presentations/   📊 PPT·CSV·혼동행렬·회의록·overview
+    ├── scripts/         🛠 make_ppt.py · generate_summary_ppt.py (발표자료 생성)
+    └── sw_registration/ 📑 소프트웨어 저작권 등록 패키지 (독립 실행 3종)
 ```
 
-각 폴더 상세: `core/README.md`, `data/README.md`, `docs/README.md`
+각 폴더 상세: `core/README.md`, `data/README.md`, `qa_docs/README.md`
 
 ---
 
@@ -75,7 +80,7 @@ pip install -r requirements.txt
 ## 재현·상세
 
 파이프라인 재현(데이터 생성 → 학습 → 평가 → 병합)과 결과 해석은
-**[docs/03_vlm_finetune/SYSTEM_OVERVIEW.md](docs/03_vlm_finetune/SYSTEM_OVERVIEW.md)** 10절 참조.
+**[qa_docs/documents/02_technical_docs/SYSTEM_OVERVIEW.md](qa_docs/documents/02_technical_docs/SYSTEM_OVERVIEW.md)** 10절 참조.
 
 ## 다음 스텝
 

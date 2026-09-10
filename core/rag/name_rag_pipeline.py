@@ -103,8 +103,8 @@ if __name__ == "__main__":
     pipe = NameRagPipeline(model, proc, KBRetriever(device="cuda"))
 
     test = [json.loads(l) for l in open(TEST_JSONL, encoding="utf-8")]
-    # 정상 사례 + 문제 사례(검은무늬병: 학명 환각이 있던 클래스)
-    picks = [test[0], [t for t in test if t["key"] == "black_blotch"][0]]
+    # 데모: 앞 2개 사례
+    picks = test[:2]
     for r in picks:
         for q in [None, "약제 뭐 써요?"]:
             out = pipe.run(r["image"], q)
