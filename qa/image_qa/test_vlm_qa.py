@@ -36,14 +36,14 @@ TEST_QUESTIONS = [
 def collect_test_images():
     """test_images/ 폴더에서 이미지 파일 목록 수집"""
     if not os.path.isdir(TEST_IMAGE_DIR):
-        print(f"❌ 테스트 이미지 폴더가 없습니다: {TEST_IMAGE_DIR}")
+        print(f"테스트 이미지 폴더가 없습니다: {TEST_IMAGE_DIR}")
         return []
     
     images = []
     for fname in sorted(os.listdir(TEST_IMAGE_DIR)):
         if fname.lower().endswith(SUPPORTED_EXT):
             images.append(os.path.join(TEST_IMAGE_DIR, fname))
-            print(f"  ✅ {fname}")
+            print(f"  {fname}")
     return images
 
 
@@ -58,7 +58,7 @@ def run_vlm_tests_for_all_images():
     image_paths = collect_test_images()
     
     if not image_paths:
-        print("❌ 테스트 이미지가 없습니다. test_images/ 폴더에 감귤 이미지를 넣어주세요.")
+        print("테스트 이미지가 없습니다. test_images/ 폴더에 감귤 이미지를 넣어주세요.")
         sys.exit(1)
     
     total_tests = len(image_paths) * len(TEST_QUESTIONS)
@@ -85,7 +85,7 @@ def run_vlm_tests_for_all_images():
                 result = vlm_qa_pipeline(img_path, question)
                 result["status"] = "SUCCESS"
             except Exception as e:
-                print(f"❌ 오류: {e}")
+                print(f"오류: {e}")
                 result = {
                     "image_path": img_path,
                     "user_question": question,
@@ -127,9 +127,9 @@ def print_summary(all_results):
     print(f"  질문 수/이미지: {len(TEST_QUESTIONS)}")
     
     if success == total:
-        print("\n✅ 모든 테스트 통과!")
+        print("\n모든 테스트 통과!")
     else:
-        print("\n⚠️ 일부 테스트 실패")
+        print("\n일부 테스트 실패")
         for img_path, image_results in all_results:
             for question, result in image_results:
                 if result["status"] == "FAILED":
@@ -169,7 +169,7 @@ def save_results_md(all_results):
         for q_idx, (question, result) in enumerate(image_results, 1):
             lines.append(f"### 질문 {q_idx}\n")
             lines.append(f"**질문:** {question}\n")
-            lines.append(f"**상태:** {'✅ 성공' if result['status'] == 'SUCCESS' else '❌ 실패'}\n")
+            lines.append(f"**상태:** {'성공' if result['status'] == 'SUCCESS' else '실패'}\n")
             lines.append(f"**VLM 응답:**\n")
             lines.append(f"```")
             lines.append(result["final_answer"])

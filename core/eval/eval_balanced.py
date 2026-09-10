@@ -122,7 +122,7 @@ def main():
     json.dump({"curve": curve, "best": best, "n_test": len(test)},
               open(os.path.join(RESULT_DIR, "balanced_curve.json"), "w", encoding="utf-8"),
               ensure_ascii=False, indent=2)
-    print(f"\n★ 최적 ep{best['epoch']} · macro-F1={best['macro_f1']:.3f} · acc={best['accuracy']:.3f} · "
+    print(f"\n최적 ep{best['epoch']} · macro-F1={best['macro_f1']:.3f} · acc={best['accuracy']:.3f} · "
           f"정상recall={best['normal_recall']:.2f} · 질병acc={best['disease_acc']:.3f}")
     with open(DONE, "w") as f:
         f.write(f"best_ep{best['epoch']}_f1{best['macro_f1']:.3f}\n")

@@ -152,9 +152,9 @@ def main():
     print(f"  스코어 top-1 acc : {score_top1_acc:.4f}")
     print(f"  생성   top-1 acc : {gen_top1_acc:.4f}")
     print(f"  스코어=생성 일치 : {agree:.4f}")
-    print(f"  ★ top-3 recall   : {top3_recall:.4f} (원본{src['원본']} NCPMS{src['NCPMS']})")
-    print(f"  ★ 마진 정답케이스: {_stat(m_correct)}")
-    print(f"  ★ 마진 오답케이스: {_stat(m_wrong)}")
+    print(f"  top-3 recall   : {top3_recall:.4f} (원본{src['원본']} NCPMS{src['NCPMS']})")
+    print(f"  마진 정답케이스: {_stat(m_correct)}")
+    print(f"  마진 오답케이스: {_stat(m_wrong)}")
     print(f"  저장: {OUT}")
 
 

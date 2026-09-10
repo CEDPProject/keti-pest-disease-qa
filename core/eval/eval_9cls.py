@@ -106,7 +106,7 @@ def main():
     best = max(curve, key=lambda c: c["macro_f1"])
     json.dump({"curve": curve, "best": best},
               open(os.path.join(RESULT_DIR, "9cls_curve.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-    print(f"\n★ 최적 ep{best['epoch']} · macro-F1={best['macro_f1']:.3f} · acc={best['accuracy']:.3f} · "
+    print(f"\n최적 ep{best['epoch']} · macro-F1={best['macro_f1']:.3f} · acc={best['accuracy']:.3f} · "
           f"정상recall={best['normal_recall']:.2f} · 질병acc={best['disease_acc']:.3f}")
 
 

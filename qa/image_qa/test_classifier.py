@@ -70,7 +70,7 @@ def run_test():
     # 이미지 수집
     images = collect_images()
     if not images:
-        print(f"❌ 이미지가 없습니다. DATASET_ROOT: {DATASET_ROOT}")
+        print(f"이미지가 없습니다. DATASET_ROOT: {DATASET_ROOT}")
         sys.exit(1)
     
     print(f"수집 이미지: {len(images)}장 (Healthy + Canker)")
@@ -111,7 +111,7 @@ def run_test():
             "pred_raw": pred_raw,
             "pred_mapped": pred_mapped,
             "confidence": confidence,
-            "correct": "✅" if pred_mapped == gt else "❌",
+            "correct": "" if pred_mapped == gt else "",
         })
         
         if (i + 1) % 50 == 0 or i == len(images) - 1:

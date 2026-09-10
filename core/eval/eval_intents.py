@@ -89,7 +89,7 @@ def main():
         row["consistent"] = len(set(preds)) == 1
         row["all_correct"] = all(p == r["label_ko"] for p in preds)
         records.append(row)
-        flag = "✅" if row["all_correct"] else ("⚠️불일치" if not row["consistent"] else "❌전부오답")
+        flag = "" if row["all_correct"] else ("불일치" if not row["consistent"] else "전부오답")
         print(f"  [{i:2d}/25] {r['label_ko']:12s} {flag}  {row['preds']}")
 
     # 지표
@@ -117,7 +117,7 @@ def main():
     print(f"\n=== 학명 환각 (KB에 학명 없는 클래스: {', '.join(no_sci) or '없음'}) ===")
     if halluc:
         for h in halluc[:6]:
-            print(f"  ⚠️ {h['gold']} [{h['intent']}] : {h['snippet'][:80]}...")
+            print(f"  {h['gold']} [{h['intent']}] : {h['snippet'][:80]}...")
         print(f"  총 {len(halluc)}건")
     else:
         print("  없음")

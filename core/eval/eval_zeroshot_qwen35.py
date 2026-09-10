@@ -95,7 +95,7 @@ def main():
         "rows": rows,
     }
     json.dump(result, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-    print(f"\n★ [R2] zero-shot Qwen3.5-4B · macro-F1={f1:.4f} · acc={acc:.4f} "
+    print(f"\n[R2] zero-shot Qwen3.5-4B · macro-F1={f1:.4f} · acc={acc:.4f} "
           f"· 원본{src_acc['원본']} NCPMS{src_acc['NCPMS']} · unknown={n_unknown}/{len(test)}")
     print(f"예측분포: {pred_dist}")
     print(f"저장: {OUT}")

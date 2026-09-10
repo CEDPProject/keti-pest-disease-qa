@@ -83,7 +83,7 @@ def main():
     A=res["condition_A_noRAG"]; B=res["condition_B_RAG"]
     print("="*56); print("  P1-2 환각률 (학명 기준)"); print("="*56)
     print(f"  조건A(RAG없음): 환각 {A['halluc_n']}/{A['n']} = {A['halluc_rate']*100:.1f}% (fab {A['fabrication']} + mis {A['misattribution']}, 정답 {A['correct']}, 미언급 {A['none']})")
-    print(f"  조건B(RAG)    : 환각 {B['halluc_n']}/{B['n']} = {B['halluc_rate']*100:.1f}% {'✅ 구조상 0 확인' if B['halluc_n']==0 else '⚠️ 0아님 → 파이프라인 결함'}")
+    print(f"  조건B(RAG)    : 환각 {B['halluc_n']}/{B['n']} = {B['halluc_rate']*100:.1f}% {'구조상 0 확인' if B['halluc_n']==0 else '0아님 → 파이프라인 결함'}")
     print(f"  저장:{OUT}")
 
 if __name__=="__main__": main()

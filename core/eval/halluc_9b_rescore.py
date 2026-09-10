@@ -80,7 +80,7 @@ json.dump(d, open(IN, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 A = d["summary"]["condition_A_noRAG"]; B = d["summary"]["condition_B_RAG"]
 print("=" * 56); print("  [M5 재채점] 9B 환각 (영명 제외, 학명만)")
 print(f"  조건A(9B직접): 환각 {A['halluc_n']}/{A['n']} = {A['halluc_rate']*100:.1f}% (fab{A['fabrication']}+mis{A['misattribution']}, 정답{A['correct']}, 미언급{A['none']})")
-print(f"  조건B(9B+RAG): 환각 {B['halluc_n']}/{B['n']} = {B['halluc_rate']*100:.1f}% {'✅ 구조상 0 확인' if B['halluc_n']==0 else '⚠️ 0아님 → 사례 첨부'}")
+print(f"  조건B(9B+RAG): 환각 {B['halluc_n']}/{B['n']} = {B['halluc_rate']*100:.1f}% {'구조상 0 확인' if B['halluc_n']==0 else '0아님 → 사례 첨부'}")
 if B["halluc_n"] > 0:
     for r in d["summary"]["B_halluc_examples"]:
         print("   ", r)

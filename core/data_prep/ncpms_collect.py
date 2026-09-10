@@ -162,7 +162,7 @@ def _img_ext_from_bytes(data):
 def probe():
     """구조 확인용: 감귤 궤양병의 목록/상세 원문을 일부 출력."""
     if "붙여넣기" in API_KEY:
-        print("⚠ 먼저 API_KEY 를 설정하세요 (https://ncpms.rda.go.kr/npms/OpenApiInfo.np)")
+        print("먼저 API_KEY 를 설정하세요 (https://ncpms.rda.go.kr/npms/OpenApiInfo.np)")
         return
     print(f"[SVC01] {CROP} 궤양병 목록 조회 …")
     xml = _get(_list_url("궤양병"))
@@ -181,7 +181,7 @@ def probe():
 
 def collect():
     if "붙여넣기" in API_KEY:
-        print("⚠ 먼저 API_KEY 를 설정하세요 (https://ncpms.rda.go.kr/npms/OpenApiInfo.np)")
+        print("먼저 API_KEY 를 설정하세요 (https://ncpms.rda.go.kr/npms/OpenApiInfo.np)")
         return
     os.makedirs(OUT_ROOT, exist_ok=True)
     summary = {}
@@ -229,7 +229,7 @@ def collect():
         print(f"  {CITRUS_DISEASES[key]:14s} ({key:12s}) {n:3d}장")
     print(f"  {'합계':14s}              {total:3d}장")
     print(f"\n  저장 위치: {OUT_ROOT}")
-    print("  ⚠ 학습 사용 전 각 이미지 라벨을 눈으로 확인하세요(도감엔 유사병 참고컷이 섞일 수 있음).")
+    print("  학습 사용 전 각 이미지 라벨을 눈으로 확인하세요(도감엔 유사병 참고컷이 섞일 수 있음).")
 
 
 if __name__ == "__main__":

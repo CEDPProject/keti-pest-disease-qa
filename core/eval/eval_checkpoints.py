@@ -130,9 +130,9 @@ def main():
     print("\n=== 에폭별 macro-F1 곡선 ===")
     for c in ordered:
         bar = "█" * int(c["macro_f1"] * 40)
-        mark = " ★" if c["epoch"] == best["epoch"] else ""
+        mark = " " if c["epoch"] == best["epoch"] else ""
         print(f"  ep{c['epoch']:2d}  acc={c['accuracy']:.3f}  F1={c['macro_f1']:.3f}  {bar}{mark}")
-    print(f"\n★ 최적: epoch {best['epoch']} (macro-F1={best['macro_f1']:.3f}, acc={best['accuracy']:.3f}) → {best['checkpoint']}")
+    print(f"\n최적: epoch {best['epoch']} (macro-F1={best['macro_f1']:.3f}, acc={best['accuracy']:.3f}) → {best['checkpoint']}")
 
 
 if __name__ == "__main__":

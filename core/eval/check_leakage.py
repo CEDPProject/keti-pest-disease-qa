@@ -62,13 +62,13 @@ def main():
                 bd, best = d, p
         corr = float(np.corrcoef(tc, tr_c[best])[0, 1])
         if bd <= 5:
-            verdict = "🔴 거의 동일(심각)"
+            verdict = "거의 동일(심각)"
             severe += 1
         elif bd <= 10:
-            verdict = "🟡 매우 유사(의심)"
+            verdict = "매우 유사(의심)"
             suspect += 1
         else:
-            verdict = "🟢 다른 사진"
+            verdict = "다른 사진"
         rows.append({"test": os.path.basename(tp), "gold": r["label_ko"],
                      "nearest": os.path.basename(best), "dist": bd, "hist_corr": corr,
                      "verdict": verdict})
@@ -76,13 +76,13 @@ def main():
               f"{bd:>5d} {corr:>9.3f}  {verdict}")
 
     print("-" * 115)
-    print(f"총 {len(test)}장 | 🔴 거의동일 {severe}장 | 🟡 유사 {suspect}장 | 🟢 정상 {len(test)-severe-suspect}장")
+    print(f"총 {len(test)}장 | 거의동일 {severe}장 | 유사 {suspect}장 | 정상 {len(test)-severe-suspect}장")
     if severe:
-        print("\n⚠️ 심각한 near-duplicate 누수 존재 → test 성능이 부풀려졌을 가능성 높음. split 재설계 필요.")
+        print("\n심각한 near-duplicate 누수 존재 → test 성능이 부풀려졌을 가능성 높음. split 재설계 필요.")
     elif suspect:
-        print("\n⚠️ 유사 이미지 일부 존재 → 성능 해석 시 주의 필요.")
+        print("\n유사 이미지 일부 존재 → 성능 해석 시 주의 필요.")
     else:
-        print("\n✅ near-duplicate 누수 없음 → test 성능 신뢰 가능.")
+        print("\nnear-duplicate 누수 없음 → test 성능 신뢰 가능.")
 
     out = os.path.join(VLM_FT, "results", "leakage_check.json")
     with open(out, "w", encoding="utf-8") as f:

@@ -151,7 +151,7 @@ def run_test():
     # 이미지 수집
     images = collect_test_images()
     if not images:
-        print("❌ 테스트 이미지가 없습니다.")
+        print("테스트 이미지가 없습니다.")
         sys.exit(1)
     
     print(f"수집 이미지: {len(images)}장")
@@ -213,12 +213,12 @@ def run_test():
             "confidence": parsed["confidence"],
             "symptoms": parsed["symptoms"][:200],
             "treatment": parsed["treatment"][:200],
-            "json_parsed": "✅" if is_json else "❌",
-            "correct": "✅" if pred == gt else "❌",
+            "json_parsed": "" if is_json else "",
+            "correct": "" if pred == gt else "",
             "raw_response": response[:500],
         })
         
-        status = "✅" if pred == gt else "❌"
+        status = "" if pred == gt else ""
         print(f"  [{i+1}/{len(images)}] {os.path.basename(path):20s} GT={gt:10s} PRED={pred:10s} {status}")
     
     elapsed = time.time() - start

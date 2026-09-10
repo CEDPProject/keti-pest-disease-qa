@@ -25,14 +25,14 @@ SUPPORTED_EXT = (".jpg", ".jpeg", ".png", ".webp")
 def collect_test_images():
     """test_images/ 폴더에서 이미지 파일 목록 수집"""
     if not os.path.isdir(TEST_IMAGE_DIR):
-        print(f"❌ 테스트 이미지 폴더가 없습니다: {TEST_IMAGE_DIR}")
+        print(f"테스트 이미지 폴더가 없습니다: {TEST_IMAGE_DIR}")
         return []
     
     images = []
     for fname in sorted(os.listdir(TEST_IMAGE_DIR)):
         if fname.lower().endswith(SUPPORTED_EXT):
             images.append(os.path.join(TEST_IMAGE_DIR, fname))
-            print(f"  ✅ {fname}")
+            print(f"  {fname}")
     return images
 
 
@@ -47,7 +47,7 @@ def run_all_test_images():
     image_paths = collect_test_images()
     
     if not image_paths:
-        print("❌ 테스트 이미지가 없습니다. test_images/ 폴더에 감귤 이미지를 넣어주세요.")
+        print("테스트 이미지가 없습니다. test_images/ 폴더에 감귤 이미지를 넣어주세요.")
         sys.exit(1)
     
     print(f"\n총 {len(image_paths)}개 이미지 발견\n")
@@ -67,7 +67,7 @@ def run_all_test_images():
             result["status"] = "SUCCESS"
             results.append(result)
         except Exception as e:
-            print(f"❌ 오류: {e}")
+            print(f"오류: {e}")
             results.append({
                 "image_path": img_path,
                 "predicted_label": "ERROR",
@@ -104,9 +104,9 @@ def print_summary(results):
     print(f"  병해충 판정 (RAG 사용): {rag_count}개")
     
     if success == total:
-        print("\n✅ 모든 테스트 통과!")
+        print("\n모든 테스트 통과!")
     else:
-        print("\n⚠️ 일부 테스트 실패")
+        print("\n일부 테스트 실패")
         for r in results:
             if r["status"] == "FAILED":
                 print(f"  - {os.path.basename(r['image_path'])}: {r['final_answer']}")
@@ -151,7 +151,7 @@ def save_results_md(results):
         lines.append(f"### 이미지 분류 결과\n")
         lines.append(f"- 예측 라벨: **{r['predicted_label']}**")
         lines.append(f"- 신뢰도: {r['confidence']*100:.1f}%")
-        lines.append(f"- 정상 여부: {'✅ 정상' if r['is_healthy'] else '❌ 병해충'}")
+        lines.append(f"- 정상 여부: {'정상' if r['is_healthy'] else '병해충'}")
         lines.append(f"- RAG 사용 여부: {'사용' if r['rag_used'] else '미사용'}")
         
         if r.get("all_scores"):

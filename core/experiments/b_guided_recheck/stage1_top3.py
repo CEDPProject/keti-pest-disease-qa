@@ -154,7 +154,7 @@ def main():
     print(f"  스코어 top-1 acc : {score_top1_acc:.4f}")
     print(f"  생성   top-1 acc : {gen_top1_acc:.4f}  (기존 평가 0.772와 비교)")
     print(f"  스코어=생성 일치 : {agree:.4f}")
-    print(f"  ★ top-3 recall   : {top3_recall:.4f}   → 게이트(≥0.85) {'통과' if top3_recall>=0.85 else '미달'}")
+    print(f"  top-3 recall   : {top3_recall:.4f}   → 게이트(≥0.85) {'통과' if top3_recall>=0.85 else '미달'}")
     print(f"  출처별 top-3     : {src}")
     print(f"  마진(정답케이스) : {_stat(m_correct)}")
     print(f"  마진(오답케이스) : {_stat(m_wrong)}")

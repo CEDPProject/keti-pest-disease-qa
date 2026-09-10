@@ -131,7 +131,7 @@ def main():
 
     res = {"model": BASE, "epoch": ep, "zero_shot": zs, "fine_tuned": ft}
     json.dump(res, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-    print(f"\n★ [M1] 저장: {OUT}")
+    print(f"\n[M1] 저장: {OUT}")
 
 
 if __name__ == "__main__":

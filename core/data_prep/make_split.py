@@ -39,7 +39,7 @@ def make_split():
         te, tr = items[:n_test], items[n_test:]
         test.extend(te)
         train.extend(tr)
-        warn = "  ⚠ test 신뢰도 낮음" if len(te) <= 1 else ""
+        warn = "  test 신뢰도 낮음" if len(te) <= 1 else ""
         print(f"{items[0]['label_ko']:14s} {n:>4d} {len(tr):>6d} {len(te):>5d}{warn}")
 
     split = {

@@ -56,7 +56,7 @@ for q in test_qs:
             "time_sec": round(elapsed, 2),
             "status": "SUCCESS",
         })
-        print(f"  ✅ 성공 ({elapsed:.2f}초, {len(answer)}자)")
+        print(f"  성공 ({elapsed:.2f}초, {len(answer)}자)")
     except Exception as e:
         elapsed = time.time() - t0
         results["method1"].append({
@@ -65,7 +65,7 @@ for q in test_qs:
             "time_sec": round(elapsed, 2),
             "status": "FAILED",
         })
-        print(f"  ❌ 실패: {e}")
+        print(f"  실패: {e}")
 
 # ═══════════════════════════════════════════
 # 방법 2: 이미지 분류 + RAG
@@ -119,7 +119,7 @@ for img_path, gt_label in test_images_m2:
             "correct": (gt_label == "정상" and result["is_healthy"]) or
                        (gt_label != "정상" and not result["is_healthy"]),
         })
-        print(f"  ✅ 예측: {result['predicted_label']} ({result['confidence']*100:.1f}%) | {elapsed:.2f}초")
+        print(f"  예측: {result['predicted_label']} ({result['confidence']*100:.1f}%) | {elapsed:.2f}초")
     except Exception as e:
         elapsed = time.time() - t0
         results["method2"].append({
@@ -129,7 +129,7 @@ for img_path, gt_label in test_images_m2:
             "time_sec": round(elapsed, 2),
             "status": "FAILED",
         })
-        print(f"  ❌ 실패: {e}")
+        print(f"  실패: {e}")
 
 # ═══════════════════════════════════════════
 # 방법 3: VLM + RAG
@@ -164,7 +164,7 @@ for img_path, question, gt_label in test_images_m3:
             "time_sec": round(elapsed, 2),
             "status": "SUCCESS",
         })
-        print(f"  ✅ 완료 ({elapsed:.2f}초)")
+        print(f"  완료 ({elapsed:.2f}초)")
     except Exception as e:
         elapsed = time.time() - t0
         results["method3"].append({
@@ -175,7 +175,7 @@ for img_path, question, gt_label in test_images_m3:
             "time_sec": round(elapsed, 2),
             "status": "FAILED",
         })
-        print(f"  ❌ 실패: {e}")
+        print(f"  실패: {e}")
 
 # ═══════════════════════════════════════════
 # 결과 저장

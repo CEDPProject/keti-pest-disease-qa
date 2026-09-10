@@ -123,7 +123,7 @@ def main():
     print("=" * 56); print("  [M5] 9B 환각률 (학명 기준)")
     print(f"  조건A(9B직접): 환각 {A['halluc_n']}/{A['n']} = {A['halluc_rate']*100:.1f}%")
     print(f"  조건B(9B+RAG): 환각 {B['halluc_n']}/{B['n']} = {B['halluc_rate']*100:.1f}% "
-          f"{'✅ 0% 확인' if B['halluc_n']==0 else '⚠️ 0아님 → 사례 전부 첨부'}")
+          f"{'0% 확인' if B['halluc_n']==0 else '0아님 → 사례 전부 첨부'}")
     print(f"  저장: {OUT}")
 
 

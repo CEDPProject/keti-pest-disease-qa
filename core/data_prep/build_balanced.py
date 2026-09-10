@@ -163,7 +163,7 @@ def main():
     for key in all_keys:
         paths = real[key][:]
         n = len(paths)
-        # ★ 출처(원본 한글/NCPMS 영어) · 부위(정상 잎/열매) 비율 유지 층화분할
+        # 출처(원본 한글/NCPMS 영어) · 부위(정상 잎/열매) 비율 유지 층화분할
         test_paths, train_reals = _split_stratified(paths, key, rng)
         rng.shuffle(train_reals)
 

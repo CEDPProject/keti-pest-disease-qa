@@ -87,7 +87,7 @@ def main(apply=False):
           f"최대: {max(grand, key=grand.get)} {max(grand.values())}장")
     under = {k: v for k, v in grand.items() if v < 50}
     if under:
-        print(f"\n⚠ 50장 미만(추가 필요): {under}")
+        print(f"\n50장 미만(추가 필요): {under}")
     if not apply:
         print("\n→ 실제 편입하려면:  python core/data_prep/consolidate_ncpms.py --apply")
     return grand

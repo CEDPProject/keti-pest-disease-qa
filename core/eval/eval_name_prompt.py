@@ -122,9 +122,9 @@ def main():
     print(f"\n=== [{tag}] '병명만' 프롬프트 macro-F1 곡선 ===")
     for c in curve:
         bar = "█" * int(c["macro_f1"] * 40)
-        mark = " ★" if c["epoch"] == best["epoch"] else ""
+        mark = " " if c["epoch"] == best["epoch"] else ""
         print(f"  ep{c['epoch']:2d}  acc={c['accuracy']:.3f}  F1={c['macro_f1']:.3f}  {bar}{mark}")
-    print(f"★ [{tag}] 최적 ep{best['epoch']} · macro-F1={best['macro_f1']:.3f} · acc={best['accuracy']:.3f}")
+    print(f"[{tag}] 최적 ep{best['epoch']} · macro-F1={best['macro_f1']:.3f} · acc={best['accuracy']:.3f}")
 
 
 if __name__ == "__main__":
