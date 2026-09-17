@@ -1,10 +1,10 @@
-"""M1: Ablation — 입력 모달리티 3조건 × [zero-shot, fine-tuned], 전부 9B.
-  (a) 텍스트만  : 이미지 없이 캡션(병명토큰 제거) → 병명 선택
-  (b) 이미지만  : 사진 + 최소 지시문("병명만 답하라.")
+"""Ablation — 입력 모달리티 3조건 × [zero-shot, fine-tuned].
+
+  (a) 텍스트만   : 이미지 없이 캡션(병명 토큰 제거) → 병명 선택
+  (b) 이미지만   : 사진 + 최소 지시문("병명만 답하라.")
   (c) 이미지+텍스트: 사진 + 평가 고정 질문
-각 조건 acc + macro-F1 (전체 + 출처별). 캡션은 기존 fusion_captions.json 재사용(재생성 금지).
-어댑터=최적 에폭(balanced_curve_9b.json).
-산출: core/results/ablation_9b.json
+각 조건 acc + macro-F1 (전체 + 출처별). 캡션은 fusion_captions.json 재사용.
+결과: core/results/ablation_9b.json
 """
 import os, sys, re, json
 os.environ.setdefault("HF_HOME", "/opt/project_data/users/jhlee/hf_cache")

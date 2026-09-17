@@ -1,5 +1,7 @@
-"""M4: Selective prediction (9B 마진 기반). 4B exp3_confidence.py 와 동일 로직,
-입력만 b_stage1_top3_9b.json. GPU 불필요.
+"""Selective prediction (마진 기반). GPU 불필요.
+
+입력=core/results/b_stage1_top3_9b.json.
+임계값 스윕, risk-coverage + AURC, 마진 하위 10/20/30% 보류 시 잔여 acc/F1.
 산출: core/results/exp3_confidence_9b.json
 """
 import os

@@ -1,6 +1,8 @@
-"""M5 재채점(9B): 영명(English name) 오인 제거. 저장된 답변/라틴에서 학명만 판정.
-4B p1_2_rescore.py 와 동일 수정. 입력=p1_2_hallucination_9b.json (덮어씀).
-정규식이 'Scab diseases'/'Green mold' 등 영명을 라틴 학명으로 잡던 버그 제거.
+"""환각 재채점 — 영명(English name) 오인 제거.
+
+저장된 답변/라틴에서 학명만 판정. 라틴 정규식이 'Scab diseases'/'Green mold' 등
+영명을 학명으로 잡던 오검출을 제거한 뒤 재집계.
+입력=core/results/p1_2_hallucination_9b.json (덮어씀).
 """
 import os, sys, re, json
 VLM_FT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

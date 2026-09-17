@@ -1,13 +1,11 @@
-"""데모 실제 테스트 — 데모(app.py)와 동일한 파이프라인을 test 이미지에 돌려 결과를 정리.
+"""데모 파이프라인 검증 — 데모와 동일한 파이프라인을 test 이미지에 돌려 결과를 정리.
 
-1) test 25장 전체를 '진단' 질문으로 → 정확도/오답 목록
-2) 대표 이미지들에 의도별 질문(진단/병명/방제/증상) → 응답 형식이 의도를 따르는지
-3) 병명 추출 → 공식 KB 섹션 연결이 되는지 (데모 우측 패널)
+1) test 전체를 '진단' 질문으로 → 정확도/오답 목록
+2) 대표 이미지에 의도별 질문(진단/병명/방제/증상) → 응답 형식이 의도를 따르는지
+3) 병명 추출 → 공식 KB 섹션 연결 확인
 
-결과: docs/03_vlm_finetune/demo_test_report.md
-
-  python test_demo.py --model_dir ../train/output/qwen2_5vl_merged
-  python test_demo.py --adapter ../train/output/qwen2_5vl_lora/checkpoint-N
+  python demo_validation.py --model_dir <merged_model_dir>
+  python demo_validation.py --adapter <lora_checkpoint_dir>
 """
 
 import os

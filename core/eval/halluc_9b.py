@@ -1,9 +1,10 @@
-"""M5: 환각률 2조건 (9B). A=9B 파인튜닝 자유생성, B=9B 병명→RAG build_answer(KB원문).
-4B p1_2_hallucination.py 와 동일 채점(라틴 이명 fabrication/misattribution/correct).
-어댑터=최적 에폭(balanced_curve_9b.json).
-프로토콜(확정): 정상 클래스 제외(병원균 없음→학명 부재) → 질병 49장 × 3질의(학명/약제/설명)
-  = 147 factual queries. P1-2 실측 프로토콜 그대로(사용자 확정 2026-08-11).
-산출: core/results/p1_2_hallucination_9b.json
+"""환각률 2조건 평가.
+
+  A = 파인튜닝 VLM 자유생성
+  B = VLM 병명 판정 → RAG build_answer(KB 원문 조립)
+학명(라틴 이명) 기준 fabrication/misattribution/correct 채점, 영명 제외.
+정상 클래스 제외(병원균 없음→학명 부재) → 질병 49장 × 3질의(학명/약제/설명) = 147 factual queries.
+결과: core/results/p1_2_hallucination_9b.json
 """
 import os, sys, re, json
 os.environ.setdefault("HF_HOME", "/opt/project_data/users/jhlee/hf_cache")

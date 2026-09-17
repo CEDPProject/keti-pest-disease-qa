@@ -1,10 +1,8 @@
-"""STAGE 2: 감별 가이드 발췌 (KB 병징 원문 발췌만).
+"""유도 감별 재확인 2단계 — 감별 가이드 발췌 (KB 병징 원문).
 
-기존 검색기(KBRetriever.retrieve_lines)로 각 후보 병해의 병징 섹션에서
-시각 어휘 질의로 상위 2~3문장을 발췌(원문 그대로). 재작성 없음.
-
-산출: core/results/b_stage2_guides.json
-  - 샘플 5개 + 오답 13건 전체의 후보별 발췌
+KBRetriever.retrieve_lines로 각 후보 병해의 병징 섹션에서 시각 어휘 질의로
+상위 2~3문장을 발췌(원문 그대로, 재작성 없음).
+결과: core/results/b_stage2_guides.json
 """
 import os
 import sys

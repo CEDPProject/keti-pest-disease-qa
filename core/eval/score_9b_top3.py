@@ -1,9 +1,9 @@
-"""M3: Qwen3.5-9B top-3 teacher-forcing 스코어링 + 신뢰도(마진) — 논문용.
-4B stage1_top3.py 와 동일 방식(8클래스 라벨 length-normalized 로그우도, 결정적),
-베이스 9B, 어댑터=최적 에폭(balanced_curve_9b.json에서 자동 판독).
+"""Qwen3.5-9B top-3 teacher-forcing 스코어링 + 신뢰도(마진).
 
+8클래스 라벨의 length-normalized 로그우도로 스코어링(결정적).
+어댑터=최적 에폭(balanced_curve_9b.json에서 자동 판독).
 산출: core/results/b_stage1_top3_9b.json
-  - score_top1 vs 생성 top-1 일치율 (검증 먼저)
+  - score_top1 vs 생성 top-1 일치율
   - top-3 recall (전체 + 출처별)
   - 마진 분포: 정답/오답 케이스 중앙값
 """

@@ -240,3 +240,6 @@ core/results/logs/
 # 정리 백업
 .cleanup_backup_*.tar.gz
 .restructure_backup_*.tar.gz
+
+# 논문/실험 결과 산출물 (코드만 커밋)
+result_md/
