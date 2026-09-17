@@ -78,7 +78,7 @@ def main():
         rows.append({"image": os.path.basename(r["image"]), "gold": r["label_ko"],
                      "pred": KEY_TO_LABEL.get(pk, "불명확"), "ok": ok, "kb_hit": kb_hit,
                      "answer": ans})
-        print(f"  [{i:2d}/25] {'✅' if ok else '❌'} {r['label_ko']} → {KEY_TO_LABEL.get(pk,'불명확')}")
+        print(f"  [{i:2d}/25] {'' if ok else ''} {r['label_ko']} → {KEY_TO_LABEL.get(pk,'불명확')}")
     acc = correct / len(test)
 
     # ---- 2) 의도별 응답 (정답 맞힌 이미지 중 서로 다른 클래스 3장) ----
@@ -116,7 +116,7 @@ def main():
     md.append("|---:|---|---|---|:--:|:--:|")
     for i, x in enumerate(rows, 1):
         md.append(f"| {i} | `{x['image']}` | {x['gold']} | {x['pred']} | "
-                  f"{'✅' if x['ok'] else '❌'} | {'✅' if x['kb_hit'] else '—'} |")
+                  f"{'' if x['ok'] else ''} | {'' if x['kb_hit'] else '—'} |")
     md.append("")
 
     wrong = [x for x in rows if not x["ok"]]

@@ -51,7 +51,7 @@ class ImagePestDiseaseQA:
         self.persist_directory = persist_directory
         
         print("=" * 60)
-        print("🖼️  이미지 기반 병해충 Q&A 시스템 초기화")
+        print(" 이미지 기반 병해충 Q&A 시스템 초기화")
         print("=" * 60)
         
         # 1. 이미지 분류기 로드
@@ -125,13 +125,13 @@ class ImagePestDiseaseQA:
             dict: {image_path, predicted_label, confidence, is_healthy, rag_used, final_answer, all_scores}
         """
         print(f"\n{'='*60}")
-        print(f"🖼️  이미지 분석 중: {image_path}")
+        print(f" 이미지 분석 중: {image_path}")
         print(f"{'='*60}")
         
         # 1단계: 이미지 분류
         label_ko, score, all_results = self.classifier.classify_with_summary(image_path)
         
-        print(f"\n📌 1차 판별: {label_ko} (신뢰도: {score*100:.1f}%)")
+        print(f"\n1차 판별: {label_ko} (신뢰도: {score*100:.1f}%)")
         for r in all_results:
             bar = "█" * int(r["score"] * 20)
             print(f"   {r['label_ko']:15s} {r['score']*100:5.1f}% {bar}")
@@ -147,7 +147,7 @@ class ImagePestDiseaseQA:
         
         if healthy:
             # 정상 판정 → RAG 호출 없이 고정 답변
-            print("\n✅ 정상 판정 → RAG 호출 생략")
+            print("\n정상 판정 → RAG 호출 생략")
             summary_line = ", ".join(
                 f"{r['label_ko']}({r['label']}) {r['score']*100:.1f}%"
                 for r in all_results
@@ -172,7 +172,7 @@ class ImagePestDiseaseQA:
         if extra_question:
             search_query += f" {extra_question}"
         
-        print(f"\n🔍 RAG 검색 쿼리: {search_query}")
+        print(f"\nRAG 검색 쿼리: {search_query}")
         source_docs = self.retriever.invoke(search_query)
         context = "\n\n".join(doc.page_content for doc in source_docs)
         
@@ -188,7 +188,7 @@ class ImagePestDiseaseQA:
             extra_question=extra_q_str,
         )
         
-        print("\n💬 LLM 답변 생성 중...")
+        print("\nLLM 답변 생성 중...")
         raw_answer = self.llm.invoke(formatted_prompt)
         
         # 모델 내부 추론 태그 제거
@@ -212,7 +212,7 @@ class ImagePestDiseaseQA:
     def interactive_mode(self):
         """대화형 모드 실행"""
         print("\n" + "=" * 60)
-        print("🖼️  감귤 병해충 이미지 진단 시스템")
+        print(" 감귤 병해충 이미지 진단 시스템")
         print("=" * 60)
         print("감귤 이미지 경로를 입력하면 병해충을 진단합니다.")
         print("  - 이미지 경로만 입력: 이미지 분석 + 상세 답변")
@@ -221,7 +221,7 @@ class ImagePestDiseaseQA:
         
         while True:
             try:
-                user_input = input("🖼️  이미지 경로 (+ 추가 질문): ").strip()
+                user_input = input(" 이미지 경로 (+ 추가 질문): ").strip()
             except (UnicodeDecodeError, EOFError):
                 continue
             
@@ -240,7 +240,7 @@ class ImagePestDiseaseQA:
                 extra_question = parts[1] if len(parts) > 1 else ""
                 
                 if not os.path.exists(image_path):
-                    print(f"❌ 파일을 찾을 수 없습니다: {image_path}\n")
+                    print(f"파일을 찾을 수 없습니다: {image_path}\n")
                     continue
                 
                 self.query(image_path, extra_question)
@@ -249,7 +249,7 @@ class ImagePestDiseaseQA:
                 print("\n\n시스템을 종료합니다.")
                 break
             except Exception as e:
-                print(f"\n❌ 오류 발생: {e}\n")
+                print(f"\n오류 발생: {e}\n")
 
 
 # --- 모듈 레벨 편의 함수 ---

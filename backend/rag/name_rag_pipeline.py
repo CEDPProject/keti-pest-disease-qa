@@ -59,7 +59,7 @@ class NameRagPipeline:
             sugg = self.kb.suggest(raw[:40], k=3)
             return {"vlm_raw": raw, "disease": None, "how": "unknown",
                     "suggestions": sugg,
-                    "answer": ("## ❓ 병명을 특정하지 못했습니다\n\n"
+                    "answer": ("## 병명을 특정하지 못했습니다\n\n"
                                "모델이 지식베이스에 없는 병명을 답했습니다. 유사 후보는 다음과 같습니다:\n\n"
                                + "\n".join(f"- {n} (유사도 {s:.3f})" for n, s in sugg)
                                + "\n\n> 사진을 다시 촬영하거나 전문가 확인이 필요합니다.")}
@@ -68,13 +68,13 @@ class NameRagPipeline:
         if res["disease"] is None:
             sugg = self.kb.suggest(name, k=3)
             return {"vlm_raw": raw, "disease": None, "how": "unknown", "suggestions": sugg,
-                    "answer": "## ❓ 병명을 KB에서 찾지 못했습니다\n\n"
+                    "answer": "## 병명을 KB에서 찾지 못했습니다\n\n"
                               + "\n".join(f"- {n} ({s:.3f})" for n, s in sugg)}
 
         disease = res["disease"]
         answer = self.kb.build_answer(disease, user_question)
         if res["how"] == "rag":
-            answer = (f"> ⚠️ 모델이 답한 '{name}' 은 KB에 없어 유사도 {res['score']:.3f} 로 "
+            answer = (f"> 모델이 답한 '{name}' 은 KB에 없어 유사도 {res['score']:.3f} 로 "
                       f"**{disease}** 에 매핑했습니다.\n\n" + answer)
         return {"vlm_raw": raw, "disease": disease, "how": res["how"],
                 "score": res["score"], "answer": answer,

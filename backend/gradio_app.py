@@ -37,7 +37,7 @@ def diagnose(image, user_question):
     # 우측: 파이프라인 내부 동작(투명성)
     how = {"exact": "KB 정확 일치", "synonym": "동의어 매핑",
            "partial": "부분 일치", "rag": "RAG 최근접 매핑", "unknown": "미확인"}
-    right = ["### 🔎 파이프라인 내부", "",
+    right = ["### 파이프라인 내부", "",
              f"**1) VLM 출력(병명만 취함)**  \n`{out['vlm_raw'][:80].splitlines()[0] if out['vlm_raw'] else '-'}`", "",
              f"**2) 병명 해석**  \n{out['disease'] or '불명확'} — {how.get(out['how'], out['how'])}"]
     if out.get("score") is not None and out["how"] == "rag":
@@ -56,7 +56,7 @@ def main():
     load(args.model_dir)
 
     with gr.Blocks(title="감귤 병해충 AI 진단") as demo:
-        gr.Markdown("# 🍊 감귤 병해충 AI 진단")
+        gr.Markdown("# 감귤 병해충 AI 진단")
         gr.Markdown("**VLM은 병명만 판단하고, 모든 정보(학명·증상·방제·약제)는 전문가 지식베이스에서 조회합니다.**  \n"
                     "모델이 사실을 생성하지 않으므로 환각이 발생하지 않습니다.")
         with gr.Row():
@@ -65,8 +65,8 @@ def main():
                 uq = gr.Textbox(label="질문 (선택)",
                                 placeholder="예) 약제 뭐 써요? / 어떤 증상인가요? / 왜 생기나요?")
                 btn = gr.Button("진단하기", variant="primary")
-                gr.Markdown("<sub>⚠️ 이미지만으로 확정 진단은 어렵습니다. 현장 확인·전문가 검토가 필요합니다.  \n"
-                            "⚠️ 이 모델은 학습 데이터(121장)와 다른 출처의 사진에서는 정확도가 크게 떨어집니다.</sub>")
+                gr.Markdown("<sub>이미지만으로 확정 진단은 어렵습니다. 현장 확인·전문가 검토가 필요합니다.  \n"
+                            "이 모델은 학습 데이터(121장)와 다른 출처의 사진에서는 정확도가 크게 떨어집니다.</sub>")
             with gr.Column(scale=2):
                 # sanitize_html=False : KB 원문을 접는 <details> 태그를 렌더링하기 위함
                 out_ans = gr.Markdown(label="진단 결과", sanitize_html=False)

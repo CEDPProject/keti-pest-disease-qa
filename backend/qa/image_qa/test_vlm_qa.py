@@ -43,7 +43,7 @@ def collect_test_images():
 def run_vlm_tests_for_all_images():
     """Run all predefined test questions for every image in image_qa/test_images."""
     print("=" * 60)
-    print("🧪 VLM 기반 이미지-질문 QA 테스트")
+    print("VLM 기반 이미지-질문 QA 테스트")
     print("=" * 60)
     
     # 1. 이미지 수집
@@ -104,7 +104,7 @@ def run_vlm_tests_for_all_images():
 def print_summary(all_results):
     """결과 요약 출력"""
     print("\n" + "=" * 60)
-    print("📊 테스트 결과 요약")
+    print("테스트 결과 요약")
     print("=" * 60)
     
     total = 0
@@ -174,7 +174,7 @@ def save_results_md(all_results):
     with open(RESULT_FILE, "w", encoding="utf-8") as f:
         f.write(content)
     
-    print(f"\n📄 결과 저장 완료: {RESULT_FILE}")
+    print(f"\n결과 저장 완료: {RESULT_FILE}")
 
 
 if __name__ == "__main__":

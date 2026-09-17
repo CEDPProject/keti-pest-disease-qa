@@ -17,7 +17,7 @@ TEST_QUESTIONS = [
 def run_test():
     """테스트 실행"""
     print("="*60)
-    print("🧪 병해충 Q&A 시스템 테스트")
+    print("병해충 Q&A 시스템 테스트")
     print("="*60)
     
     # 현재 스크립트 경로 기준으로 경로 설정
@@ -58,7 +58,7 @@ def run_test():
     
     # 결과 요약
     print("\n" + "="*60)
-    print("📊 테스트 결과 요약")
+    print("테스트 결과 요약")
     print("="*60)
     
     success_count = sum(1 for r in results if r["status"] == "SUCCESS")

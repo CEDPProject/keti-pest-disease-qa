@@ -133,14 +133,14 @@ class KBRetriever:
     # ---------- 4) 답변 조립 (모델이 사실을 생성하지 않음) ----------
     def build_answer(self, disease: str, question: str = None) -> str:
         k = self.kb[disease]
-        out = [f"## 🔬 진단: **{disease}**", ""]
+        out = [f"## 진단: **{disease}**", ""]
         ident = []
         if k["scientific"] and "미확정" not in k["scientific"]:
             ident.append(f"학명 {k['scientific']}")
         if k["english"] and "가칭" not in k["english"]:
             ident.append(f"영명 {k['english']}")
         out += [f"*{' / '.join(ident)}*", ""] if ident else \
-               ["> ⚠️ 이 병해는 KB에 학명이 확정되어 있지 않습니다(전문가 검증 필요).", ""]
+               ["> 이 병해는 KB에 학명이 확정되어 있지 않습니다(전문가 검증 필요).", ""]
 
         if not question:
             for c in self.retrieve(disease, None):
@@ -152,22 +152,22 @@ class KBRetriever:
 
             if top["section"] in LIST_SECTIONS:
                 # 약제 목록은 전체가 답
-                out += [f"### 💊 {top['section']}", _body(top), ""]
+                out += [f"### {top['section']}", _body(top), ""]
             else:
                 best = self.retrieve_lines(disease, question, top["section"])
                 n_total = sum(1 for l in self.lines
                               if l["disease"] == disease and l["section"] == top["section"])
-                out += ["### 💡 질문에 대한 답", ""]
+                out += ["### 질문에 대한 답", ""]
                 out += [f"- {l['text']}" for l in best] if best else [_body(top)]
                 out.append("")
                 # 상위 문장이 섹션 전체를 덮으면 접어둘 내용이 없다
                 if best and len(best) < n_total:
-                    out += [f"<details><summary>📄 「{top['section']}」 원문 전체 보기 "
+                    out += [f"<details><summary>「{top['section']}」 원문 전체 보기 "
                             f"(문장 {n_total}개)</summary>",
                             "", _body(top), "", "</details>", ""]
 
             for s in secs[1:]:
-                out += [f"<details><summary>📄 참고: 「{s['section']}」</summary>",
+                out += [f"<details><summary>참고: 「{s['section']}」</summary>",
                         "", _body(s), "", "</details>", ""]
 
         out += ["---",

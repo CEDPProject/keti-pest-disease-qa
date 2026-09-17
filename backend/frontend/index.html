@@ -439,7 +439,7 @@ details.raw .rawtext{
 
 <header class="top">
   <button class="brand" id="brandHome" aria-label="홈으로 이동" type="button">
-    <div class="logo">🍊</div>
+    <div class="logo"></div>
     <h1>감귤 병해충 AI 진단</h1>
   </button>
   <nav class="nav" id="nav" aria-label="주요 메뉴">
@@ -465,7 +465,7 @@ details.raw .rawtext{
         모델이 사실을 생성하지 않는 구조라 환각(없는 정보를 지어내는 것)을 근본적으로 차단합니다.
       </p>
       <div class="doc-actions">
-        <button class="cta" data-goto="diagnose">📷 진단 시작하기</button>
+        <button class="cta" data-goto="diagnose">진단 시작하기</button>
         <button class="cta ghost" data-goto="tech">활용 기술 보기</button>
       </div>
     </div>
@@ -474,17 +474,17 @@ details.raw .rawtext{
       <div class="sec-h"><span class="no">01</span><h2>왜 이 연구인가 — 문제</h2></div>
       <div class="cards">
         <div class="card">
-          <span class="em">🔍</span>
+          <span class="em"></span>
           <h3>조기 진단의 벽</h3>
           <p>병해충은 초기 대응이 관건이지만, 유사한 병징을 육안으로 감별하려면 전문성이 필요하고 현장 전문가는 부족합니다.</p>
         </div>
         <div class="card">
-          <span class="em">📡</span>
+          <span class="em"></span>
           <h3>접근성의 한계</h3>
           <p>농가가 병징을 발견한 순간 즉시 물어볼 전문가나 신뢰할 자료에 접근하기 어렵습니다.</p>
         </div>
         <div class="card">
-          <span class="em">💊</span>
+          <span class="em"></span>
           <h3>오진 → 약제 오남용</h3>
           <p>잘못된 진단은 부적절한 약제·살포 시기로 이어져 방제 실패와 비용·환경 부담을 키웁니다.</p>
         </div>
@@ -499,12 +499,12 @@ details.raw .rawtext{
       </p>
       <div class="cards" style="margin-top:6px">
         <div class="card accent">
-          <span class="em">🧠</span>
+          <span class="em"></span>
           <h3>모델 — 무엇인가</h3>
           <p>파인튜닝한 VLM이 이미지 근거로 <b>병명 하나</b>만 결정합니다. 시각 판단은 모델이 가장 잘합니다.</p>
         </div>
         <div class="card ok">
-          <span class="em">🔒</span>
+          <span class="em"></span>
           <h3>지식베이스 — 무슨 뜻인가</h3>
           <p>학명·증상·약제 등 <b>사실</b>은 전문가 KB 원문에서 그대로 조회합니다. 모델이 생성하지 않습니다.</p>
         </div>
@@ -521,7 +521,7 @@ details.raw .rawtext{
         <div class="st"><div class="v" style="font-size:26px">0.56~0.72</div><div class="l">다른 출처 한국 감귤<br>(교차 검증 · 부분 전이)</div></div>
       </div>
       <div class="note info">
-        <span class="i">🔎</span>
+        <span class="i"></span>
         <div><b>파이프라인이 작동하고, 실제 병징도 어느 정도 학습했습니다.</b> 사진 121장으로 학습하면 같은 분포에서 92%,
         학습에 안 쓴 <b>다른 출처의 한국 감귤(온주밀감)</b> 사진에서도 <b>0.56~0.72</b>로 상당 부분 맞힙니다 — 사진 스타일만 외운 게 아닙니다.
         다만 <b>다른 감귤 종(오렌지 등)·현장 사진엔 아직 약해</b>, 견고성을 높이려면 <b>다양한 출처의 데이터 확보</b>가 관건입니다.</div>
@@ -531,10 +531,10 @@ details.raw .rawtext{
     <div class="sec">
       <div class="sec-h"><span class="no">04</span><h2>기대 효과</h2></div>
       <div class="cards">
-        <div class="card"><span class="em">⏱️</span><h3>조기 대응 지원</h3><p>현장에서 즉시 1차 진단을 받아 초기 방제 타이밍을 놓치지 않도록 돕습니다.</p></div>
-        <div class="card"><span class="em">🧪</span><h3>약제 오남용 감소</h3><p>검증된 방제 정보만 제공해 부적절한 약제 선택·시기를 줄입니다.</p></div>
-        <div class="card"><span class="em">📚</span><h3>전문지식 접근성</h3><p>전문가 지식베이스를 누구나 질문 형태로 활용할 수 있게 합니다.</p></div>
-        <div class="card"><span class="em">📈</span><h3>데이터 투자 근거</h3><p>“데이터에 투자하면 성능이 나온다”를 숫자로 증명해 후속 데이터 확보의 근거를 제공합니다.</p></div>
+        <div class="card"><span class="em">⏱</span><h3>조기 대응 지원</h3><p>현장에서 즉시 1차 진단을 받아 초기 방제 타이밍을 놓치지 않도록 돕습니다.</p></div>
+        <div class="card"><span class="em"></span><h3>약제 오남용 감소</h3><p>검증된 방제 정보만 제공해 부적절한 약제 선택·시기를 줄입니다.</p></div>
+        <div class="card"><span class="em"></span><h3>전문지식 접근성</h3><p>전문가 지식베이스를 누구나 질문 형태로 활용할 수 있게 합니다.</p></div>
+        <div class="card"><span class="em"></span><h3>데이터 투자 근거</h3><p>“데이터에 투자하면 성능이 나온다”를 숫자로 증명해 후속 데이터 확보의 근거를 제공합니다.</p></div>
       </div>
     </div>
   </div>
@@ -560,7 +560,7 @@ details.raw .rawtext{
             <input type="file" id="file" accept="image/*" aria-label="감귤 사진 업로드" />
             <img id="preview" alt="업로드한 감귤 사진 미리보기" />
             <div class="ph">
-              <div class="big">🖼</div>
+              <div class="big"></div>
               <div><b>사진을 끌어다 놓거나 클릭</b>하세요</div>
               <div style="font-size:12px; margin-top:5px; color:var(--faint)">JPG · PNG</div>
             </div>
@@ -600,7 +600,7 @@ details.raw .rawtext{
         </div>
 
         <div class="empty" id="empty">
-          <div class="ic">🔬</div>
+          <div class="ic"></div>
           <h3>사진을 올리고 진단해 보세요</h3>
           <p><b>병명</b>과 <b>정보</b>는 서로 다른 출처에서 옵니다.</p>
           <div class="legend">
@@ -621,7 +621,7 @@ details.raw .rawtext{
 
     <div class="disclaimer">
       <div class="in">
-        <div class="ic">⚠️</div>
+        <div class="ic"></div>
         <div>
           <h3>이 시스템은 PoC(가능성 검증) 단계입니다</h3>
           <p>
@@ -656,20 +656,20 @@ details.raw .rawtext{
         <table class="tbl">
           <thead><tr><th>클래스</th><th>발생 부위</th><th class="num">전체</th><th class="num">train</th><th class="num">test</th><th>비고</th></tr></thead>
           <tbody>
-            <tr><td>잿빛곰팡이병</td><td><div class="parts-cell"><span class="part">🌸 꽃</span><span class="part fruit">🍊 열매</span></div></td><td class="num">27</td><td class="num">22</td><td class="num">5</td><td></td></tr>
-            <tr><td>더뎅이병</td><td><div class="parts-cell"><span class="part leaf">🍃 잎</span><span class="part fruit">🍊 열매</span></div></td><td class="num">21</td><td class="num">17</td><td class="num">4</td><td></td></tr>
-            <tr><td>탄저병</td><td><div class="parts-cell"><span class="part leaf">🍃 잎</span><span class="part fruit">🍊 열매</span><span class="part">🌿 가지</span></div></td><td class="num">19</td><td class="num">15</td><td class="num">4</td><td class="warn-cell">KB 초안</td></tr>
-            <tr><td>궤양병</td><td><div class="parts-cell"><span class="part leaf">🍃 잎</span><span class="part fruit">🍊 열매</span><span class="part">🌿 가지</span></div></td><td class="num">18</td><td class="num">14</td><td class="num">4</td><td></td></tr>
-            <tr><td>수지병</td><td><div class="parts-cell"><span class="part">🌿 가지·줄기</span></div></td><td class="num">13</td><td class="num">10</td><td class="num">3</td><td></td></tr>
-            <tr><td>녹색곰팡이병</td><td><div class="parts-cell"><span class="part fruit">🍊 열매</span><span class="part">수확 후</span></div></td><td class="num">11</td><td class="num">9</td><td class="num">2</td><td></td></tr>
-            <tr><td>검은점무늬병</td><td><div class="parts-cell"><span class="part leaf">🍃 잎</span><span class="part fruit">🍊 열매</span></div></td><td class="num">8</td><td class="num">6</td><td class="num">2</td><td></td></tr>
-            <tr><td>검은무늬병</td><td><div class="parts-cell"><span class="part leaf">🍃 잎</span><span class="part fruit">🍊 열매</span></div></td><td class="num">4</td><td class="num">3</td><td class="num warn-cell">1</td><td class="warn-cell">KB 초안 · 병명 미확정</td></tr>
+            <tr><td>잿빛곰팡이병</td><td><div class="parts-cell"><span class="part">꽃</span><span class="part fruit">열매</span></div></td><td class="num">27</td><td class="num">22</td><td class="num">5</td><td></td></tr>
+            <tr><td>더뎅이병</td><td><div class="parts-cell"><span class="part leaf">잎</span><span class="part fruit">열매</span></div></td><td class="num">21</td><td class="num">17</td><td class="num">4</td><td></td></tr>
+            <tr><td>탄저병</td><td><div class="parts-cell"><span class="part leaf">잎</span><span class="part fruit">열매</span><span class="part">가지</span></div></td><td class="num">19</td><td class="num">15</td><td class="num">4</td><td class="warn-cell">KB 초안</td></tr>
+            <tr><td>궤양병</td><td><div class="parts-cell"><span class="part leaf">잎</span><span class="part fruit">열매</span><span class="part">가지</span></div></td><td class="num">18</td><td class="num">14</td><td class="num">4</td><td></td></tr>
+            <tr><td>수지병</td><td><div class="parts-cell"><span class="part">가지·줄기</span></div></td><td class="num">13</td><td class="num">10</td><td class="num">3</td><td></td></tr>
+            <tr><td>녹색곰팡이병</td><td><div class="parts-cell"><span class="part fruit">열매</span><span class="part">수확 후</span></div></td><td class="num">11</td><td class="num">9</td><td class="num">2</td><td></td></tr>
+            <tr><td>검은점무늬병</td><td><div class="parts-cell"><span class="part leaf">잎</span><span class="part fruit">열매</span></div></td><td class="num">8</td><td class="num">6</td><td class="num">2</td><td></td></tr>
+            <tr><td>검은무늬병</td><td><div class="parts-cell"><span class="part leaf">잎</span><span class="part fruit">열매</span></div></td><td class="num">4</td><td class="num">3</td><td class="num warn-cell">1</td><td class="warn-cell">KB 초안 · 병명 미확정</td></tr>
             <tr class="total"><td>합계</td><td></td><td class="num">121</td><td class="num">96</td><td class="num">25</td><td></td></tr>
           </tbody>
         </table>
       </div>
       <div class="note info">
-        <span class="i">ℹ️</span>
+        <span class="i">ℹ</span>
         <div><b>발생 부위</b>는 KB '형태/병징' 기준이며, 한 병해가 여러 부위(잎·열매·가지)에 함께 발생할 수 있습니다.
         녹색곰팡이병은 <b>수확 후 저장 과실</b>에서 주로 문제됩니다.<br>
         증강(augmentation)은 <b>train에만</b> 적용해 test 누수를 방지했습니다 → 학습 <b>384샘플</b>.
@@ -699,7 +699,7 @@ details.raw .rawtext{
         사진 스타일만 외운 게 아니라 실제 병징을 학습했음을 보여줍니다.
       </p>
       <div class="note info">
-        <span class="i">🔎</span>
+        <span class="i"></span>
         <div>초기엔 <b>다른 감귤 종(파키스탄 오렌지/라임, Mendeley)</b>으로 검증해 무작위 수준이 나와 '일반화 실패'로 봤으나,
         같은 <b>한국 감귤</b>로 다시 검증하니 0.56~0.72로 전이됐습니다. → 앞선 붕괴는 <b>과일 종 차이(도메인 시프트)</b> 때문이었습니다.</div>
       </div>
@@ -718,7 +718,7 @@ details.raw .rawtext{
         <div class="row"><dt>전체 macro-F1</dt><dd><b>0.950</b> <span class="mono">(9클래스 · ep5)</span></dd></div>
       </div>
       <div class="note warn">
-        <span class="i">⚠️</span>
+        <span class="i"></span>
         <div>정상 이미지는 <b>흰배경 스튜디오</b>, 병 이미지는 field 스타일이라 <b>배경 혼입</b> 가능성이 남습니다.
         진짜 검증은 <b>현장에서 찍은 건강한 감귤 사진</b>으로 해야 합니다.</div>
       </div>
@@ -742,7 +742,7 @@ details.raw .rawtext{
       <div class="sec-h"><span class="no">01</span><h2>각 항목의 구조</h2></div>
       <p class="prose">모든 병해충 항목은 아래 형식으로 정리되어 있으며, RAG는 이 원문을 <b>섹션 검색 → 문장 재랭킹</b> 방식으로 찾아 답합니다.</p>
       <div class="kbex">
-        <div class="exh">📄 예시 — 궤양병</div>
+        <div class="exh">예시 — 궤양병</div>
         <div class="exb">
           <div class="k">학명 / 영명</div>
           <p><span class="mono">Xanthomonas axonopodis pv. citri</span> · Canker</p>
@@ -793,7 +793,7 @@ details.raw .rawtext{
     </div>
 
     <div class="note warn">
-      <span class="i">⚠️</span>
+      <span class="i"></span>
       <div>진단 대상 8종 중 <b>탄저병·검은무늬병</b>은 원래 KB에 없어 초안을 추가했습니다(35→37종).
       이 2종은 <b>전문가 검증 전</b>이며, 검은무늬병은 병명 정의 자체가 미확정입니다. 방제 정보는 참고용으로만 사용하세요.</div>
     </div>
@@ -850,13 +850,13 @@ details.raw .rawtext{
         <table class="tbl">
           <thead><tr><th>설계</th><th>방식</th><th class="num">우리 test</th><th>환각</th><th>판정</th></tr></thead>
           <tbody>
-            <tr><td>A</td><td>VLM 후보 → RAG가 선택</td><td class="num">0.920 → 0.480</td><td>정답→오답 11건</td><td class="warn-cell">❌ 실패</td></tr>
-            <tr><td>B</td><td>VLM 병명 결정 → RAG는 정보만</td><td class="num">0.920 유지</td><td style="color:var(--ok-text)">학명 환각 0건</td><td style="color:var(--ok-text); font-weight:700">✅ 채택</td></tr>
+            <tr><td>A</td><td>VLM 후보 → RAG가 선택</td><td class="num">0.920 → 0.480</td><td>정답→오답 11건</td><td class="warn-cell">실패</td></tr>
+            <tr><td>B</td><td>VLM 병명 결정 → RAG는 정보만</td><td class="num">0.920 유지</td><td style="color:var(--ok-text)">학명 환각 0건</td><td style="color:var(--ok-text); font-weight:700">채택</td></tr>
           </tbody>
         </table>
       </div>
       <div class="note info">
-        <span class="i">💡</span>
+        <span class="i"></span>
         <div><b>교훈 — 폐쇄된 라벨 집합에서 RAG를 분류기로 쓰면 안 됩니다.</b> 1·2위 후보의 코사인 점수차가 평균 0.018로 구분이 불가능해,
         VLM의 정확한 시각 판단(0.920)을 텍스트 유사도 노이즈로 덮어썼습니다.</div>
       </div>
@@ -876,7 +876,7 @@ details.raw .rawtext{
         </table>
       </div>
       <div class="note info">
-        <span class="i">🔎</span>
+        <span class="i"></span>
         <div>학습에 안 쓴 다른 출처의 한국 감귤에서도 <b>0.56~0.72</b>로 상당 부분 맞힙니다 → 실제 병징을 학습.
         동일 분포 92%가 곧 실사용 성능은 아니며, 다른 종·현장 견고성을 위해 <b>데이터 다양성</b>이 관건입니다.</div>
       </div>
@@ -895,7 +895,7 @@ details.raw .rawtext{
         </table>
       </div>
       <div class="note info">
-        <span class="i">💡</span>
+        <span class="i"></span>
         <div>같은 조건에서 <b>3.5-4B가 2.5-VL-7B를 앞섰고</b>(더 작은데도), <b>정상 클래스</b>를 추가하니 정상 사진을 전부 "정상"으로 맞히면서 질병 성능도 유지했습니다. (배포 데모는 아직 2.5-VL 8클래스)</div>
       </div>
     </div>
@@ -953,9 +953,9 @@ details.raw .rawtext{
 <div class="modal" id="kbmodal" aria-hidden="true">
   <div class="box" role="dialog" aria-modal="true" aria-labelledby="kbmTitle">
     <div class="mh">
-      <span class="tag kb">🔒 지식베이스</span>
+      <span class="tag kb">지식베이스</span>
       <h3 id="kbmTitle"></h3>
-      <button class="x" id="kbmClose" type="button" aria-label="닫기">✕</button>
+      <button class="x" id="kbmClose" type="button" aria-label="닫기">&times;</button>
     </div>
     <div class="mb" id="kbmBody"></div>
   </div>
@@ -1014,10 +1014,10 @@ function openKb(name){
   kbmTitle.textContent = name;
   let head = "";
   if(KB_DRAFT.has(name)){
-    head = `<div class="note warn" style="margin:0 0 14px"><span class="i">⚠️</span>
+    head = `<div class="note warn" style="margin:0 0 14px"><span class="i"></span>
       <div><b>KB 초안 — 전문가 검증 전.</b> 병원균 동정·병명이 미확정일 수 있어 참고용으로만 사용하세요.</div></div>`;
   } else if(KB_DIAG.has(name)){
-    head = `<div class="note info" style="margin:0 0 14px"><span class="i">🎯</span>
+    head = `<div class="note info" style="margin:0 0 14px"><span class="i"></span>
       <div>이 병해충은 <b>AI 진단 대상 8종</b>에 포함됩니다.</div></div>`;
   }
   kbmBody.innerHTML = head + (md ? kbMdToHtml(md) : `<p class="metaline">등록된 상세 정보가 없습니다.</p>`);
@@ -1041,7 +1041,7 @@ const emptyBox = el("empty"), resultBox = el("result"), qBox = el("q");
 /* ---------- 렌더링 ---------- */
 const RES_LABEL = {exact:"KB 정확 일치", synonym:"동의어 매핑", partial:"부분 일치", rag:"최근접 매핑", unknown:"미확인"};
 const RES_CLASS = {exact:"exact", synonym:"syn", partial:"partial", rag:"rag", unknown:""};
-const RES_ICON  = {exact:"✓", synonym:"⇄", partial:"≈", rag:"~", unknown:"?"};
+const RES_ICON  = {exact:"=", synonym:"⇄", partial:"≈", rag:"~", unknown:"?"};
 const SECTIONS = [
   {key:"symptoms",  name:"관찰 증상",       intents:["symptom","diagnose","name"]},
   {key:"control",   name:"방제 및 관리",    intents:["control","diagnose"]},
@@ -1061,7 +1061,7 @@ function render(res){
   const primaryKey = PRIMARY_BY_INTENT[res.intent] || "symptoms";
 
   const sciBlock = info.scientific
-    ? `<div class="dx-sci"><span class="kbtag">🔒 KB 원문</span><span class="sci">${esc(info.scientific)}</span></div>` : "";
+    ? `<div class="dx-sci"><span class="kbtag">KB 원문</span><span class="sci">${esc(info.scientific)}</span></div>` : "";
   let html = `<div class="diag">
     <span class="tag model">모델 판단</span>
     <div class="dx">
@@ -1083,14 +1083,14 @@ function render(res){
       <div>모델은 <b>${esc(res.resolved_from)}</b>(이)라고 답했고, 지식베이스에서 <b>${esc(res.disease)}</b>(으)로 정규화했습니다.</div></div>`;
   }
   if(draft){
-    html += `<div class="callout warn"><span class="ci">⚠️</span>
+    html += `<div class="callout warn"><span class="ci"></span>
       <div><b>KB 초안 — 전문가 검증 전.</b> ${info.scientific? "":"학명·병원균이 <b>미확정</b>이며 "}방제 정보는 참고용으로만 사용하세요.</div></div>`;
   }
   html += `<details class="raw"><summary>모델 원본 출력 보기 (병명만 취하고 나머지는 폐기됨)</summary>
     <div class="rawtext">${esc(res.vlm_raw||"")}</div></details></div>`;
 
   let kbHtml = `<div class="kbwrap">
-    <div class="kbhead"><span class="tag kb">🔒 지식베이스 원문 · 검증됨</span><span class="line"></span></div>
+    <div class="kbhead"><span class="tag kb">지식베이스 원문 · 검증됨</span><span class="line"></span></div>
     <div class="kbnote">아래 정보는 전문가 지식베이스에서 그대로 조회한 것이며, <b>모델이 생성하지 않았습니다.</b></div>
     <div class="kbgrid">`;
 
@@ -1118,10 +1118,10 @@ function render(res){
   //           없으면(롤백/오프): 기존처럼 KB 원문을 그대로 표시.
   if(res.synthesis){
     html += `<div class="synth">
-      <div class="synth-h">💬 종합 답변<span class="synth-sub"> · 지식베이스 근거로 정리</span></div>
+      <div class="synth-h">종합 답변<span class="synth-sub"> · 지식베이스 근거로 정리</span></div>
       <div class="synth-body">${esc(res.synthesis).replace(/\n/g,"<br>")}</div>
     </div>
-    <details class="kbsrc"><summary>📄 지식베이스 원문 보기 (검증용)</summary>${kbHtml}</details>`;
+    <details class="kbsrc"><summary>지식베이스 원문 보기 (검증용)</summary>${kbHtml}</details>`;
   } else {
     html += kbHtml;
   }
@@ -1140,7 +1140,7 @@ function renderUnknown(res){
       <div class="s"><span class="name">${esc(n)}</span>
         <span class="bar"><i style="width:${Math.round(s*100)}%"></i></span>
         <span class="sc">${s.toFixed(2)}</span></div>`).join("")}</div>`:""}
-    <div class="callout warn" style="margin-top:15px"><span class="ci">📷</span>
+    <div class="callout warn" style="margin-top:15px"><span class="ci"></span>
       <div>사진을 다시 촬영하거나(초점·조명·병반 근접), 전문가 확인을 권장합니다.</div></div>
   </div>`;
 }

@@ -211,7 +211,7 @@ class PestDiseaseQA:
             Tuple[답변, 관련 문서 리스트]
         """
         print(f"\n{'='*60}")
-        print(f"❓ 질문: {question}")
+        print(f"질문: {question}")
         print(f"{'='*60}")
         
         # 후보 번호 선택 처리 ("1번", "2번" 등 → 이전 후보의 병해충명으로 변환)
@@ -306,7 +306,7 @@ class PestDiseaseQA:
     def interactive_mode(self):
         """대화형 모드 실행"""
         print("\n" + "="*60)
-        print("🍊 감귤 병해충 질의응답 시스템")
+        print("감귤 병해충 질의응답 시스템")
         print("="*60)
         print("증상이나 병해충에 대해 질문해주세요.")
         print("  - 종료: 'q' 또는 'quit'")
@@ -314,12 +314,12 @@ class PestDiseaseQA:
         
         while True:
             try:
-                question = input("🔍 질문: ")
+                question = input("질문: ")
                 if question is None:
                     continue
                 question = question.strip()
             except UnicodeDecodeError:
-                print("⚠️ 입력 인코딩 오류가 발생했습니다. 다시 입력해주세요.\n")
+                print("입력 인코딩 오류가 발생했습니다. 다시 입력해주세요.\n")
                 continue
             
             try:
@@ -341,7 +341,7 @@ class PestDiseaseQA:
                 print("\n\n시스템을 종료합니다.")
                 break
             except Exception as e:
-                print(f"\n❌ 오류 발생: {e}\n")
+                print(f"\n오류 발생: {e}\n")
     
     def rebuild_vectorstore(self):
         """벡터 저장소 재구축"""

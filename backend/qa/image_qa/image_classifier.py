@@ -100,9 +100,9 @@ def main():
     label_ko, score, all_results = classifier.classify_with_summary(image_path)
     
     print(f"\n{'='*50}")
-    print(f"🖼️  이미지: {image_path}")
+    print(f" 이미지: {image_path}")
     print(f"{'='*50}")
-    print(f"📌 판별 결과: {label_ko} (신뢰도: {score*100:.1f}%)")
+    print(f"판별 결과: {label_ko} (신뢰도: {score*100:.1f}%)")
     print(f"\n전체 결과:")
     for r in all_results:
         bar = "█" * int(r['score'] * 30)

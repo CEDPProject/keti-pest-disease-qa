@@ -16,7 +16,7 @@ results = {"method1": [], "method2": [], "method3": []}
 # 방법 1: 텍스트 RAG
 # ═══════════════════════════════════════════
 print("\n" + "="*70)
-print("📝 방법 1: 텍스트 RAG 테스트")
+print("방법 1: 텍스트 RAG 테스트")
 print("="*70)
 
 sys.path.insert(0, TEXT_QA_DIR)
@@ -68,7 +68,7 @@ for q in test_qs:
 # 방법 2: 이미지 분류 + RAG
 # ═══════════════════════════════════════════
 print("\n" + "="*70)
-print("🖼️ 방법 2: 이미지 분류 + RAG 테스트")
+print("방법 2: 이미지 분류 + RAG 테스트")
 print("="*70)
 
 # sys.path 순서 중요: image_qa를 text_qa 앞에 넣어서 prompts 충돌 방지
@@ -132,7 +132,7 @@ for img_path, gt_label in test_images_m2:
 # 방법 3: VLM + RAG
 # ═══════════════════════════════════════════
 print("\n" + "="*70)
-print("🧠 방법 3: VLM + RAG 테스트")
+print("방법 3: VLM + RAG 테스트")
 print("="*70)
 
 from vlm_qa import vlm_qa_pipeline
@@ -182,7 +182,7 @@ with open(output_path, "w", encoding="utf-8") as f:
     json.dump(results, f, ensure_ascii=False, indent=2)
 
 print("\n" + "="*70)
-print(f"📊 결과 저장: {output_path}")
+print(f"결과 저장: {output_path}")
 print("="*70)
 
 # 요약 출력
