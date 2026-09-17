@@ -1,16 +1,3 @@
-"""NCPMS 수집 이미지를 원본 클래스 폴더에 통합(근접중복 제거).
-
-원본(data/raw/감귤_병해충_사진/{라벨}) 도 농촌진흥청 출처라 NCPMS 도감컷과
-겹칠 수 있다 → dHash 근접중복 검사로 겹치는 것을 버리고, 새로운 것만 편입한다.
-
-  - 원본 vs NCPMS 교차중복 제거 (train/test 누수 방지)
-  - NCPMS 내부 근접중복 제거
-  - 편입 이미지는 ncpms_{key}_{n}.jpg 로 표시(추적 가능)
-
-실행: python research/data_prep/consolidate_ncpms.py [--apply]
-  기본은 리포트만(dry-run). --apply 시 실제 복사.
-"""
-
 import os
 import sys
 import shutil

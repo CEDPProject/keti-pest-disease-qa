@@ -1,10 +1,3 @@
-"""VLM 기반 이미지-질문 QA 테스트 스크립트
-
-- test_images/ 폴더의 모든 이미지를 자동 순회
-- 각 이미지마다 8개 테스트 질문 실행
-- 결과를 result_md/vlm_qa_results.md에 저장
-"""
-
 import os
 import sys
 from datetime import datetime

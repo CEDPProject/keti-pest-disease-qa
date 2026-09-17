@@ -1,6 +1,3 @@
-"""P1-2 재채점: 영명(English name) 오인 제거. 저장된 답변/라틴에서 학명만 판정.
-결과: research/results/p1_2_hallucination.json (덮어씀, 재채점본)
-"""
 import os,sys,re,json
 HERE=os.path.dirname(os.path.abspath(__file__)); CORE=os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0,os.path.join(os.path.dirname(CORE),"backend","common"))

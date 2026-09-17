@@ -1,4 +1,3 @@
-"""이미지만(zero-shot): 베이스 Qwen3.5-4B(어댑터 없음)를 신 test 57장 평가. ablation 빈칸."""
 import os,sys,json
 os.environ.setdefault("HF_HOME","/opt/project_data/users/jhlee/hf_cache")
 import torch

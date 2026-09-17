@@ -1,9 +1,3 @@
-"""Qwen3.5-4B zero-shot (어댑터 미적용) test 병명 판정.
-
-파인튜닝 평가와 동일 프로토콜: 고정 '병명만' 프롬프트, greedy, label_extract.
-산출: acc, macro-F1 (전체 + 출처별) → research/results/zeroshot_qwen35.json
-qwenvl-ft 환경. CUDA_VISIBLE_DEVICES로 단일 GPU 지정.
-"""
 import os
 import sys
 import json

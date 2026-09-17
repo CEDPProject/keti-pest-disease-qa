@@ -1,12 +1,3 @@
-"""9클래스 데이터셋 = 기존 8클래스(질병) + 정상(healthy) 추가.
-
-기존 8클래스 학습/평가 데이터(data/vlm_finetune/train.json, test.jsonl)는 그대로 두고,
-정상 40장(잎 20 + 열매 20)을 stratified split → 정상 QA 샘플 생성 → 병합하여
-data/vlm_finetune_9cls/ 에 9클래스 train.json + test.jsonl + dataset_info.json 을 만든다.
-
-  정상: KB 없음 → 간단한 '정상/건강' 답변(**정상** 굵게, label_extract가 normal 로 추출).
-  train 이미지당 원본→진단(full) + 증강 2장→병명(name)/증상(symptom).  (정상 과대표집 방지)
-"""
 import os
 import sys
 import json

@@ -1,11 +1,3 @@
-"""균형 8클래스(질병7 + 정상) Qwen3.5-4B 에폭별 평가 → 최적 에폭 선정.
-
-  python eval_balanced.py --output_dir ../../models/qwen3_5_balanced_lora [--epoch N]
-
-'병명만' 프롬프트로 test(실사진 57장)를 평가.
-지표: macro-F1, accuracy, 정상 recall, 질병 acc, 출처별(원본/NCPMS) acc.
-qwenvl-ft 환경.
-"""
 import os
 import re
 import sys

@@ -1,9 +1,3 @@
-"""LoRA 어댑터를 base 모델에 병합하여 단일 모델로 저장 (서빙/데모용).
-
-qwenvl-ft 환경에서 실행:
-  python merge_lora.py --adapter .../output/qwen2_5vl_lora --out .../output/qwen2_5vl_merged
-"""
-
 import os
 import argparse
 

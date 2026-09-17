@@ -1,9 +1,3 @@
-"""Selective prediction (마진 기반). GPU 불필요.
-
-입력=research/results/b_stage1_top3_9b.json.
-임계값 스윕, risk-coverage + AURC, 마진 하위 10/20/30% 보류 시 잔여 acc/F1.
-산출: research/results/exp3_confidence_9b.json
-"""
 import os
 import json
 from sklearn.metrics import f1_score, accuracy_score

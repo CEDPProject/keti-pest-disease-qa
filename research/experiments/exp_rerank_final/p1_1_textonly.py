@@ -1,7 +1,3 @@
-"""P1-1: 텍스트-only 병명 정확도 (ablation '텍스트만' 칸).
-입력=베이스 캡션(병명 토큰 제거). (a) e5 최근접  (b) Gemma 선택.
-결과: research/results/p1_1_textonly.json
-"""
 import os,sys,re,json,urllib.request
 import numpy as np
 HERE=os.path.dirname(os.path.abspath(__file__)); CORE=os.path.dirname(os.path.dirname(HERE))

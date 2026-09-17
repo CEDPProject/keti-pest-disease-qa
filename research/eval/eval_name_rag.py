@@ -1,14 +1,3 @@
-"""새 구조(VLM=병명만 → RAG=KB 정보조회) 검증.
-
-측정
-  1) 진단 정확도  — '병명만' 프롬프트로도 기존 0.920 이 유지되는가?
-  2) 환각         — 답변 텍스트가 전부 KB 원문인가? (구조상 0이어야 함)
-                     특히 KB에 학명이 없는 검은무늬병에 학명이 붙는가?
-  3) 이름 해석 분포 — exact / synonym / partial / rag / unknown
-
-Mendeley 교차셋도 함께 돌려, 새 구조가 '틀린 병명'을 어떻게 처리하는지 본다.
-"""
-
 import os
 import sys
 import glob

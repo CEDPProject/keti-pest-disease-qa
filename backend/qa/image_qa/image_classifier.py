@@ -1,9 +1,3 @@
-"""
-감귤 병해충 이미지 분류기 (Citrus Disease Image Classifier)
-- 모델: dima806/orange_fruit_disease_detection (ViT 기반)
-- 분류: citrus canker(궤양병), melanose(흑점병), healthy(건강)
-"""
-
 import os
 
 # GPU 설정 (GPU 1번 사용)

@@ -1,13 +1,3 @@
-"""'병명만 답하세요' 프롬프트로 에폭별 LoRA 체크포인트 평가 — 2.5-VL·3.5 공정 비교.
-
-배포 파이프라인(name_rag_pipeline._vlm_name)과 동일한 짧은 병명 프롬프트를 사용해
-병명 파싱을 안정화한다(진단+증상 프롬프트는 모델별 출력 형식차로 파싱이 불안정).
-기존 결과 파일은 건드리지 않고 nameprompt_* 로 별도 저장한다. qwenvl-ft 환경.
-
-  python eval_name_prompt.py --model_type qwen35 --output_dir ../../models/qwen3_5vl_lora
-  python eval_name_prompt.py --model_type qwen25 --output_dir ../../models/qwen2_5vl_lora
-"""
-
 import os
 import re
 import sys

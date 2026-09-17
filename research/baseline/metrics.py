@@ -1,8 +1,3 @@
-"""예측 결과(jsonl: gold_key, pred_key) → macro-F1 / per-class / confusion.
-
-predictions jsonl 각 줄: {"key": gold, "pred_key": pred, ...}
-"""
-
 import json
 import sys
 

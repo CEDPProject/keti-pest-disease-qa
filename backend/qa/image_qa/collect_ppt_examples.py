@@ -1,6 +1,3 @@
-"""3가지 방법 실제 실행 예시 수집 스크립트
-PPT에 넣을 입력/출력 예시 + 실행 시간 수집
-"""
 import os
 import sys
 import time

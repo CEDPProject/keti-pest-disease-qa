@@ -1,13 +1,3 @@
-"""교차 데이터셋(Mendeley) 공정 평가 — 2.5·3.5 동일 조건(ep4 + '병명만' 프롬프트).
-
-일반화 검사: 학습에 안 쓴 다른 출처(Mendeley Citrus)의 겹치는 병해로 정확도 측정.
-기존 eval_cross_dataset.py(2.5 merged/진단프롬프트, 0.155)와 달리, 같은 프롬프트·에폭으로
-두 모델을 나란히 비교한다. qwenvl-ft 환경.
-
-  python eval_cross_nameprompt.py --model_type qwen35 --output_dir ../../models/qwen3_5vl_lora --epoch 4
-  python eval_cross_nameprompt.py --model_type qwen25 --output_dir ../../models/qwen2_5vl_lora --epoch 4
-"""
-
 import os
 import sys
 import glob

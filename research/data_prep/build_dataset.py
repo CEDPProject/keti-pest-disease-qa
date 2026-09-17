@@ -1,17 +1,3 @@
-"""split.json + KB → 파인튜닝/평가 데이터셋 생성 (의도 다양화 버전).
-
-VLM QA 어시스턴트가 되도록, 이미지 + '다양한 의도의 텍스트 질문' → '의도에 맞는 답변'을 학습.
-의도 4종: 진단(full) / 병명(name) / 방제(control) / 증상(symptom) — 모두 KB grounding.
-
-산출물 (vlm_finetune/data/):
-  - train.json           : LLaMA-Factory 멀티모달 SFT (의도 4종 균형)
-  - test.jsonl           : 평가용 (고정 진단질문, gold=full 답변)
-  - target_answers.json  : 클래스×의도 답변 참고본
-  - images_aug/          : 증강 이미지
-
-원본 이미지 → 진단(full), 증강 3장 → 방제/증상/병명 각 1개. (test 누수 방지: 증강은 train만)
-"""
-
 import os
 import sys
 

@@ -1,11 +1,3 @@
-"""유도 감별 재확인 3단계 — 2차 재질문 파이프라인.
-
-1단계 top-3 + 2단계 병징 발췌(가나다순)를 사진과 함께 제시하고 VLM이 다시 관찰해
-병명 하나를 답하게 한다. RAG는 판단하지 않고 가이드만 제공.
-조건: (a) 전체 (b) 마진기반 선택 (c) 오답 oracle.
-안전폴백: 2차 답변이 top-3 밖/파싱실패 → top-1 유지. 결정적(greedy).
-결과: research/results/b_stage3_recheck.json
-"""
 import os
 import sys
 import json

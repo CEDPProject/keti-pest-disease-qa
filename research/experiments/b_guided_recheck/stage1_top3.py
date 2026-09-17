@@ -1,9 +1,3 @@
-"""유도 감별 재확인 1단계 — top-3 후보 추출 + recall 측정.
-
-각 이미지에 8개 클래스 라벨을 teacher-forcing 로그우도로 스코어링 → 상위 3개 후보.
-(생성 샘플링 아님, 결정적/재현 가능) 스코어 top-1이 생성 평가와 일치하는지 검증.
-결과: research/results/b_stage1_top3.json
-"""
 import os
 import sys
 import json

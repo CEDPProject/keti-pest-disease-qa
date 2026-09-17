@@ -1,11 +1,3 @@
-"""
-병해충 질의응답 시스템 (Pest Disease Q&A System)
-- RAG 기반 질의응답 시스템
-- LLM: gemma3:12B (Ollama, Instruction-tuned)
-- Embedding: intfloat/multilingual-e5-large
-- Vector DB: Chroma
-"""
-
 import os
 import re
 from typing import List, Tuple, Dict

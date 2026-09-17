@@ -1,9 +1,3 @@
-"""VLM 기반 이미지-질문 QA 파이프라인
-
-이미지와 사용자 질문을 VLM에 입력하고, 자연어 답변을 생성하는 구조.
-필요 시 text_qa RAG로 답변 보강 가능.
-"""
-
 import os
 import sys
 

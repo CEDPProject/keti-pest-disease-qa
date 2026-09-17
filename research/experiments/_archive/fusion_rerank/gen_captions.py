@@ -1,10 +1,3 @@
-"""STAGE F1 (1/2): 베이스 Qwen2.5-VL-7B 로 test 57장 시각 캡션 생성 (병명 없이).
-
-파인튜닝 안 된 베이스 모델 사용 → 자기 판단 편향의 순환 유입 차단.
-캡션은 병명 언급 없이 시각 특징만. greedy. JSON 캐싱.
-
-결과: research/results/fusion_captions.json
-"""
 import os
 import sys
 import json

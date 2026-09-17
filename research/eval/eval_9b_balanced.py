@@ -1,11 +1,3 @@
-"""Qwen3.5-9B 균형 8클래스 에폭별 평가 → 최적 에폭 선정.
-
-고정 '병명만' 프롬프트로 test 이미지를 추론(greedy), label_extract로 병명 추출.
-지표: macro-F1, accuracy, 정상 recall, 질병 acc, 출처별(원본/NCPMS) acc.
-결과: research/results/balanced_curve_9b.json, pred_balanced_9b_ep{N}.json
-
-  python eval_9b_balanced.py --output_dir <adapter_dir> [--epoch N]
-"""
 import os
 import re
 import sys

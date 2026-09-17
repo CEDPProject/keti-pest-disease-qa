@@ -1,5 +1,3 @@
-"""공통 평가 모듈 — sklearn metrics + Confusion Matrix 시각화"""
-
 import os
 import numpy as np
 import matplotlib

@@ -1,11 +1,3 @@
-"""
-시각 발췌 임베딩 비교 (e5/bge-m3 × 전체병징/시각발췌).
-
-(2a) 병해 쌍별 코사인 산포 4조건.
-(2b) 게이트: top-3 softmax std 중앙값 ≥0.02 AND 오답13 정답후보 RAG 1위 >0.33 이면
-     그 조건으로 융합 재검토. 전 조건 미달이면 "임베딩·발췌 무관" 확정.
-결과: research/results/exp2_embed_compare.json
-"""
 import os, sys, json, itertools
 import numpy as np
 HERE=os.path.dirname(os.path.abspath(__file__)); CORE=os.path.dirname(os.path.dirname(HERE))

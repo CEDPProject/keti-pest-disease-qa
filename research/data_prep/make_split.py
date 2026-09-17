@@ -1,10 +1,3 @@
-"""manifest.csv → stratified train/test split (split.json).
-
-- 클래스별로 shuffle 후 test = max(1, round(0.2*n)), 나머지 train
-- 증강은 나중에 train 에만 적용 → test 누수 방지 (여기서는 원본만 분할)
-- 소량 클래스(예: 검은무늬병 4장)는 test 신뢰도 낮음 → 경고 출력
-"""
-
 import os
 import sys
 

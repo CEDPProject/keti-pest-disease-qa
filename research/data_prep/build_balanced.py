@@ -1,16 +1,3 @@
-"""클래스 균형 데이터셋 생성 (NCPMS 실사진 + 정상, 균형증강).
-
-- 실사진 출처: data/raw/ncpms_수집/{키} (7병해, 원본 121장을 포함하는 상위집합) + data/raw/감귤_정상_사진(정상)
-- 클래스 내 dHash 근접중복 제거
-- 클래스별 stratified split: 테스트는 '실사진만' 홀드아웃(증강 누수 방지)
-- 학습셋은 클래스별 TARGET 장까지 균형증강 → 전 클래스 동일 수
-- 각 base 이미지에 의도(진단/병명/증상/방제) 라운드로빈 부여 → ShareGPT 샘플
-
-산출물: data/vlm_finetune_balanced/{train.json, test.jsonl, split.json, images_aug/, dataset_info.json}
-
-실행: python research/data_prep/build_balanced.py
-"""
-
 import os
 import sys
 import json

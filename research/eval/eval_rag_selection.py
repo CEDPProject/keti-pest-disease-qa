@@ -1,17 +1,3 @@
-"""VLM-only vs VLM+RAG 선택 비교 — RAG가 실제로 도움이 되는가?
-
-3단계(메모리 절약 위해 모델을 순차 로드/해제):
-  Stage 1 (base 모델)   : 병명 없는 시각 관찰문 생성          → obs.json
-  Stage 2 (파인튜닝 모델) : (a) 단독 진단  (b) 후보 감별 나열   → diag.json
-  Stage 3 (E5)         : 관찰문으로 후보들을 RAG 랭킹 → 최종  → 비교
-
-평가 대상
-  - 우리 test 25장 (동일 분포)
-  - Mendeley 교차 데이터셋 (다른 출처) — VLM 단독은 0.155
-
-핵심 질문: 파인튜닝 모델의 '이미지 스타일 의존'을, 중립 관찰문 + KB 대조로 보정할 수 있는가?
-"""
-
 import os
 import sys
 import gc

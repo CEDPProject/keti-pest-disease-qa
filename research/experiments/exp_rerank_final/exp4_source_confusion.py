@@ -1,9 +1,3 @@
-"""출처별 혼동행렬 분해 (GPU 불필요).
-
-원본/NCPMS 각각 혼동행렬, NCPMS 오답 집중 클래스 쌍 상위 3개,
-혼동 3형제(궤양·더뎅이·검은점) 쌍 오류 비중.
-결과: research/results/exp4_source_confusion.json
-"""
 import os
 import json
 from collections import Counter

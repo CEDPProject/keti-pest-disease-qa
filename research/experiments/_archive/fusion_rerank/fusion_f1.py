@@ -1,13 +1,3 @@
-"""STAGE F1 (2/2): RAG_score V1/V2 구축 + 변별력 진단 (게이트).
-
-V1: cos(임베딩(시각캡션), 임베딩(후보 KB 병징))  — 이미지별 신호
-V2: cos(임베딩(고정질문),  임베딩(후보 KB 병징))  — 전역 prior(통제군)
-정규화: 이미지 top-3 위에서 softmax.
-게이트: V1 top-3 softmax 표준편차가 0에 수렴하면 중단(A안 0.018 재현).
-        + 오답13건에서 정답후보의 RAG_V1 순위 1위 비율(>33% 이어야 재료 있음).
-
-결과: research/results/fusion_f1.json
-"""
 import os
 import re
 import sys

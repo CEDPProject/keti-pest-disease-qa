@@ -1,7 +1,3 @@
-"""P1-3: 구 3.5-4B(0.890 냈던 어댑터)를 새 test 병해 49장에 동일 프로토콜 평가.
-목적: 0.890 vs 0.783은 rerank 아니라 평가셋 차이임을 표로. 둘 다 VLM top-1(no rerank).
-결과: research/results/p1_3_oldmodel.json
-"""
 import os,sys,re,json
 os.environ.setdefault("HF_HOME","/opt/project_data/users/jhlee/hf_cache")
 import torch

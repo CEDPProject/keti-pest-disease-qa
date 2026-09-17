@@ -1,12 +1,3 @@
-"""KB(citrus_PD_ver3.md, 37종) 벡터 인덱스 — intfloat/multilingual-e5-large.
-
-37개 섹션뿐이라 벡터DB 없이 numpy 코사인으로 충분하다.
-E5 규약대로 passage/query prefix 를 붙인다.
-
-  idx = KBIndex()
-  idx.search("잎 뒷면에 갈색 화상 같은 병반", top_k=5)  → [(병명, score), ...]
-"""
-
 import os
 import sys
 import json

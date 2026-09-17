@@ -1,14 +1,3 @@
-"""train/test near-duplicate 검사 — 성능 부풀림(데이터 누수) 여부 판별.
-
-perceptual hash(dHash, 64bit) 로 각 test 이미지의 최근접 train 이미지를 찾아
-Hamming distance 를 본다.
-  - dist <= 5  : 거의 동일 (심각한 누수)
-  - dist <= 10 : 매우 유사 (누수 의심)
-  - dist > 15  : 사실상 다른 사진
-
-추가로 색히스토그램 상관도(coarse)도 병행 확인.
-"""
-
 import os
 import sys
 import json

@@ -1,7 +1,3 @@
-"""P1-2: 조건별 환각률. A=파인튜닝 VLM 자유생성, B=RAG build_answer(KB원문).
-학명(라틴 이명) 기준 fabrication/misattribution/correct 채점. 약제는 보조.
-결과: research/results/p1_2_hallucination.json
-"""
 import os,sys,re,json
 os.environ.setdefault("HF_HOME","/opt/project_data/users/jhlee/hf_cache")
 import torch

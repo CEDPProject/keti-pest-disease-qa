@@ -1,21 +1,3 @@
-"""NCPMS(국가농작물병해충관리시스템) OpenAPI 감귤 병해 이미지 수집기.
-
-정식 정부 DB에서 한국 감귤(온주밀감) 병해 도감 이미지를 수집한다.
-  - 종(species) 정확: 대상작물 '감귤'로 조회 → 오렌지/레몬 혼입 없음
-  - 라벨 정확: 병명별 전문가 도감
-  - 출처 명확: 농촌진흥청 NCPMS (출처표시 조건 준수)
-
-사용법:
-  1) NCPMS OpenAPI 인증키 발급: https://ncpms.rda.go.kr/npms/OpenApiInfo.np
-  2) 아래 API_KEY 에 발급받은 키를 붙여넣는다.
-  3) 먼저 구조 확인:   python research/data_prep/ncpms_collect.py --probe
-  4) 전체 수집:        python research/data_prep/ncpms_collect.py
-     → data/raw/ncpms_수집/{클래스키}/ 에 이미지 저장
-
-주의: 도감 사진은 '현장(field)'이 아니라 '대표 이미지'라 클래스당 수 장~수십 장 수준일 수 있다.
-      학습 보강용 1차 소스로 쓰고, 최종 대량 확보는 AI Hub(원본 출처)를 병행 권장.
-"""
-
 import os
 import re
 import sys

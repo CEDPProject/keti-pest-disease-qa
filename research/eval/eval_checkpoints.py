@@ -1,14 +1,3 @@
-"""에폭별 LoRA 체크포인트를 test 셋으로 평가 → macro-F1 곡선 → 최적 에폭 선택.
-
-base 모델은 1회만 로딩하고, 각 체크포인트를 named adapter 로 갈아끼우며 평가(빠름).
-이미 평가된 에폭(results/pred_lora_ep{N}.jsonl 존재)은 건너뛰고 기존 곡선과 병합한다.
-qwenvl-ft 환경에서 실행.
-
-  python eval_checkpoints.py --output_dir .../output/qwen2_5vl_lora [--force]
-
-주의: test 로 에폭을 고르는 것은 경미한 선택 편향 → 전체 곡선을 공개하고 최적점을 보고(리포트에 명시).
-"""
-
 import os
 import re
 import sys

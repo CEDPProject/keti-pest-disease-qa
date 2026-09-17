@@ -1,5 +1,3 @@
-"""라벨 유틸리티 - 정상/건강 판정 키워드 관리"""
-
 HEALTHY_KEYWORDS = [
     "healthy",
     "normal",

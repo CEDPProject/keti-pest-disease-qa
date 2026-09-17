@@ -1,12 +1,3 @@
-"""EXP-1: LLM-as-reranker (임베딩 없음, 이미지 없음).
-
-캡션(베이스 VLM 생성) + top-3 후보 KB 병징 발췌를 Gemma3(Ollama)에 주고
-"서술과 가장 부합하는 후보 하나"를 고르게 한다. temp=0.
-위치편향 통제: 가나다순 + 역순 2회 → 일치할 때만 채택, 불일치는 top-1 유지.
-조건 (a) 전체 57  (b) 마진<0.9.
-
-결과: research/results/exp1_llm_reranker.json
-"""
 import os
 import re
 import sys

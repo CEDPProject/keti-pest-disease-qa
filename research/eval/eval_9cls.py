@@ -1,10 +1,3 @@
-"""9클래스(질병8 + 정상) Qwen3.5-4B 에폭별 평가 → macro-F1 + 정상 recall.
-
-  python eval_9cls.py --output_dir ../../models/qwen3_5_9cls_lora [--epoch N]
-
-'병명만' 프롬프트로 test(질병25 + 정상10)를 평가. 정상 사진이 'normal'로 나오는지 확인.
-qwenvl-ft 환경.
-"""
 import os
 import re
 import sys

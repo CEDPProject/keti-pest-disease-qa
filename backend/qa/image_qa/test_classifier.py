@@ -1,7 +1,3 @@
-"""경로 A: Classifier 테스트
-dima806/orange_fruit_disease_detection → Mendeley Healthy/Canker 2-class 평가
-"""
-
 import os
 import sys
 import csv

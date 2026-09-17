@@ -1,9 +1,3 @@
-"""VLM 추론 모듈 - 이미지 + 텍스트 멀티모달 추론
-
-현재 백엔드: Ollama gemma3:12b (멀티모달 지원)
-나중에 Agri-LLaVA, LLaVA, Qwen-VL 등으로 교체 가능하도록 함수 인터페이스를 분리.
-"""
-
 import os
 import re
 import base64

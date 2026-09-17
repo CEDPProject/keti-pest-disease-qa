@@ -1,10 +1,3 @@
-"""원본 이미지(한글 폴더) → ASCII 경로 정제 복사본 + manifest.csv 생성.
-
-- desktop.ini 등 비이미지 제외
-- PIL 로 열리는지 검증(손상 파일 스킵), EXIF 회전 보정 후 JPEG로 재저장하여 포맷 정규화
-- manifest.csv: image_path(절대), key, label_ko, orig_name
-"""
-
 import os
 import sys
 

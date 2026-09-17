@@ -1,11 +1,3 @@
-"""
-이미지 기반 병해충 질의응답 시스템 (Image Q&A System)
-- 이미지 분류: dima806/orange_fruit_disease_detection (ViT)
-- RAG 연동: text_qa의 PestDiseaseQA 시스템 활용
-- LLM: Ollama (gemma3:12B)
-- 플로우: 이미지 → 분류 → 분류결과로 RAG 검색 → LLM 상세 답변
-"""
-
 import os
 import sys
 import re

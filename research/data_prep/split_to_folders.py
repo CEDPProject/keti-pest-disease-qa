@@ -1,12 +1,3 @@
-"""split.json 기준으로 실사진+증강을 train/test 폴더로 물리 재배치.
-
-  data/vlm_finetune_balanced/images_split/
-    ├── train/{키}/   학습용 (실사진 train분 + 증강)  = 60/클래스
-    └── test/{키}/    테스트용 (실사진만, 증강 없음)   = 5~10/클래스
-
-split.json(train:{키:[{image,aug}]}, test:[{image,label_ko,key}]) 을 단일 소스로 사용.
-"""
-
 import os
 import sys
 import json

@@ -1,9 +1,3 @@
-"""경로 B: VLM 테스트
-Qwen2.5-VL-7B (Ollama) → 4-class zero-shot 분류 + 증상/방제 응답
-
-테스트 이미지: test_images/ 6장 (4클래스) + Mendeley Healthy/Canker 샘플
-"""
-
 import os
 import sys
 import csv

@@ -1,10 +1,3 @@
-"""신뢰도 곡선 (마진 기반). GPU 불필요.
-
-(a) 임계값 스윕: 감별모드 발동률 / 오답 커버리지 / 후보내 정답 포함률
-(b) risk-coverage curve + AURC
-(c) 보류 정책: 마진 하위 10/20/30% 보류 시 잔여 acc/F1
-결과: research/results/exp3_confidence.json
-"""
 import os
 import json
 

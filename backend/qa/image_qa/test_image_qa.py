@@ -1,11 +1,3 @@
-"""
-이미지 분류 + RAG 방식 병해충 Q&A 테스트 스크립트
-- test_images/ 폴더의 모든 이미지를 자동 순회
-- 건강/정상 판정 시 RAG 호출 없이 고정 답변
-- 병해충 판정 시 RAG 연동 답변
-- 결과를 result_md/classifier_rag_results.md에 저장
-"""
-
 import os
 import sys
 from datetime import datetime

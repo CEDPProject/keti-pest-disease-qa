@@ -1,13 +1,3 @@
-"""실사진을 data/vlm_finetune_balanced/images/{클래스키}/ 로 통합(중복 제거).
-
-- 원본 '감귤_병해충_사진/{한글병명}' + NCPMS '수집/{키}' → images/{키}/
-- 정상 '감귤_정상_사진/{잎,열매}' → images/normal/
-- 원본은 파일명(품종·시기·부위 정보) 유지, NCPMS 추가분은 ncpms_ 접두
-- dHash 근접중복 제거 (원본 ⊆ NCPMS 라 실제로는 원본 우선 채택 + NCPMS 신규만 추가)
-
-실행: python research/data_prep/consolidate_images.py
-"""
-
 import os
 import sys
 import shutil

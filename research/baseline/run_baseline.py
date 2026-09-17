@@ -1,12 +1,3 @@
-"""무학습 baseline 평가 — Ollama qwen2.5vl:7b.
-
-두 방식:
-  - zeroshot : 테스트 이미지 + 후보 8종 제시 → 진단
-  - fewshot  : 클래스별 예시 이미지 1장(train)을 in-context 로 준 뒤 진단
-
-각 테스트 이미지의 생성 답변에서 병명을 추출 → results/pred_baseline_*.jsonl 저장 → macro-F1.
-"""
-
 import os
 import sys
 import io

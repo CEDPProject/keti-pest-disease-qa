@@ -1,18 +1,3 @@
-"""감귤 병해충 진단 데모 웹앱 백엔드 (FastAPI).
-
-  GET  /          : backend/frontend/index.html 서빙
-  GET  /health    : 상태
-  POST /diagnose  : {image_base64, question, intent} → 구조화 진단 JSON
-
-기존 파이프라인(name_rag_pipeline.NameRagPipeline + KBRetriever)을 재사용한다.
-  - VLM 은 병명 하나만 결정
-  - 학명·증상·약제 등 정보는 KB 원문에서 조회 (모델이 생성하지 않음 → 환각 없음)
-
-실행 (루트 app.py 가 이 main() 을 호출):
-  python app.py --port 5100          # 실제 모델 (GPU ~16GB)
-  python app.py --port 5100 --mock   # 모델 없이 UI 테스트
-"""
-
 import os
 import sys
 import io

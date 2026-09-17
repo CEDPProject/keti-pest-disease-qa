@@ -1,13 +1,3 @@
-"""데모 파이프라인 검증 — 데모와 동일한 파이프라인을 test 이미지에 돌려 결과를 정리.
-
-1) test 전체를 '진단' 질문으로 → 정확도/오답 목록
-2) 대표 이미지에 의도별 질문(진단/병명/방제/증상) → 응답 형식이 의도를 따르는지
-3) 병명 추출 → 공식 KB 섹션 연결 확인
-
-  python demo_validation.py --model_dir <merged_model_dir>
-  python demo_validation.py --adapter <lora_checkpoint_dir>
-"""
-
 import os
 import sys
 import json
