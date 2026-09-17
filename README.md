@@ -58,7 +58,7 @@ python app.py --port 5100            # → http://<서버IP>:5100
 python app.py --port 5100 --mock
 ```
 
-백엔드 없이 `web/frontend/index.html`을 브라우저에서 바로 열어도 **Mock 모드**로 전체 UI가 동작한다.
+백엔드 없이 `backend/frontend/index.html`을 브라우저에서 바로 열어도 **Mock 모드**로 전체 UI가 동작한다.
 
 ---
 
