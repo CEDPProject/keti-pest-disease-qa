@@ -5,7 +5,7 @@
 # 이후:
 #   pip install -r requirements.txt
 #
-# 무학습 baseline(Ollama)·전처리는 별도 conda 환경(cedpllm) 사용.
+# 답변 문장 다듬기(선택): Ollama gemma3:4b
 
 # --- VLM 파인튜닝 · 추론 ---
 transformers==5.7.0
@@ -19,9 +19,9 @@ sentence-transformers==5.6.0   # intfloat/multilingual-e5-large
 # --- 웹 서버 (FastAPI) ---
 fastapi==0.139.0
 uvicorn==0.51.0
-gradio==5.50.0                 # (선택) web/gradio_app.py 용
 
 # --- 데이터·평가 ---
 scikit-learn==1.9.0
 pillow==11.3.0
 numpy==2.4.4
+matplotlib==3.11.0            # 논문 그림 생성

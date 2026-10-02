@@ -11,24 +11,20 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 
-BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))   # backend/api/
-WEB_DIR = os.path.dirname(BACKEND_DIR)                     # web/
-REPO_DIR = os.path.dirname(WEB_DIR)                        # repo
-CORE_DIR = os.path.join(REPO_DIR, "backend")
-FRONTEND_DIR = os.path.join(WEB_DIR, "frontend")
-sys.path.insert(0, os.path.join(CORE_DIR, "common"))
-sys.path.insert(0, os.path.join(CORE_DIR, "rag"))
+API_DIR = os.path.dirname(os.path.abspath(__file__))       # backend/api/
+REPO_DIR = os.path.dirname(os.path.dirname(API_DIR))       # repo
+FRONTEND_DIR = os.path.join(REPO_DIR, "frontend")
+sys.path.insert(0, os.path.join(REPO_DIR, "backend", "core"))
 from classes import DRAFT_KB_LABELS, MERGED_MODEL_DIR  # noqa
+from settings import SERVER_HOST, SERVER_PORT, OLLAMA_URL, OLLAMA_MODEL  # noqa
 
 DEFAULT_MODEL = MERGED_MODEL_DIR
-DEFAULT_PORT = 5100
+DEFAULT_PORT = SERVER_PORT
 
 # ── LLM 종합(grounded) 설정 ───────────────────────────────────────
 # 최종 답을 gemma(Ollama)로 KB 근거만 써서 자연스럽게 종합. 프론트는 원문을 토글로 병기.
 # 롤백: SYNTHESIZE = False  → synthesis 미포함 → 프론트가 기존처럼 KB 원문 파트별 표시.
 SYNTHESIZE = True
-OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "gemma3:4b"
 _INTENT_ASK = {
     "diagnose": "이 감귤을 진단하고 관찰 증상과 방제 방법을 종합해서 설명해줘.",
     "name": "이 감귤이 무슨 병인지, 어떤 특징인지 알려줘.",
@@ -212,7 +208,7 @@ def main():
     global MOCK_MODE
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=DEFAULT_PORT)
-    ap.add_argument("--host", default="0.0.0.0")
+    ap.add_argument("--host", default=SERVER_HOST)
     ap.add_argument("--model_dir", default=DEFAULT_MODEL)
     ap.add_argument("--mock", action="store_true", help="모델 없이 배선만 테스트")
     args = ap.parse_args()
