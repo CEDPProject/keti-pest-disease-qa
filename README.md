@@ -37,8 +37,7 @@ keti-pest-disease-qa/
 │       ├── data_prep/     데이터셋 구축
 │       ├── train/         LoRA 학습 설정 · 실행 스크립트
 │       ├── eval/          진단 성능 · 환각 · 선택적 응답 측정
-│       ├── interventions/ 검색 개입 예비 실험 4종 (Table III)
-│       └── paper/         논문 그림 · 표 생성
+│       └── interventions/ 검색 개입 예비 실험 4종 (Table III)
 ├── data/                  데이터 (git 제외, 아래 설명 참고)
 └── models/                학습 산출물 · KB 임베딩 캐시 (git 제외)
 ```
@@ -98,7 +97,7 @@ python app.py --port 5100 --mock          # 모델 없이 화면 · API 동작�
 
 ## 논문 실험 재현
 
-실험 결과 JSON은 `qa_docs/experiment_results/`, 논문 그림 · 표는 `qa_docs/paper/` 아래에 쓰인다 (둘 다 git 제외).
+실험 결과 JSON은 `qa_docs/experiment_results/` 아래에 쓰인다 (git 제외).
 
 | 단계 | 스크립트 | 논문 |
 |---|---|---|
@@ -111,7 +110,6 @@ python app.py --port 5100 --mock          # 모델 없이 화면 · API 동작�
 | 선택적 응답 | `eval/selective_9b.py` | Fig. 2 |
 | 사실 환각 | `eval/halluc_9b.py`, `eval/halluc_9b_rescore.py` | Table I |
 | 검색 개입 4종 | `interventions/candidate_selection/` · `guided_recheck/` · `score_fusion/` · `llm_rerank/`, 임베딩 교체 `interventions/exp2_embed_compare.py` | Table III |
-| 그림 · 표 생성 | `paper/make_figures_9b.py`, `paper/make_tables_9b.py` | Fig. 2, Tables |
 
 학습 뒤 측정 단계 전체는 `train/run_eval_9b.sh` 하나로 순서대로 실행된다. 플랫폼 서빙 모델(Qwen2.5-VL)은 `data_prep/build_manifest.py` → `make_split.py` → `build_dataset.py` → `train/run_train.sh` → `train/merge_lora.py` 순서로 만든다.
 

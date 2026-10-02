@@ -30,9 +30,8 @@ MERGED_MODEL_DIR = os.path.join(MODELS_DIR, "qwen2_5vl_merged")
 KB_PATH = os.path.join(CORE_DIR, "knowledge", "citrus_PD_ver3.md")
 KB_CACHE_DIR = os.path.join(MODELS_DIR, "kb_cache")
 
-# 실험 산출물 (git 제외): 결과 JSON, 논문 그림·표
+# 실험 결과 JSON (git 제외)
 RESULTS_DIR = os.path.join(REPO_DIR, "qa_docs", "experiment_results")
-PAPER_DOCS_DIR = os.path.join(REPO_DIR, "qa_docs", "paper")
 
 # 한글 폴더명 → (ASCII 키, KB 섹션명)
 # KB 섹션명은 citrus_PD_ver3.md 의 '## ' 헤더와 정확히 일치해야 함.

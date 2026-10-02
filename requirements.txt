@@ -24,4 +24,3 @@ uvicorn==0.51.0
 scikit-learn==1.9.0
 pillow==11.3.0
 numpy==2.4.4
-matplotlib==3.11.0            # 논문 그림 생성
