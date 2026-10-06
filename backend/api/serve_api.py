@@ -23,7 +23,7 @@ DEFAULT_PORT = SERVER_PORT
 
 # ── LLM 종합(grounded) 설정 ───────────────────────────────────────
 # 최종 답을 gemma(Ollama)로 KB 근거만 써서 자연스럽게 종합. 프론트는 원문을 토글로 병기.
-# 롤백: SYNTHESIZE = False  → synthesis 미포함 → 프론트가 기존처럼 KB 원문 파트별 표시.
+# SYNTHESIZE = False 이면 synthesis 없이 KB 원문을 파트별로 표시한다.
 SYNTHESIZE = True
 _INTENT_ASK = {
     "diagnose": "이 감귤을 진단하고 관찰 증상과 방제 방법을 종합해서 설명해줘.",

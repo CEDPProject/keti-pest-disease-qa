@@ -1,8 +1,8 @@
 ### 감귤 병해충 8클래스(질병7 + 정상) 균형 데이터셋 — Qwen3.5-9B LoRA SFT (논문 메인)
-### 4B(qwen3_5_balanced_lora_sft.yaml)와 완전히 동일한 데이터·하이퍼, 베이스 모델만 9B로 교체.
+### 하이퍼파라미터는 이전 4B 실험과 같고 베이스 모델만 9B
 
 model_name_or_path: Qwen/Qwen3.5-9B
-image_max_pixels: 262144          # 512x512 (4B와 동일)
+image_max_pixels: 262144          # 512x512
 image_min_pixels: 50176
 trust_remote_code: true
 
@@ -26,13 +26,13 @@ dataloader_num_workers: 4
 
 output_dir: __REPO__/models/qwen3_5_9b_balanced_lora
 logging_steps: 10
-save_steps: 233          # 1 에폭 ≈ 233 step (1860 / eff.batch 8) → 에폭마다 체크포인트 (4B와 동일)
+save_steps: 233          # 1 에폭 ≈ 233 step (1860 / eff.batch 8) → 에폭마다 체크포인트
 save_total_limit: 8
 plot_loss: true
 overwrite_output_dir: true
 report_to: none
 
-per_device_train_batch_size: 2       # 4B와 동일. OOM 시에만 1로 낮추고 accum 8로 (유효배치 8 유지)
+per_device_train_batch_size: 2       # OOM 시 1로 낮추고 accum 8로 (유효배치 8 유지)
 gradient_accumulation_steps: 4       # 단일 GPU × batch2 × accum4 = effective batch 8
 gradient_checkpointing: true
 learning_rate: 1.0e-4

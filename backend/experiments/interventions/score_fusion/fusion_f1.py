@@ -102,7 +102,7 @@ def main():
     summary = {
         "n": n,
         "v1_top3_softmax_std": std_stat,
-        "gate_std_near_zero": bool(std_stat["median"] < 0.02),   # A안 0.018 기준
+        "gate_std_near_zero": bool(std_stat["median"] < 0.02),   # 후보 선택 실험(유사도 폭 0.018)과 같은 기준
         "wrong_n_gold_in_top3": len(wrong),
         "wrong_gold_rag_v1_rank1": gold_rank1,
         "wrong_gold_rank1_ratio": round(gold_rank1 / len(wrong), 3) if wrong else None,

@@ -13,7 +13,7 @@ from sklearn.metrics import f1_score, accuracy_score
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, os.path.join(REPO, "backend", "core"))
-from classes import RESULTS_DIR  # noqa: E402
+from classes import RESULTS_DIR, LOGS_DIR  # noqa: E402
 from label_extract import extract_label, LABEL_TO_KEY  # noqa
 
 BASE = "Qwen/Qwen3.5-9B"
@@ -23,7 +23,7 @@ NAME_PROMPT = "이 감귤 사진의 병명은 무엇인가요? 병명만 답하�
 CLASS_KEYS = ["canker", "scab", "gray_mold", "gummosis", "black_spot",
               "green_mold", "anthracnose", "normal"]
 STEPS_PER_EPOCH = 233
-DONE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "train", "eval_9b_balanced.done")
+DONE = os.path.join(LOGS_DIR, "eval_9b_balanced.done")
 
 
 def _source(path, key):
@@ -65,7 +65,7 @@ def main():
     golds = [r["key"] for r in test]
     srcs = [_source(r["image"], r["key"]) for r in test]
 
-    print(f"[M2] base 로딩: {BASE} · test {len(test)}장", flush=True)
+    print(f"base 로딩: {BASE} · test {len(test)}장", flush=True)
     base = AutoModelForMultimodalLM.from_pretrained(BASE, torch_dtype=torch.bfloat16,
                                                     device_map="cuda", trust_remote_code=True)
     proc = AutoProcessor.from_pretrained(BASE, trust_remote_code=True)
@@ -114,9 +114,10 @@ def main():
     json.dump({"model": BASE, "curve": curve, "best": best, "n_test": len(test)},
               open(os.path.join(RESULT_DIR, "balanced_curve_9b.json"), "w", encoding="utf-8"),
               ensure_ascii=False, indent=2)
-    print(f"\n[M2] 최적 ep{best['epoch']} · macro-F1={best['macro_f1']:.4f} · acc={best['accuracy']:.4f} · "
+    print(f"\n최적 ep{best['epoch']} · macro-F1={best['macro_f1']:.4f} · acc={best['accuracy']:.4f} · "
           f"정상recall={best['normal_recall']:.2f} · 질병acc={best['disease_acc']:.3f} · "
           f"원본{best['src_acc']['원본']} NCPMS{best['src_acc']['NCPMS']}")
+    os.makedirs(LOGS_DIR, exist_ok=True)
     with open(DONE, "w") as f:
         f.write(f"best_ep{best['epoch']}_f1{best['macro_f1']:.4f}\n")
 

@@ -36,8 +36,6 @@ plot_loss: true
 overwrite_output_dir: false
 report_to: none
 
-### resume: 서버 크래시로 ep6(step288) 손상 → ep5(step240)부터 재개하여 ep6~10 학습
-# resume_from_checkpoint: __REPO__/models/qwen2_5vl_lora/checkpoint-240   # 원 실행 때 재개 지점
 
 ### train
 per_device_train_batch_size: 2

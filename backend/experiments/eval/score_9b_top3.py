@@ -80,7 +80,7 @@ def generate_top1(model, proc, image, prompt_text):
 def main():
     ep, adapter = best_adapter()
     test = [json.loads(l) for l in open(TEST, encoding="utf-8")]
-    print(f"[M3] test {len(test)}장 · 9B adapter ep{ep} ({adapter})", flush=True)
+    print(f"test {len(test)}장 · 9B adapter ep{ep} ({adapter})", flush=True)
 
     base = AutoModelForMultimodalLM.from_pretrained(BASE, torch_dtype=torch.bfloat16,
                                                     device_map="cuda", trust_remote_code=True)
@@ -138,7 +138,7 @@ def main():
     json.dump({"summary": summary, "rows": rows},
               open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     print("\n" + "=" * 60)
-    print(f"  [M3] 9B top-3 스코어링 (ep{ep})")
+    print(f"  9B top-3 스코어링 (ep{ep})")
     print(f"  스코어 top-1 acc : {score_top1_acc:.4f}")
     print(f"  생성   top-1 acc : {gen_top1_acc:.4f}")
     print(f"  스코어=생성 일치 : {agree:.4f}")

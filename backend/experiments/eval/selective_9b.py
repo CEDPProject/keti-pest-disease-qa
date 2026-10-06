@@ -60,7 +60,7 @@ def main():
            "sweep": sweep, "aurc": aurc, "risk_coverage": rc, "reject_policy": reject,
            "operating_points": ops}
     json.dump(res, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-    print("=" * 60); print("  [M4] 9B Selective prediction"); print("=" * 60)
+    print("=" * 60); print("  9B Selective prediction"); print("=" * 60)
     print(f"  baseline acc={res['baseline_acc']} · 오답 {n_wrong}/{n} · AURC={aurc}")
     for r in reject:
         print(f"    하위{int(r['reject_pct']*100)}% 보류 → 유지 {r['n_kept']}장 acc={r['acc']} F1={r['macro_f1']}")

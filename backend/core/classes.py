@@ -5,7 +5,7 @@ CORE_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.dirname(CORE_DIR)
 REPO_DIR = os.path.dirname(BACKEND_DIR)
 
-# ---- 데이터 루트 (모든 이미지·데이터셋은 repo/data/ 아래로 통합) ----
+# ---- 데이터 루트 (repo/data/, git 제외) ----
 DATA_ROOT = os.path.join(REPO_DIR, "data")
 
 RAW_IMAGE_DIR = os.path.join(DATA_ROOT, "raw", "감귤_병해충_사진")   # 원본 121장
@@ -21,7 +21,7 @@ SPLIT_JSON = os.path.join(DATA_DIR, "split.json")
 TRAIN_JSON = os.path.join(DATA_DIR, "train.json")
 TEST_JSONL = os.path.join(DATA_DIR, "test.jsonl")
 
-# 학습 산출물 (repo/models/ 로 분리)
+# 학습 산출물 (repo/models/, git 제외)
 MODELS_DIR = os.path.join(REPO_DIR, "models")
 LORA_DIR = os.path.join(MODELS_DIR, "qwen2_5vl_lora")
 MERGED_MODEL_DIR = os.path.join(MODELS_DIR, "qwen2_5vl_merged")
@@ -32,6 +32,7 @@ KB_CACHE_DIR = os.path.join(MODELS_DIR, "kb_cache")
 
 # 실험 결과 JSON (git 제외)
 RESULTS_DIR = os.path.join(REPO_DIR, "qa_docs", "experiment_results")
+LOGS_DIR = os.path.join(RESULTS_DIR, "logs")           # 학습 · 측정 실행 로그와 완료 표시
 
 # 한글 폴더명 → (ASCII 키, KB 섹션명)
 # KB 섹션명은 citrus_PD_ver3.md 의 '## ' 헤더와 정확히 일치해야 함.

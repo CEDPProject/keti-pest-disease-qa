@@ -61,7 +61,7 @@ def main():
                                                     device_map="cuda", trust_remote_code=True)
     proc = AutoProcessor.from_pretrained(BASE, trust_remote_code=True)
     model = PeftModel.from_pretrained(base, adapter).eval()
-    print(f"[M5] 9B adapter ep{ep} · 질병 test × 3질의", flush=True)
+    print(f"9B adapter ep{ep} · 질병 test × 3질의", flush=True)
 
     def classify(text, gold_key):
         found = {n for n in latin_set(text) if n not in eng_latin}  # 영명 제외
@@ -112,7 +112,7 @@ def main():
     json.dump({"summary": res, "rowsA": rowsA, "rowsB": rowsB},
               open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     A = res["condition_A_noRAG"]; B = res["condition_B_RAG"]
-    print("=" * 56); print("  [M5] 9B 환각률 (학명 기준)")
+    print("=" * 56); print("  9B 환각률 (학명 기준)")
     print(f"  조건A(9B직접): 환각 {A['halluc_n']}/{A['n']} = {A['halluc_rate']*100:.1f}%")
     print(f"  조건B(9B+RAG): 환각 {B['halluc_n']}/{B['n']} = {B['halluc_rate']*100:.1f}% "
           f"{'0% 확인' if B['halluc_n']==0 else '0아님 → 사례 전부 첨부'}")

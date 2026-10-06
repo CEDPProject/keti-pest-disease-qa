@@ -21,7 +21,7 @@ TARGET = 60                 # 클래스당 학습 base 이미지 목표(균형)
 TEST_RATIO = 0.2
 TEST_MIN = 5
 DUP_DIST = 3                # 클래스 내 근접중복(해밍) 제거 임계
-SEED = 2026                 # 분할 랜덤 시드(새로 설정)
+SEED = 2026                 # 분할 랜덤 시드
 
 OUT = os.path.join(DATA_ROOT, "vlm_finetune_balanced")
 IMAGES_ROOT = os.path.join(OUT, "images")            # 통합 실사진(소스, consolidate_images.py 산출)
@@ -135,7 +135,7 @@ def main():
     import shutil
     os.makedirs(OUT, exist_ok=True)
     if os.path.exists(VLM_ROOT):
-        shutil.rmtree(VLM_ROOT)          # 새 시드로 완전 재구성
+        shutil.rmtree(VLM_ROOT)          # 이전 분할 결과를 지우고 다시 구성
     rng = random.Random(SEED)
     kb = kb_for_classes()
 

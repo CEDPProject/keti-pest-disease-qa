@@ -113,16 +113,16 @@ def main():
                                                     device_map="cuda", trust_remote_code=True)
     proc = AutoProcessor.from_pretrained(BASE, trust_remote_code=True)
     base.eval()
-    print(f"[M1] zero-shot(base) 조건 실행", flush=True)
+    print("zero-shot(base) 조건 실행", flush=True)
     zs = run_conditions(base, proc, test, caps, "zero-shot")
 
     model = PeftModel.from_pretrained(base, adapter).eval()
-    print(f"[M1] fine-tuned(ep{ep}) 조건 실행", flush=True)
+    print(f"fine-tuned(ep{ep}) 조건 실행", flush=True)
     ft = run_conditions(model, proc, test, caps, f"fine-tuned ep{ep}")
 
     res = {"model": BASE, "epoch": ep, "zero_shot": zs, "fine_tuned": ft}
     json.dump(res, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-    print(f"\n[M1] 저장: {OUT}")
+    print(f"\n저장: {OUT}")
 
 
 if __name__ == "__main__":

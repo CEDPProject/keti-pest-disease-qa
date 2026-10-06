@@ -146,7 +146,7 @@ keti-pest-disease-qa/
 플랫폼 서빙 모델(Qwen2.5-VL-7B + LoRA 병합)은 다음 순서로 만듭니다. LoRA 학습은 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)를 씁니다 (설치 위치: `.env`의 `LLAMAFACTORY_DIR`).
 
 ```
-data_prep/build_manifest.py → make_split.py → build_dataset.py → train/run_train.sh → train/merge_lora.py
+data_prep/build_manifest.py → make_split.py → build_dataset.py → train/train.py --model platform → train/merge_lora.py
 ```
 
 ## 관련 논문
@@ -178,8 +178,8 @@ Jihoon Lee, Sungin Hwang, Jaewon Moon — KETI
 |---|---|
 | 데이터 수집 · 구축 | `data_prep/ncpms_collect.py` → `consolidate_images.py` → `build_balanced.py` |
 | 누수 점검 | `eval/check_leakage.py` |
-| 학습 (Qwen3.5-9B) | `train/run_train_9b.sh` |
-| 측정 전체 실행 | `train/run_eval_9b.sh` (아래 eval 스크립트를 순서대로 실행) |
+| 학습 (Qwen3.5-9B) | `train/train.py` |
+| 측정 전체 실행 | `eval/run_eval_9b.py` (아래 eval 스크립트를 순서대로 실행) |
 | 진단 성능 · 에폭 선택 | `eval/eval_9b_balanced.py` |
 | 입력 조건 비교 | `eval/eval_9b_ablation.py` |
 | 라벨 채점 · 마진 · 상위 3개 | `eval/score_9b_top3.py` |
