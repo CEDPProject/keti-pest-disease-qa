@@ -1,13 +1,10 @@
-import os
 import re
-import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # core/ 자기참조
-from classes import KB_PATH, CLASSES  # noqa: E402
+from backend.core.classes import CLASSES, KB_PATH
 
 
+# 블록에서 '- ' 로 시작하는 항목 줄만 뽑는다
 def _bullets(block: str) -> list:
-    """'- ' 로 시작하는 줄만 추출."""
     out = []
     for line in block.splitlines():
         line = line.strip()
@@ -16,24 +13,21 @@ def _bullets(block: str) -> list:
     return out
 
 
+# KB 문서를 병해충별 학명·영명·병징·생태·방제·약제 사전으로 파싱한다
 def parse_kb() -> dict:
-    """{KB섹션명: {scientific, english, symptoms[], ecology[], control[], pesticides[]}}"""
     with open(KB_PATH, encoding="utf-8") as f:
         text = f.read()
 
     sections = {}
-    # '## ' 기준 분리
     for sec in re.split(r"\n(?=## )", text):
         sec = sec.strip()
         if not sec.startswith("## "):
             continue
         name = sec.splitlines()[0].replace("## ", "").strip()
 
-        # 학명/영명 (헤더 직후 bullet)
         sci = re.search(r"학명:\s*(.+)", sec)
         eng = re.search(r"영명:\s*(.+)", sec)
 
-        # ### 하위 섹션 분리
         subs = {}
         for part in re.split(r"\n(?=### )", sec):
             if part.strip().startswith("### "):
@@ -53,8 +47,8 @@ def parse_kb() -> dict:
     return sections
 
 
+# 진단 대상 질병 클래스의 KB 항목만 한글 라벨 기준으로 돌려준다
 def kb_for_classes() -> dict:
-    """사진 8클래스에 해당하는 KB만 반환 {label_ko: knowledge}."""
     kb = parse_kb()
     out = {}
     for label_ko, info in CLASSES.items():
@@ -65,9 +59,15 @@ def kb_for_classes() -> dict:
     return out
 
 
-if __name__ == "__main__":
+# 클래스별 KB 항목 개수를 출력한다
+def main():
     kb = kb_for_classes()
     for label, k in kb.items():
         print(f"\n=== {label} ({k['english']}) ===")
         print(f"  학명: {k['scientific']}")
-        print(f"  증상 {len(k['symptoms'])} / 생태 {len(k['ecology'])} / 방제 {len(k['control'])} / 약제 {len(k['pesticides'])}")
+        print(f"  증상 {len(k['symptoms'])} / 생태 {len(k['ecology'])} / "
+              f"방제 {len(k['control'])} / 약제 {len(k['pesticides'])}")
+
+
+if __name__ == "__main__":
+    main()

@@ -118,9 +118,15 @@ keti-pest-disease-qa/
 │   │   ├── label_extract.py     생성 답변 → 병명 추출
 │   │   ├── kb_parser.py         KB 문서 파서
 │   │   ├── kb_retriever.py      이름 정규화 · 섹션 검색
+│   │   ├── vlm.py               VLM 실행기 (채팅 템플릿 · 생성 · 라벨 채점)
 │   │   ├── name_rag_pipeline.py VLM 판정 + KB 조회 파이프라인
+│   │   ├── ollama_client.py     답변 문장 정리용 Ollama 호출
 │   │   └── knowledge/           지식베이스 원문
 │   └── experiments/       학습 · 평가 · 논문 실험
+│       ├── data_io.py     JSON 입출력 · 이미지 목록 · 교차 검증 사진
+│       ├── metrics.py     평가 지표 · 학명 환각 채점
+│       ├── paper_model.py 논문 모델 로딩 · 최적 에폭 · 라벨 채점 루프
+│       ├── kb_text.py     KB 병징 발췌 · 캡션 정리
 │       ├── data_prep/     데이터셋 구축
 │       ├── train/         LoRA 학습 · 모델 병합
 │       ├── eval/          진단 성능 · 환각 · 선택적 응답 측정
@@ -145,8 +151,12 @@ keti-pest-disease-qa/
 
 플랫폼 서빙 모델(Qwen2.5-VL-7B + LoRA 병합)은 다음 순서로 만듭니다. LoRA 학습은 [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)를 씁니다 (설치 위치: `.env`의 `LLAMAFACTORY_DIR`).
 
-```
-data_prep/build_manifest.py → make_split.py → build_dataset.py → train/train.py --model platform → train/merge_lora.py
+```bash
+python -m backend.experiments.data_prep.build_manifest
+python -m backend.experiments.data_prep.make_split
+python -m backend.experiments.data_prep.build_dataset
+python -m backend.experiments.train.train --model platform
+python -m backend.experiments.train.merge_lora --adapter models/qwen2_5vl_lora/checkpoint-<N> --out models/qwen2_5vl_merged
 ```
 
 ## 관련 논문
@@ -172,7 +182,8 @@ Jihoon Lee, Sungin Hwang, Jaewon Moon — KETI
 <details>
 <summary>실험 재현 스크립트</summary>
 
-결과 JSON은 `qa_docs/experiment_results/`에 저장됩니다 (git 제외). 경로는 `backend/experiments/` 기준입니다.
+결과 JSON은 `qa_docs/experiment_results/`에 저장됩니다 (git 제외). 표의 경로는 `backend/experiments/` 기준이며,
+모든 스크립트는 저장소 루트에서 모듈로 실행합니다. 예: `eval/score_9b_top3.py` → `python -m backend.experiments.eval.score_9b_top3`
 
 | 단계 | 스크립트 |
 |---|---|

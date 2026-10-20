@@ -1,11 +1,10 @@
 import os
 
-# 환경별 설정 · 비밀값은 저장소 루트의 .env 에서 읽는다 (.env 는 git 제외, 항목은 .env.example 참고).
-# 이미 셸에 설정된 환경변수가 .env 보다 우선한다.
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ENV_PATH = os.path.join(REPO_DIR, ".env")
 
 
+# 저장소 루트의 .env 를 읽어 셸에 없는 환경변수만 채운다
 def load_env(path: str = ENV_PATH) -> None:
     if not os.path.exists(path):
         return

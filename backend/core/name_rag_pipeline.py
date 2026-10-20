@@ -1,58 +1,40 @@
-import os
-import sys
+import json
 
-import torch
-from PIL import Image
+from backend.core.classes import KEY_TO_LABEL, LABEL_TO_KEY, MERGED_MODEL_DIR, SECTION_TO_KEY, TEST_JSONL
+from backend.core.kb_retriever import KBRetriever
+from backend.core.label_extract import extract_label
+from backend.core.vlm import VLMRunner, load_qwen25
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from label_extract import extract_label, LABEL_TO_KEY  # noqa
-from kb_retriever import KBRetriever  # noqa
-from classes import CLASSES, TEST_JSONL  # noqa
-
-KEY_TO_LABEL = {v: k for k, v in LABEL_TO_KEY.items()}
-# KB 섹션명 → 우리 8클래스 키 (예: '녹색곰팡이병ㆍ푸른곰팡이병' → 'green_mold')
-KB_SECTION_TO_KEY = {v["kb_section"]: v["key"] for v in CLASSES.values()}
+NAME_PROMPT = "이 감귤 사진의 병명은 무엇인가요? 병명만 답하세요."
+NAME_MAX_NEW_TOKENS = 120
 
 
+# KB 섹션명이나 클래스 한글명을 클래스 키로 바꾼다
 def kb_name_to_key(kb_disease: str) -> str:
-    """KB 섹션명(또는 클래스 한글명) → 클래스 키. 매핑 없으면 'unknown'."""
     if not kb_disease:
         return "unknown"
-    if kb_disease in KB_SECTION_TO_KEY:
-        return KB_SECTION_TO_KEY[kb_disease]
+    if kb_disease in SECTION_TO_KEY:
+        return SECTION_TO_KEY[kb_disease]
     return LABEL_TO_KEY.get(kb_disease, "unknown")
 
-# 병명만 요구하는 프롬프트. (모델이 장황하게 답해도 extract_label 로 병명만 취한다)
-NAME_PROMPT = "이 감귤 사진의 병명은 무엇인가요? 병명만 답하세요."
 
-
+# VLM 은 병명만 정하고 사실 정보는 KB 에서 가져오는 진단 파이프라인
 class NameRagPipeline:
-    """VLM=병명만, RAG=정보조회."""
-
-    def __init__(self, model, processor, retriever: KBRetriever):
-        self.model = model
-        self.proc = processor
+    # VLM 실행기와 KB 검색기를 받는다
+    def __init__(self, runner: VLMRunner, retriever: KBRetriever):
+        self.runner = runner
         self.kb = retriever
 
-    def _vlm_name(self, image):
-        msgs = [{"role": "user", "content": [
-            {"type": "image", "image": image, "max_pixels": 768 * 768},
-            {"type": "text", "text": NAME_PROMPT}]}]
-        txt = self.proc.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
-        img = Image.open(image).convert("RGB") if isinstance(image, str) else image.convert("RGB")
-        inp = self.proc(text=[txt], images=[img], return_tensors="pt").to("cuda")
-        with torch.no_grad():
-            out = self.model.generate(**inp, max_new_tokens=120, do_sample=False)
-        raw = self.proc.batch_decode(out[:, inp.input_ids.shape[1]:], skip_special_tokens=True)[0].strip()
-        key = extract_label(raw)                       # 병명 하나만 취함
-        name = KEY_TO_LABEL.get(key)                   # 나머지 텍스트는 버림
-        return name, raw
+    # 사진에서 병명 하나를 뽑아 모델 원문과 함께 돌려준다
+    def predict_name(self, image):
+        raw = self.runner.ask(image, NAME_PROMPT, NAME_MAX_NEW_TOKENS)
+        return KEY_TO_LABEL.get(extract_label(raw)), raw
 
+    # 병명 판정 후 KB 원문으로 답변을 조립한다
     def run(self, image, user_question: str = None) -> dict:
-        name, raw = self._vlm_name(image)
+        name, raw = self.predict_name(image)
 
         if name is None:
-            # 모델이 학습된 8종 밖의 이름을 뱉었을 수 있음 → 원문에서 후보 제안
             sugg = self.kb.suggest(raw[:40], k=3)
             return {"vlm_raw": raw, "disease": None, "how": "unknown",
                     "suggestions": sugg,
@@ -78,22 +60,21 @@ class NameRagPipeline:
                 "class_key": kb_name_to_key(disease)}
 
 
-if __name__ == "__main__":
-    import json
-    from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor
-    from classes import MERGED_MODEL_DIR as M  # noqa
-    model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-        M, torch_dtype=torch.bfloat16, device_map="cuda").eval()
-    proc = AutoProcessor.from_pretrained(M, max_pixels=768 * 768)
-    pipe = NameRagPipeline(model, proc, KBRetriever(device="cuda"))
+# 서빙 모델로 테스트 사진 두 장에 대한 답변을 출력한다
+def main():
+    model, proc = load_qwen25(MERGED_MODEL_DIR)
+    pipe = NameRagPipeline(VLMRunner(model, proc), KBRetriever(device="cuda"))
 
-    test = [json.loads(l) for l in open(TEST_JSONL, encoding="utf-8")]
-    # 데모: 앞 2개 사례
-    picks = test[:2]
-    for r in picks:
+    with open(TEST_JSONL, encoding="utf-8") as f:
+        test = [json.loads(line) for line in f]
+    for r in test[:2]:
         for q in [None, "약제 뭐 써요?"]:
             out = pipe.run(r["image"], q)
-            print(f"\n{'='*66}\n정답={r['label_ko']} | 질문={q or '(없음)'}")
-            print(f"  VLM 원문: {out['vlm_raw'][:70].replace(chr(10),' ')}")
+            print(f"\n{'=' * 66}\n정답={r['label_ko']} | 질문={q or '(없음)'}")
+            print(f"  VLM 원문: {out['vlm_raw'][:70].replace(chr(10), ' ')}")
             print(f"  → 병명: {out['disease']} ({out['how']})")
             print(f"  답변 앞부분:\n{out['answer'][:300]}")
+
+
+if __name__ == "__main__":
+    main()

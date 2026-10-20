@@ -1,195 +1,142 @@
 import os
-import sys
-import json
 import random
 
-import torch
 import numpy as np
-from PIL import Image
-from transformers import AutoModelForMultimodalLM, AutoProcessor
+import torch
 from peft import PeftModel
-from sklearn.metrics import f1_score, accuracy_score
+from sklearn.metrics import accuracy_score
 
-random.seed(42); np.random.seed(42); torch.manual_seed(42)
+from backend.core.classes import BALANCED_TEST_JSONL, KEY_TO_LABEL, NORMAL_KEY, RESULTS_DIR
+from backend.core.kb_retriever import KBRetriever
+from backend.core.label_extract import extract_label
+from backend.core.vlm import VLMRunner
+from backend.experiments.data_io import read_json, read_jsonl, write_json
+from backend.experiments.kb_text import symptom_guides
+from backend.experiments.metrics import macro_f1, prediction_changes, source_accuracy
+from backend.experiments.paper_model import RECHECK_ADAPTER, RECHECK_BASE_MODEL, load_qwen35
 
-REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-sys.path.insert(0, os.path.join(REPO, "backend", "core"))
-from classes import RESULTS_DIR  # noqa: E402
-from classes import CLASSES  # noqa
-from label_extract import extract_label, LABEL_TO_KEY  # noqa
-from kb_retriever import KBRetriever  # noqa
-
-BASE = "Qwen/Qwen3.5-4B"
-ADAPTER = os.path.join(REPO, "models", "qwen3_5_balanced_lora", "checkpoint-932")
-TEST = os.path.join(REPO, "data", "vlm_finetune_balanced", "test.jsonl")
 STAGE1 = os.path.join(RESULTS_DIR, "b_stage1_top3.json")
 OUT = os.path.join(RESULTS_DIR, "b_stage3_recheck.json")
-MAX_PIXELS = 768 * 768
-
-CLASS_KEYS = ["canker", "scab", "gray_mold", "gummosis", "black_spot",
-              "green_mold", "anthracnose", "normal"]
-KO = {v: k for k, v in LABEL_TO_KEY.items()}; KO["normal"] = "정상"
-KEY_TO_SECTION = {m["key"]: m["kb_section"] for lab, m in CLASSES.items()}
-VISUAL_QUERY = ("병반 반점 딱지 부스럼 융기 돌출 코르크 분화구 검은점 "
-                "부패 곰팡이 균사 포자 색깔 표면 모양 크기 테두리")
-NORMAL_RULE = "병징에 해당하는 이상 소견(반점·병반·변색·곰팡이 등)이 없으면 정상."
 
 
-def build_guides(kb):
-    g = {}
-    for key in CLASS_KEYS:
-        if key == "normal":
-            g[key] = [NORMAL_RULE]
-        else:
-            lines = kb.retrieve_lines(KEY_TO_SECTION[key], VISUAL_QUERY, "병징", top_n=3)
-            g[key] = [l["text"] for l in lines]
-    return g
-
-
-def second_prompt(proc, top3_keys, guides):
-    order = sorted(top3_keys, key=lambda k: KO[k])          # 가나다순
-    blocks = []
-    for k in order:
-        body = " ".join(guides[k])
-        blocks.append(f"[{KO[k]}]\n{body}")
+# 후보 3개의 병징 발췌를 붙인 2차 질문 프롬프트를 만든다
+def second_prompt(runner: VLMRunner, top3_keys: list, guides: dict):
+    order = sorted(top3_keys, key=lambda k: KEY_TO_LABEL[k])
+    blocks = [f"[{KEY_TO_LABEL[k]}]\n{' '.join(guides[k])}" for k in order]
     text = ("다음 세 후보 중 하나다. 각 후보의 병징 발췌를 참고하여 "
             "사진을 다시 관찰하고 병명 하나만 답하라.\n\n" + "\n\n".join(blocks))
-    msgs = [{"role": "user", "content": [
-        {"type": "image", "image": None, "max_pixels": MAX_PIXELS},
-        {"type": "text", "text": text}]}]
-    try:
-        t = proc.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True, enable_thinking=False)
-    except TypeError:
-        t = proc.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
-    return t, order[0]                                        # 첫 후보(위치편향 검사용)
+    return runner.build_prompt(text), order[0]
 
 
-@torch.no_grad()
-def gen(model, proc, image, prompt_text):
-    im = Image.open(image).convert("RGB")
-    inp = proc(text=[prompt_text], images=[im], return_tensors="pt").to("cuda")
-    out = model.generate(**inp, max_new_tokens=32, do_sample=False)
-    return proc.batch_decode(out[:, inp.input_ids.shape[1]:], skip_special_tokens=True)[0].strip()
+# 정확도, macro-F1, 출처별 정확도를 묶어 계산한다
+def metrics(golds: list, preds: list, srcs: list) -> dict:
+    return {"accuracy": round(accuracy_score(golds, preds), 4), "macro_f1": round(macro_f1(golds, preds), 4),
+            "src_acc": source_accuracy(golds, preds, srcs, 3)}
 
 
-def _metrics(golds, preds, srcs):
-    acc = accuracy_score(golds, preds)
-    f1 = f1_score(golds, preds, labels=CLASS_KEYS, average="macro", zero_division=0)
-    src = {}
-    for s in ("원본", "NCPMS"):
-        idx = [i for i in range(len(golds)) if srcs[i] == s and golds[i] != "normal"]
-        src[s] = round(sum(preds[i] == golds[i] for i in idx) / len(idx), 3) if idx else None
-    return {"accuracy": round(acc, 4), "macro_f1": round(f1, 4), "src_acc": src}
-
-
-def _transitions(golds, base, final):
-    w2c = [i for i in range(len(golds)) if base[i] != golds[i] and final[i] == golds[i]]
-    c2w = [i for i in range(len(golds)) if base[i] == golds[i] and final[i] != golds[i]]
-    normal_flip = [i for i in range(len(golds)) if golds[i] == "normal"
-                   and base[i] == "normal" and final[i] != "normal"]
+# 기준 대비 예측 변화 건수와 정상→질병 뒤집힘 수를 센다
+def transitions(golds: list, base: list, final: list) -> dict:
+    w2c, c2w = prediction_changes(golds, base, final)
+    normal_flip = [i for i in range(len(golds)) if golds[i] == NORMAL_KEY
+                   and base[i] == NORMAL_KEY and final[i] != NORMAL_KEY]
     return {"wrong2correct": len(w2c), "correct2wrong": len(c2w),
             "net": len(w2c) - len(c2w), "normal_to_disease": len(normal_flip),
             "w2c_idx": w2c, "c2w_idx": c2w}
 
 
-def main():
-    test = [json.loads(l) for l in open(TEST, encoding="utf-8")]
-    s1 = {r["image"]: r for r in json.load(open(STAGE1, encoding="utf-8"))["rows"]}
-
-    kb = KBRetriever(device="cpu")
-    guides = build_guides(kb)
-
-    base = AutoModelForMultimodalLM.from_pretrained(BASE, torch_dtype=torch.bfloat16,
-                                                    device_map="cuda", trust_remote_code=True)
-    proc = AutoProcessor.from_pretrained(BASE, trust_remote_code=True)
-    model = PeftModel.from_pretrained(base, ADAPTER).eval()
-
+# 사진마다 후보 발췌를 보여 주고 다시 물어 2차 답을 기록한다
+def recheck_rows(runner: VLMRunner, test: list, s1: dict, guides: dict) -> list:
     rows = []
     for i, r in enumerate(test):
         img_b = os.path.basename(r["image"])
         s = s1[img_b]
-        gold = s["gold"]; top1 = s["score_top1"]; top3 = s["score_top3"]; margin = s["margin_1_2"]
-        prompt, first_cand = second_prompt(proc, top3, guides)
-        raw2 = gen(model, proc, r["image"], prompt)
+        top1, top3 = s["score_top1"], s["score_top3"]
+        prompt, first_cand = second_prompt(runner, top3, guides)
+        raw2 = runner.generate(prompt, r["image"], 32)
         key2 = extract_label(raw2)
-        applied_valid = key2 in top3
-        second = key2 if applied_valid else top1        # 폴백
+        valid = key2 in top3
         rows.append({
-            "image": img_b, "gold": gold, "source": s["source"],
-            "top1": top1, "top3": top3, "margin": margin,
-            "second_raw": raw2, "second_key": key2, "valid": applied_valid,
-            "second_final": second, "first_cand": first_cand,
+            "image": img_b, "gold": s["gold"], "source": s["source"],
+            "top1": top1, "top3": top3, "margin": s["margin_1_2"],
+            "second_raw": raw2, "second_key": key2, "valid": valid,
+            "second_final": key2 if valid else top1, "first_cand": first_cand,
             "hit_first": key2 == first_cand,
         })
         if (i + 1) % 10 == 0:
             print(f"  {i+1}/{len(test)}")
+    return rows
+
+
+# 마진 임계값별 2차 답 적용 결과를 표로 만든다
+def margin_table(rows: list, golds: list, srcs: list, base_pred: list, wrong_idx: list) -> list:
+    table = []
+    for t in (0.7, 0.9, 1.1):
+        applied = [i for i in range(len(rows)) if rows[i]["margin"] < t]
+        pb = [rows[i]["second_final"] if rows[i]["margin"] < t else base_pred[i] for i in range(len(rows))]
+        m = metrics(golds, pb, srcs)
+        table.append({"threshold": t, "n_applied": len(applied),
+                      "wrong_covered": sum(1 for i in applied if i in wrong_idx),
+                      "correct_at_risk": sum(1 for i in applied if i not in wrong_idx),
+                      "macro_f1": m["macro_f1"], "accuracy": m["accuracy"],
+                      **transitions(golds, base_pred, pb), "src_acc": m["src_acc"]})
+    return table
+
+
+# 유도 재확인을 전체·마진·오라클 조건으로 평가한다
+def main():
+    random.seed(42)
+    np.random.seed(42)
+    torch.manual_seed(42)
+
+    test = read_jsonl(BALANCED_TEST_JSONL)
+    s1 = {r["image"]: r for r in read_json(STAGE1)["rows"]}
+    guides = symptom_guides(KBRetriever(device="cpu"))
+
+    base, proc = load_qwen35(RECHECK_BASE_MODEL)
+    runner = VLMRunner(PeftModel.from_pretrained(base, RECHECK_ADAPTER).eval(), proc, enable_thinking=False)
+    rows = recheck_rows(runner, test, s1, guides)
 
     golds = [r["gold"] for r in rows]
     srcs = [r["source"] for r in rows]
     base_pred = [r["top1"] for r in rows]
-    margins = [r["margin"] for r in rows]
     wrong_idx = [i for i in range(len(rows)) if base_pred[i] != golds[i]]
 
-    # 조건별 최종 예측
-    def cond_a():
-        return [r["second_final"] for r in rows]
-
-    def cond_b(t):
-        return [rows[i]["second_final"] if margins[i] < t else base_pred[i] for i in range(len(rows))]
-
-    def cond_c():
-        return [rows[i]["second_final"] if i in wrong_idx else base_pred[i] for i in range(len(rows))]
-
-    results = {}
-    results["baseline"] = {**_metrics(golds, base_pred, srcs)}
-    pa = cond_a(); results["a_all"] = {**_metrics(golds, pa, srcs), **_transitions(golds, base_pred, pa)}
-    pc = cond_c(); results["c_oracle_wrong13"] = {**_metrics(golds, pc, srcs), **_transitions(golds, base_pred, pc)}
-
-    # (b) 마진 임계 트레이드오프
-    b_table = []
-    for t in (0.7, 0.9, 1.1):
-        applied = [i for i in range(len(rows)) if margins[i] < t]
-        n_wrong_covered = sum(1 for i in applied if i in wrong_idx)
-        n_correct_risk = sum(1 for i in applied if i not in wrong_idx)
-        pb = cond_b(t)
-        tr = _transitions(golds, base_pred, pb)
-        m = _metrics(golds, pb, srcs)
-        b_table.append({"threshold": t, "n_applied": len(applied),
-                        "wrong_covered": n_wrong_covered, "correct_at_risk": n_correct_risk,
-                        "macro_f1": m["macro_f1"], "accuracy": m["accuracy"], **tr,
-                        "src_acc": m["src_acc"]})
-    results["b_margin_table"] = b_table
+    baseline = metrics(golds, base_pred, srcs)
+    pa = [r["second_final"] for r in rows]
+    a_all = {**metrics(golds, pa, srcs), **transitions(golds, base_pred, pa)}
+    pc = [rows[i]["second_final"] if i in wrong_idx else base_pred[i] for i in range(len(rows))]
+    c_oracle = {**metrics(golds, pc, srcs), **transitions(golds, base_pred, pc)}
+    b_table = margin_table(rows, golds, srcs, base_pred, wrong_idx)
     best_b = max(b_table, key=lambda x: x["net"])
-    results["b_best"] = best_b
 
-    # 위치편향
     hit_first = sum(r["hit_first"] for r in rows) / len(rows)
-    # 약함 판정 케이스(정답=잿빛곰팡이) 2차 성패
-    weak = [{"image": r["image"], "gold": KO[r["gold"]], "top1": KO[r["top1"]],
-             "second": KO.get(r["second_key"], r["second_key"]), "valid": r["valid"],
+    weak = [{"image": r["image"], "gold": KEY_TO_LABEL[r["gold"]], "top1": KEY_TO_LABEL[r["top1"]],
+             "second": KEY_TO_LABEL.get(r["second_key"], r["second_key"]), "valid": r["valid"],
              "correct": r["second_final"] == r["gold"]}
             for r in rows if r["gold"] == "gray_mold"]
 
     summary = {
-        "baseline": results["baseline"],
-        "a_all": results["a_all"],
+        "baseline": baseline,
+        "a_all": a_all,
         "b_margin_table": b_table,
         "b_best_threshold": best_b["threshold"],
-        "c_oracle": results["c_oracle_wrong13"],
+        "c_oracle": c_oracle,
         "position_bias_hit_first": round(hit_first, 3),
-        "position_bias_expected": round(1/3, 3),
+        "position_bias_expected": round(1 / 3, 3),
         "graymold_cases": weak,
     }
-    json.dump({"summary": summary, "rows": rows}, open(OUT, "w", encoding="utf-8"),
-              ensure_ascii=False, indent=2)
+    write_json({"summary": summary, "rows": rows}, OUT)
 
     print("\n" + "=" * 64)
     print("  STAGE 3 결과 요약")
     print("=" * 64)
-    b = results["baseline"]; a = results["a_all"]; c = results["c_oracle_wrong13"]
-    print(f"  baseline    : F1={b['macro_f1']:.3f} acc={b['accuracy']:.3f} 원본{b['src_acc']['원본']} NCPMS{b['src_acc']['NCPMS']}")
-    print(f"  (a) 전체적용: F1={a['macro_f1']:.3f} acc={a['accuracy']:.3f} | 오답→정답 {a['wrong2correct']} 정답→오답 {a['correct2wrong']} 순이득 {a['net']} | 정상→병해 {a['normal_to_disease']}")
-    print(f"  (c) oracle  : F1={c['macro_f1']:.3f} acc={c['accuracy']:.3f} | 오답→정답 {c['wrong2correct']} 정답→오답 {c['correct2wrong']} 순이득 {c['net']}")
+    b, a, c = baseline, a_all, c_oracle
+    print(f"  baseline    : F1={b['macro_f1']:.3f} acc={b['accuracy']:.3f} "
+          f"원본{b['src_acc']['원본']} NCPMS{b['src_acc']['NCPMS']}")
+    print(f"  (a) 전체적용: F1={a['macro_f1']:.3f} acc={a['accuracy']:.3f} | 오답→정답 {a['wrong2correct']} "
+          f"정답→오답 {a['correct2wrong']} 순이득 {a['net']} | 정상→병해 {a['normal_to_disease']}")
+    print(f"  (c) oracle  : F1={c['macro_f1']:.3f} acc={c['accuracy']:.3f} | 오답→정답 {c['wrong2correct']} "
+          f"정답→오답 {c['correct2wrong']} 순이득 {c['net']}")
     print("  (b) 마진 임계 트레이드오프:")
     for r in b_table:
         print(f"     t={r['threshold']}: 적용{r['n_applied']}장(오답{r['wrong_covered']}+정답{r['correct_at_risk']}) "

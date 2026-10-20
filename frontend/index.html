@@ -5,11 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>감귤 병해충 AI 진단</title>
 <style>
-/* ============================================================
-   라이트 기본. 밝은 웜화이트 배경 + 순백 카드.
-   액센트는 절제 — 선명한 감귤 오렌지(#f97316)는 버튼·강조·포커스에만.
-   그린은 'KB 검증' 등 긍정 배지에만. 대부분 면적은 화이트/그레이 + 진한 텍스트.
-   ============================================================ */
 :root{
   --bg:#f8fafc; --surface:#ffffff; --surface-2:#f9fafb; --kb-bg:#f9fafb;
   --border:#e5e7eb; --border-2:#eef0f2;
@@ -38,7 +33,7 @@ button{font-family:inherit; cursor:pointer}
 :focus-visible{outline:2.5px solid var(--focus); outline-offset:2px; border-radius:6px}
 .mono{font-family:var(--font-mono)}
 
-/* ---------- 상단바 + 내비게이션 ---------- */
+/* 상단바 + 내비게이션 */
 .top{
   position:sticky; top:0; z-index:20;
   display:flex; align-items:center; gap:18px;
@@ -63,7 +58,7 @@ button{font-family:inherit; cursor:pointer}
 .nav .tab:hover{background:var(--surface-2); color:var(--ink)}
 .nav .tab.on{background:var(--accent-soft); color:var(--accent-text)}
 
-/* ---------- 페이지 전환 ---------- */
+/* 페이지 전환 */
 .page{display:none}
 .page.active{display:block; animation:fade .22s ease}
 @keyframes fade{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
@@ -71,7 +66,7 @@ button{font-family:inherit; cursor:pointer}
 .pw.wide{max-width:min(1840px,96vw)}
 .pw.doc{max-width:min(1460px,94vw)}
 
-/* ---------- 진단: 2단 레이아웃 (입력 고정폭 + 결과 넓게) ---------- */
+/* 진단 2단 레이아웃 */
 .grid{display:grid; grid-template-columns:410px minmax(0,1fr); gap:26px; align-items:start}
 @media(max-width:940px){ .grid{grid-template-columns:1fr} }
 .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow)}
@@ -90,7 +85,7 @@ button{font-family:inherit; cursor:pointer}
 .panel-h .sub{margin:9px 0 0; font-size:12.5px; color:var(--muted); line-height:1.55}
 .panel-b{padding:20px 22px 22px}
 
-/* ---------- 업로드 ---------- */
+/* 업로드 */
 .drop{
   position:relative; border:1.5px dashed var(--border); border-radius:var(--radius-sm);
   background:var(--surface-2); aspect-ratio:4/3; overflow:hidden;
@@ -148,7 +143,7 @@ textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px va
 .hint{margin-top:14px; font-size:12px; color:var(--faint); line-height:1.6}
 .hint b{color:var(--muted); font-weight:600}
 
-/* ---------- 결과: 빈 상태 ---------- */
+/* 결과: 빈 상태 */
 .empty{padding:44px 26px; text-align:center}
 .empty .ic{font-size:32px; margin-bottom:14px; opacity:.55}
 .empty h3{font-size:16px; margin-bottom:7px}
@@ -165,11 +160,11 @@ textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px va
 .legend .row div{color:var(--muted)}
 .legend .row div b{color:var(--ink)}
 
-/* ---------- 결과 ---------- */
+/* 결과 */
 .result{padding:20px 22px 24px; display:none}
 .result.show{display:block}
 
-/* 모델 판단 카드 = 오렌지 좌측보더 + 옅은 오렌지 배경 */
+/* 모델 판단 카드 */
 .diag{
   border:1px solid var(--accent-line); border-left:4px solid var(--accent);
   border-radius:var(--radius); background:var(--accent-soft); padding:18px 20px;
@@ -219,7 +214,7 @@ details.raw .rawtext{
   white-space:pre-wrap; word-break:break-word; border:1px solid var(--border);
 }
 
-/* KB 원문 카드 = 그린 좌측보더 + 옅은 그레이 배경. 넓은 결과 폭을 활용해 다단 배치 */
+/* KB 원문 카드 */
 .kbwrap{margin-top:22px}
 .kbhead{display:flex; align-items:center; gap:10px; margin-bottom:7px}
 .kbhead .line{flex:1; height:1px; background:var(--border)}
@@ -245,7 +240,7 @@ details.raw .rawtext{
 .pills span{font-size:12px; padding:4px 10px; border-radius:8px; background:var(--surface);
   border:1px solid var(--border); color:var(--ink); font-weight:500}
 
-/* LLM 종합 답변 카드 + 원문 보기 토글 */
+/* LLM 종합 답변 카드 */
 .synth{margin-top:22px; border:1px solid var(--accent-line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow-sm); overflow:hidden}
 .synth-h{padding:11px 18px; background:var(--accent-soft); border-bottom:1px solid var(--accent-line);
   font-size:13px; font-weight:700; color:var(--accent-text); display:flex; align-items:center; gap:6px}
@@ -259,7 +254,7 @@ details.raw .rawtext{
 .kbsrc[open] > summary::before{content:"▾ "}
 .kbsrc .kbwrap{margin-top:10px}
 
-/* ---------- 미확정(unknown) ---------- */
+/* 미확정(unknown) */
 .unknown{border:1px solid var(--warn-line); border-left:4px solid var(--warn); border-radius:var(--radius);
   background:var(--warn-soft); padding:19px}
 .unknown h2{font-size:20px; color:var(--warn-text); margin:12px 0 5px}
@@ -272,7 +267,7 @@ details.raw .rawtext{
 .sugg .bar{width:64px; height:6px; border-radius:3px; background:var(--surface-2); overflow:hidden}
 .sugg .bar i{display:block; height:100%; background:var(--warn)}
 
-/* ---------- 진단 하단 고지 ---------- */
+/* 진단 하단 고지 */
 .disclaimer{margin-top:26px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow)}
 .disclaimer .in{padding:16px 20px; display:flex; gap:14px; align-items:flex-start}
 .disclaimer .ic{font-size:18px; flex:none; opacity:.9}
@@ -282,9 +277,7 @@ details.raw .rawtext{
 .disclaimer .stat b{font-family:var(--font-mono); font-weight:700; color:var(--ink); font-size:12.5px}
 .disclaimer .stat.bad b{color:var(--danger)}
 
-/* ============================================================
-   콘텐츠 페이지 (홈 · 데이터셋 · 지식베이스 · 활용 기술 · Reference)
-   ============================================================ */
+/* 콘텐츠 페이지 */
 .doc-h{margin-bottom:8px}
 .eyebrow{font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-text)}
 .doc-h h1{font-size:clamp(24px,3.2vw,33px); font-weight:800; letter-spacing:-.03em; margin:11px 0 0}
@@ -309,7 +302,6 @@ details.raw .rawtext{
 
 .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px}
 .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow-sm)}
-.card .em{font-size:22px; margin-bottom:10px; display:block; line-height:1}
 .card h3{font-size:14.5px; font-weight:700; margin-bottom:6px}
 .card p{font-size:13px; color:var(--muted); line-height:1.65; margin:0}
 .card.accent{border-color:var(--accent-line); background:var(--accent-soft)}
@@ -398,7 +390,6 @@ details.raw .rawtext{
 
 /* 노트 박스 */
 .note{display:flex; gap:12px; padding:14px 16px; border-radius:var(--radius-sm); font-size:13px; line-height:1.62; border:1px solid; margin-top:16px}
-.note .i{flex:none; font-size:15px; line-height:1.3}
 .note.info{background:var(--accent-soft); border-color:var(--accent-line); color:var(--ink)}
 .note.info b{color:var(--accent-text)}
 .note.warn{background:var(--warn-soft); border-color:var(--warn-line); color:var(--ink)}
@@ -424,7 +415,7 @@ details.raw .rawtext{
 .kbex .exb .k:first-child{margin-top:0}
 .kbex .exb p{font-size:13px; color:var(--ink); margin:0; line-height:1.6}
 
-/* ---------- 토스트 ---------- */
+/* 토스트 */
 .toast{
   position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
   background:var(--ink); color:var(--surface); padding:12px 18px; border-radius:11px; font-size:13px; font-weight:600;
@@ -453,7 +444,7 @@ details.raw .rawtext{
 
 <main>
 
-<!-- ==================== 홈 ==================== -->
+<!-- 홈 -->
 <section class="page active" id="page-home">
   <div class="pw doc">
     <div class="doc-h">
@@ -474,17 +465,14 @@ details.raw .rawtext{
       <div class="sec-h"><span class="no">01</span><h2>왜 이 연구인가 — 문제</h2></div>
       <div class="cards">
         <div class="card">
-          <span class="em"></span>
           <h3>조기 진단의 벽</h3>
           <p>병해충은 초기 대응이 관건이지만, 유사한 병징을 육안으로 감별하려면 전문성이 필요하고 현장 전문가는 부족합니다.</p>
         </div>
         <div class="card">
-          <span class="em"></span>
           <h3>접근성의 한계</h3>
           <p>농가가 병징을 발견한 순간 즉시 물어볼 전문가나 신뢰할 자료에 접근하기 어렵습니다.</p>
         </div>
         <div class="card">
-          <span class="em"></span>
           <h3>오진 → 약제 오남용</h3>
           <p>잘못된 진단은 부적절한 약제·살포 시기로 이어져 방제 실패와 비용·환경 부담을 키웁니다.</p>
         </div>
@@ -499,12 +487,10 @@ details.raw .rawtext{
       </p>
       <div class="cards" style="margin-top:6px">
         <div class="card accent">
-          <span class="em"></span>
           <h3>모델 — 무엇인가</h3>
           <p>파인튜닝한 VLM이 이미지 근거로 <b>병명 하나</b>만 결정합니다. 시각 판단은 모델이 가장 잘합니다.</p>
         </div>
         <div class="card ok">
-          <span class="em"></span>
           <h3>지식베이스 — 무슨 뜻인가</h3>
           <p>학명·증상·약제 등 <b>사실</b>은 전문가 KB 원문에서 그대로 조회합니다. 모델이 생성하지 않습니다.</p>
         </div>
@@ -521,7 +507,6 @@ details.raw .rawtext{
         <div class="st"><div class="v" style="font-size:26px">0.56~0.72</div><div class="l">다른 출처 한국 감귤<br>(교차 검증 · 부분 전이)</div></div>
       </div>
       <div class="note info">
-        <span class="i"></span>
         <div><b>파이프라인이 작동하고, 실제 병징도 어느 정도 학습했습니다.</b> 사진 121장으로 학습하면 같은 분포에서 92%,
         학습에 안 쓴 <b>다른 출처의 한국 감귤(온주밀감)</b> 사진에서도 <b>0.56~0.72</b>로 상당 부분 맞힙니다 — 사진 스타일만 외운 게 아닙니다.
         다만 <b>다른 감귤 종(오렌지 등)·현장 사진엔 아직 약해</b>, 견고성을 높이려면 <b>다양한 출처의 데이터 확보</b>가 관건입니다.</div>
@@ -531,16 +516,16 @@ details.raw .rawtext{
     <div class="sec">
       <div class="sec-h"><span class="no">04</span><h2>기대 효과</h2></div>
       <div class="cards">
-        <div class="card"><span class="em">⏱</span><h3>조기 대응 지원</h3><p>현장에서 즉시 1차 진단을 받아 초기 방제 타이밍을 놓치지 않도록 돕습니다.</p></div>
-        <div class="card"><span class="em"></span><h3>약제 오남용 감소</h3><p>검증된 방제 정보만 제공해 부적절한 약제 선택·시기를 줄입니다.</p></div>
-        <div class="card"><span class="em"></span><h3>전문지식 접근성</h3><p>전문가 지식베이스를 누구나 질문 형태로 활용할 수 있게 합니다.</p></div>
-        <div class="card"><span class="em"></span><h3>데이터 투자 근거</h3><p>“데이터에 투자하면 성능이 나온다”를 숫자로 증명해 후속 데이터 확보의 근거를 제공합니다.</p></div>
+        <div class="card"><h3>조기 대응 지원</h3><p>현장에서 즉시 1차 진단을 받아 초기 방제 타이밍을 놓치지 않도록 돕습니다.</p></div>
+        <div class="card"><h3>약제 오남용 감소</h3><p>검증된 방제 정보만 제공해 부적절한 약제 선택·시기를 줄입니다.</p></div>
+        <div class="card"><h3>전문지식 접근성</h3><p>전문가 지식베이스를 누구나 질문 형태로 활용할 수 있게 합니다.</p></div>
+        <div class="card"><h3>데이터 투자 근거</h3><p>“데이터에 투자하면 성능이 나온다”를 숫자로 증명해 후속 데이터 확보의 근거를 제공합니다.</p></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ==================== 진단 ==================== -->
+<!-- 진단 -->
 <section class="page" id="page-diagnose">
   <div class="pw wide">
     <div class="grid">
@@ -637,7 +622,7 @@ details.raw .rawtext{
   </div>
 </section>
 
-<!-- ==================== 데이터셋 ==================== -->
+<!-- 데이터셋 -->
 <section class="page" id="page-data">
   <div class="pw doc">
     <div class="doc-h">
@@ -669,7 +654,6 @@ details.raw .rawtext{
         </table>
       </div>
       <div class="note info">
-        <span class="i">ℹ</span>
         <div><b>발생 부위</b>는 KB '형태/병징' 기준이며, 한 병해가 여러 부위(잎·열매·가지)에 함께 발생할 수 있습니다.
         녹색곰팡이병은 <b>수확 후 저장 과실</b>에서 주로 문제됩니다.<br>
         증강(augmentation)은 <b>train에만</b> 적용해 test 누수를 방지했습니다 → 학습 <b>384샘플</b>.
@@ -699,7 +683,6 @@ details.raw .rawtext{
         사진 스타일만 외운 게 아니라 실제 병징을 학습했음을 보여줍니다.
       </p>
       <div class="note info">
-        <span class="i"></span>
         <div>초기엔 <b>다른 감귤 종(파키스탄 오렌지/라임, Mendeley)</b>으로 검증해 무작위 수준이 나와 '일반화 실패'로 봤으나,
         같은 <b>한국 감귤</b>로 다시 검증하니 0.56~0.72로 전이됐습니다. → 앞선 붕괴는 <b>과일 종 차이(도메인 시프트)</b> 때문이었습니다.</div>
       </div>
@@ -718,7 +701,6 @@ details.raw .rawtext{
         <div class="row"><dt>전체 macro-F1</dt><dd><b>0.950</b> <span class="mono">(9클래스 · ep5)</span></dd></div>
       </div>
       <div class="note warn">
-        <span class="i"></span>
         <div>정상 이미지는 <b>흰배경 스튜디오</b>, 병 이미지는 field 스타일이라 <b>배경 혼입</b> 가능성이 남습니다.
         진짜 검증은 <b>현장에서 찍은 건강한 감귤 사진</b>으로 해야 합니다.</div>
       </div>
@@ -726,7 +708,7 @@ details.raw .rawtext{
   </div>
 </section>
 
-<!-- ==================== 지식베이스 ==================== -->
+<!-- 지식베이스 -->
 <section class="page" id="page-kb">
   <div class="pw doc">
     <div class="doc-h">
@@ -793,14 +775,13 @@ details.raw .rawtext{
     </div>
 
     <div class="note warn">
-      <span class="i"></span>
       <div>진단 대상 8종 중 <b>탄저병·검은무늬병</b>은 원래 KB에 없어 초안을 추가했습니다(35→37종).
       이 2종은 <b>전문가 검증 전</b>이며, 검은무늬병은 병명 정의 자체가 미확정입니다. 방제 정보는 참고용으로만 사용하세요.</div>
     </div>
   </div>
 </section>
 
-<!-- ==================== 활용 기술 ==================== -->
+<!-- 활용 기술 -->
 <section class="page" id="page-tech">
   <div class="pw doc">
     <div class="doc-h">
@@ -856,7 +837,6 @@ details.raw .rawtext{
         </table>
       </div>
       <div class="note info">
-        <span class="i"></span>
         <div><b>교훈 — 폐쇄된 라벨 집합에서 RAG를 분류기로 쓰면 안 됩니다.</b> 1·2위 후보의 코사인 점수차가 평균 0.018로 구분이 불가능해,
         VLM의 정확한 시각 판단(0.920)을 텍스트 유사도 노이즈로 덮어썼습니다.</div>
       </div>
@@ -876,7 +856,6 @@ details.raw .rawtext{
         </table>
       </div>
       <div class="note info">
-        <span class="i"></span>
         <div>학습에 안 쓴 다른 출처의 한국 감귤에서도 <b>0.56~0.72</b>로 상당 부분 맞힙니다 → 실제 병징을 학습.
         동일 분포 92%가 곧 실사용 성능은 아니며, 다른 종·현장 견고성을 위해 <b>데이터 다양성</b>이 관건입니다.</div>
       </div>
@@ -895,14 +874,13 @@ details.raw .rawtext{
         </table>
       </div>
       <div class="note info">
-        <span class="i"></span>
         <div>같은 조건에서 <b>3.5-4B가 2.5-VL-7B를 앞섰고</b>(더 작은데도), <b>정상 클래스</b>를 추가하니 정상 사진을 전부 "정상"으로 맞히면서 질병 성능도 유지했습니다. (배포 데모는 아직 2.5-VL 8클래스)</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ==================== Reference ==================== -->
+<!-- Reference -->
 <section class="page" id="page-ref">
   <div class="pw doc">
     <div class="doc-h">
@@ -967,8 +945,11 @@ details.raw .rawtext{
 <script>
 "use strict";
 
-/* ---------- 페이지(탭) 전환 ---------- */
+// HTML 특수문자를 이스케이프한다
+const esc = (s)=>String(s).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
 const PAGES = ["home","diagnose","data","kb","tech","ref"];
+// 지정한 탭 페이지만 보이게 하고 주소 해시를 맞춘다
 function showPage(id){
   if(!PAGES.includes(id)) id = "home";
   document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active", p.id === "page-"+id));
@@ -983,15 +964,14 @@ document.getElementById("brandHome").addEventListener("click",()=>showPage("home
 document.querySelectorAll("[data-goto]").forEach(x=>x.addEventListener("click",()=>showPage(x.dataset.goto)));
 showPage((location.hash || "#home").slice(1));
 
-/* ---------- 지식베이스 상세 모달 ---------- */
 const KB_DATA = (()=>{ try{ return JSON.parse(document.getElementById("kbdata").textContent); }catch(e){ return {}; } })();
 const KB_DIAG = new Set(["궤양병","더뎅이병","검은점무늬병","녹색곰팡이병ㆍ푸른곰팡이병","잿빛곰팡이병","수지병","탄저병","검은무늬병"]);
 const KB_DRAFT = new Set(["탄저병","검은무늬병"]);
 const kbmodal = document.getElementById("kbmodal");
 const kbmTitle = document.getElementById("kbmTitle");
 const kbmBody = document.getElementById("kbmBody");
-const escKb = (s)=>String(s).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+// KB 마크다운 원문을 모달용 HTML 로 바꾼다
 function kbMdToHtml(md){
   const out = []; let inList = false;
   const close = ()=>{ if(inList){ out.push("</ul>"); inList = false; } };
@@ -999,31 +979,31 @@ function kbMdToHtml(md){
     const line = raw.replace(/\s+$/,"");
     if(!line.trim()) continue;
     let m;
-    if(/^##\s+/.test(line)) continue;                       // 섹션 제목은 헤더에 별도 표시
-    if((m = line.match(/^###\s+(.*)/))){ close(); out.push(`<h4>${escKb(m[1])}</h4>`); continue; }
+    if(/^##\s+/.test(line)) continue;
+    if((m = line.match(/^###\s+(.*)/))){ close(); out.push(`<h4>${esc(m[1])}</h4>`); continue; }
     if((m = line.match(/^(\s*)(?:\d+\.|[-•])\s+(.*)/))){
       if(!inList){ out.push("<ul>"); inList = true; }
-      out.push(`<li${m[1].length >= 3 ? ' class="sub"' : ''}>${escKb(m[2])}</li>`); continue;
+      out.push(`<li${m[1].length >= 3 ? ' class="sub"' : ''}>${esc(m[2])}</li>`); continue;
     }
-    close(); out.push(`<p>${escKb(line.trim())}</p>`);
+    close(); out.push(`<p>${esc(line.trim())}</p>`);
   }
   close(); return out.join("");
 }
+// 병해충 KB 상세 모달을 연다
 function openKb(name){
   const md = KB_DATA[name];
   kbmTitle.textContent = name;
   let head = "";
   if(KB_DRAFT.has(name)){
-    head = `<div class="note warn" style="margin:0 0 14px"><span class="i"></span>
-      <div><b>KB 초안 — 전문가 검증 전.</b> 병원균 동정·병명이 미확정일 수 있어 참고용으로만 사용하세요.</div></div>`;
+    head = `<div class="note warn" style="margin:0 0 14px"><div><b>KB 초안 — 전문가 검증 전.</b> 병원균 동정·병명이 미확정일 수 있어 참고용으로만 사용하세요.</div></div>`;
   } else if(KB_DIAG.has(name)){
-    head = `<div class="note info" style="margin:0 0 14px"><span class="i"></span>
-      <div>이 병해충은 <b>AI 진단 대상 8종</b>에 포함됩니다.</div></div>`;
+    head = `<div class="note info" style="margin:0 0 14px"><div>이 병해충은 <b>AI 진단 대상 8종</b>에 포함됩니다.</div></div>`;
   }
   kbmBody.innerHTML = head + (md ? kbMdToHtml(md) : `<p class="metaline">등록된 상세 정보가 없습니다.</p>`);
   kbmBody.scrollTop = 0;
   kbmodal.classList.add("show"); kbmodal.setAttribute("aria-hidden","false");
 }
+// KB 상세 모달을 닫는다
 function closeKb(){ kbmodal.classList.remove("show"); kbmodal.setAttribute("aria-hidden","true"); }
 document.querySelectorAll(".dlist").forEach(list=>list.addEventListener("click",(e)=>{
   const b = e.target.closest(".dchip"); if(b) openKb(b.dataset.kb || b.textContent.trim());
@@ -1032,13 +1012,12 @@ document.getElementById("kbmClose").addEventListener("click", closeKb);
 kbmodal.addEventListener("click",(e)=>{ if(e.target === kbmodal) closeKb(); });
 document.addEventListener("keydown",(e)=>{ if(e.key === "Escape" && kbmodal.classList.contains("show")) closeKb(); });
 
-/* ---------- 진단 상태/요소 ---------- */
 const state = { imageDataUrl:null, intent:"diagnose" };
+// id 로 요소를 찾는다
 const el = (id)=>document.getElementById(id);
 const drop = el("drop"), fileInput = el("file"), preview = el("preview"), runBtn = el("run");
 const emptyBox = el("empty"), resultBox = el("result"), qBox = el("q");
 
-/* ---------- 렌더링 ---------- */
 const RES_LABEL = {exact:"KB 정확 일치", synonym:"동의어 매핑", partial:"부분 일치", rag:"최근접 매핑", unknown:"미확인"};
 const RES_CLASS = {exact:"exact", synonym:"syn", partial:"partial", rag:"rag", unknown:""};
 const RES_ICON  = {exact:"=", synonym:"⇄", partial:"≈", rag:"~", unknown:"?"};
@@ -1049,8 +1028,8 @@ const SECTIONS = [
   {key:"ecology",   name:"발생 원인·생태",  intents:["diagnose"]},
 ];
 const PRIMARY_BY_INTENT = { diagnose:"symptoms", name:"symptoms", symptom:"symptoms", control:"pesticides" };
-const esc = (s)=>String(s).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+// 진단 응답을 모델 판단 카드와 KB 원문 카드로 그린다
 function render(res){
   emptyBox.style.display="none";
   resultBox.classList.add("show");
@@ -1083,8 +1062,7 @@ function render(res){
       <div>모델은 <b>${esc(res.resolved_from)}</b>(이)라고 답했고, 지식베이스에서 <b>${esc(res.disease)}</b>(으)로 정규화했습니다.</div></div>`;
   }
   if(draft){
-    html += `<div class="callout warn"><span class="ci"></span>
-      <div><b>KB 초안 — 전문가 검증 전.</b> ${info.scientific? "":"학명·병원균이 <b>미확정</b>이며 "}방제 정보는 참고용으로만 사용하세요.</div></div>`;
+    html += `<div class="callout warn"><div><b>KB 초안 — 전문가 검증 전.</b> ${info.scientific? "":"학명·병원균이 <b>미확정</b>이며 "}방제 정보는 참고용으로만 사용하세요.</div></div>`;
   }
   html += `<details class="raw"><summary>모델 원본 출력 보기 (병명만 취하고 나머지는 폐기됨)</summary>
     <div class="rawtext">${esc(res.vlm_raw||"")}</div></details></div>`;
@@ -1114,8 +1092,6 @@ function render(res){
   }
   kbHtml += `</div></div>`;
 
-  // [LLM 종합] 백엔드가 synthesis 를 주면: 자연스러운 종합 답변 + 'KB 원문 보기' 토글.
-  //           없으면(롤백/오프): 기존처럼 KB 원문을 그대로 표시.
   if(res.synthesis){
     html += `<div class="synth">
       <div class="synth-h">종합 답변<span class="synth-sub"> · 지식베이스 근거로 정리</span></div>
@@ -1128,6 +1104,7 @@ function render(res){
   resultBox.innerHTML = html;
 }
 
+// 병명을 특정하지 못한 응답을 유사 후보와 함께 그린다
 function renderUnknown(res){
   const sugg = res.suggestions||[];
   return `<div class="unknown">
@@ -1140,12 +1117,11 @@ function renderUnknown(res){
       <div class="s"><span class="name">${esc(n)}</span>
         <span class="bar"><i style="width:${Math.round(s*100)}%"></i></span>
         <span class="sc">${s.toFixed(2)}</span></div>`).join("")}</div>`:""}
-    <div class="callout warn" style="margin-top:15px"><span class="ci"></span>
-      <div>사진을 다시 촬영하거나(초점·조명·병반 근접), 전문가 확인을 권장합니다.</div></div>
+    <div class="callout warn" style="margin-top:15px"><div>사진을 다시 촬영하거나(초점·조명·병반 근접), 전문가 확인을 권장합니다.</div></div>
   </div>`;
 }
 
-/* ---------- 진단 (실제 API) ---------- */
+// 사진과 질문 의도를 서버에 보내 진단 결과를 받아 그린다
 async function diagnose(){
   if(!state.imageDataUrl){ toast("사진을 먼저 올려주세요"); return; }
   runBtn.classList.add("loading"); runBtn.disabled = true;
@@ -1171,12 +1147,13 @@ async function diagnose(){
   }
 }
 
-/* ---------- 유틸·이벤트 ---------- */
 let toastT;
+// 화면 아래에 짧은 안내 메시지를 띄운다
 function toast(msg){
   const t = el("toast"); t.textContent = msg; t.classList.add("show");
   clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("show"), 2800);
 }
+// 고른 사진을 읽어 미리보기에 띄우고 진단 버튼을 켠다
 function setImage(file){
   if(!file || !file.type.startsWith("image/")){ toast("이미지 파일만 올릴 수 있습니다"); return; }
   const rd = new FileReader();

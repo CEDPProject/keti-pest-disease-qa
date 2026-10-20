@@ -1,14 +1,12 @@
 import os
-import sys
 import json
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from classes import KB_CACHE_DIR  # noqa
-from kb_parser import parse_kb  # noqa
-from label_extract import SYNONYM  # noqa
+from backend.core.classes import KB_CACHE_DIR
+from backend.core.kb_parser import parse_kb
+from backend.core.label_extract import SYNONYM
 
 MODEL_NAME = "intfloat/multilingual-e5-large"
 CHUNK_NPY = os.path.join(KB_CACHE_DIR, "kb_chunks.npy")
@@ -17,25 +15,27 @@ NAME_NPY = os.path.join(KB_CACHE_DIR, "kb_names.npy")
 META = os.path.join(KB_CACHE_DIR, "kb_meta.json")
 CACHE_VERSION = 2
 
-RESOLVE_THRESHOLD = 0.86   # 이보다 낮으면 이름 매핑 포기(unknown)
-TOP_LINES = 3              # 섹션 안에서 앞에 제시할 문장 수
-LIST_SECTIONS = {"방제약제"}  # 문장 재랭킹을 하지 않고 전체를 보여줄 섹션
+RESOLVE_THRESHOLD = 0.86
+TOP_LINES = 3
+LIST_SECTIONS = {"방제약제"}
 
 SECTIONS = [("symptoms", "병징"), ("ecology", "발생생태"),
             ("control", "방제 및 과원관리"), ("pesticides", "방제약제")]
 
 
+# 섹션 청크 텍스트에서 '병명 섹션:' 머리를 뗀 본문을 돌려준다
 def _body(chunk: dict) -> str:
     return chunk["text"].split(":", 1)[1].strip() if ":" in chunk["text"] else chunk["text"]
 
 
+# 병명 정규화와 섹션·문장 검색, KB 원문 답변 조립을 맡는 검색기
 class KBRetriever:
+    # KB 를 청크·문장으로 나누고 임베딩 캐시를 준비한다
     def __init__(self, device: str = "cuda", rebuild: bool = False):
         self.model = SentenceTransformer(MODEL_NAME, device=device)
         self.kb = parse_kb()
         self.names = sorted(self.kb.keys())
 
-        # 섹션 청크 + 문장(불릿) 단위 항목
         self.chunks, self.lines = [], []
         for name in self.names:
             k = self.kb[name]
@@ -46,7 +46,7 @@ class KBRetriever:
                 self.chunks.append({"disease": name, "section": ko,
                                     "text": f"{name} {ko}: " + " ".join(vals)})
                 if ko in LIST_SECTIONS:
-                    continue  # 약제 목록은 문장 단위로 쪼개지 않음
+                    continue
                 for v in vals:
                     self.lines.append({"disease": name, "section": ko, "text": v})
 
@@ -57,13 +57,16 @@ class KBRetriever:
             self.line_emb = np.load(LINE_NPY)
             self.name_emb = np.load(NAME_NPY)
 
+    # 캐시 파일이 현재 KB 구성과 맞는지 확인한다
     def _cache_valid(self):
         if not all(os.path.exists(p) for p in (CHUNK_NPY, LINE_NPY, NAME_NPY, META)):
             return False
-        m = json.load(open(META, encoding="utf-8"))
+        with open(META, encoding="utf-8") as f:
+            m = json.load(f)
         return (m.get("version") == CACHE_VERSION and m.get("names") == self.names
                 and m.get("n_chunks") == len(self.chunks) and m.get("n_lines") == len(self.lines))
 
+    # 청크·문장·병명 임베딩을 계산해 캐시에 저장한다
     def _build(self):
         self.chunk_emb = self.model.encode([f"passage: {c['text']}" for c in self.chunks],
                                            normalize_embeddings=True, batch_size=16)
@@ -76,11 +79,11 @@ class KBRetriever:
         np.save(CHUNK_NPY, self.chunk_emb)
         np.save(LINE_NPY, self.line_emb)
         np.save(NAME_NPY, self.name_emb)
-        json.dump({"version": CACHE_VERSION, "names": self.names,
-                   "n_chunks": len(self.chunks), "n_lines": len(self.lines)},
-                  open(META, "w", encoding="utf-8"), ensure_ascii=False)
+        with open(META, "w", encoding="utf-8") as f:
+            json.dump({"version": CACHE_VERSION, "names": self.names,
+                       "n_chunks": len(self.chunks), "n_lines": len(self.lines)}, f, ensure_ascii=False)
 
-    # ---------- 1) 이름 해석 ----------
+    # 병명을 KB 표준 병명으로 정규화한다
     def resolve(self, raw_name: str) -> dict:
         if not raw_name:
             return {"disease": None, "how": "unknown", "score": 0.0}
@@ -100,6 +103,7 @@ class KBRetriever:
             return {"disease": None, "how": "unknown", "score": score}
         return {"disease": self.names[i], "how": "rag", "score": score}
 
+    # 임베딩 유사도가 높은 KB 병명 후보 k개를 돌려준다
     def suggest(self, raw_name: str, k: int = 3) -> list:
         if not raw_name:
             return []
@@ -107,7 +111,7 @@ class KBRetriever:
         sims = self.name_emb @ q
         return [(self.names[i], float(sims[i])) for i in np.argsort(-sims)[:k]]
 
-    # ---------- 2) 섹션 검색 ----------
+    # 한 병해의 섹션 청크를 질문 유사도 순으로 고른다
     def retrieve(self, disease: str, question: str = None, top_k: int = 2) -> list:
         idxs = [i for i, c in enumerate(self.chunks) if c["disease"] == disease]
         if not idxs:
@@ -119,7 +123,7 @@ class KBRetriever:
         return [dict(self.chunks[idxs[o]], score=float(sims[o]))
                 for o in np.argsort(-sims)[:top_k]]
 
-    # ---------- 3) 섹션 안에서 문장 재랭킹 ----------
+    # 한 섹션 안의 문장을 질문 유사도 순으로 다시 고른다
     def retrieve_lines(self, disease: str, question: str, section: str, top_n: int = TOP_LINES) -> list:
         idxs = [i for i, l in enumerate(self.lines)
                 if l["disease"] == disease and l["section"] == section]
@@ -130,7 +134,7 @@ class KBRetriever:
         return [dict(self.lines[idxs[o]], score=float(sims[o]))
                 for o in np.argsort(-sims)[:top_n]]
 
-    # ---------- 4) 답변 조립 (모델이 사실을 생성하지 않음) ----------
+    # 모델 생성 없이 KB 원문만으로 마크다운 답변을 조립한다
     def build_answer(self, disease: str, question: str = None) -> str:
         k = self.kb[disease]
         out = [f"## 진단: **{disease}**", ""]
@@ -151,7 +155,6 @@ class KBRetriever:
             top = secs[0]
 
             if top["section"] in LIST_SECTIONS:
-                # 약제 목록은 전체가 답
                 out += [f"### {top['section']}", _body(top), ""]
             else:
                 best = self.retrieve_lines(disease, question, top["section"])
@@ -160,7 +163,6 @@ class KBRetriever:
                 out += ["### 질문에 대한 답", ""]
                 out += [f"- {l['text']}" for l in best] if best else [_body(top)]
                 out.append("")
-                # 상위 문장이 섹션 전체를 덮으면 접어둘 내용이 없다
                 if best and len(best) < n_total:
                     out += [f"<details><summary>「{top['section']}」 원문 전체 보기 "
                             f"(문장 {n_total}개)</summary>",
@@ -176,7 +178,8 @@ class KBRetriever:
         return "\n".join(out)
 
 
-if __name__ == "__main__":
+# 이름 해석과 질문별 섹션·문장 검색 결과를 출력한다
+def main():
     r = KBRetriever(device="cpu")
     print(f"KB {len(r.names)}종 / 섹션청크 {len(r.chunks)}개 / 문장 {len(r.lines)}개\n")
 
@@ -187,11 +190,14 @@ if __name__ == "__main__":
 
     print("\n=== 하이브리드 검색: 질문별 상위 섹션 + 문장 ===")
     for q in ["약제 뭐 써요?", "언제 방제해요?", "어떤 증상이 보이나요?", "왜 생기나요?"]:
-        secs = r.retrieve("궤양병", q, top_k=1)
-        s = secs[0]
+        s = r.retrieve("궤양병", q, top_k=1)[0]
         print(f"\n  '{q}' → [{s['section']}] {s['score']:.3f}")
         if s["section"] in LIST_SECTIONS:
             print(f"      (목록 전체 반환, {len(_body(s))}자)")
         else:
             for l in r.retrieve_lines("궤양병", q, s["section"], top_n=2):
                 print(f"      · {l['score']:.3f}  {l['text'][:60]}...")
+
+
+if __name__ == "__main__":
+    main()

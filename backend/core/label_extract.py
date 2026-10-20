@@ -1,6 +1,7 @@
 import re
 
-# 정규 클래스명 (질병 7 + 정상 = 8클래스)
+from backend.core.classes import LABEL_TO_KEY
+
 CANON = [
     "검은점무늬병",
     "잿빛곰팡이병",
@@ -11,28 +12,20 @@ CANON = [
     "수지병",
     "정상",
 ]
-LABEL_TO_KEY = {
-    "궤양병": "canker", "더뎅이병": "scab", "잿빛곰팡이병": "gray_mold",
-    "수지병": "gummosis", "검은점무늬병": "black_spot", "녹색곰팡이병": "green_mold",
-    "탄저병": "anthracnose",
-    "정상": "normal",
-}
-# 동의어 → 정규명
 SYNONYM = {
     "회색곰팡이병": "잿빛곰팡이병",
     "푸른곰팡이병": "녹색곰팡이병",
     "멜라노스": "검은점무늬병",
     "흑점병": "검은점무늬병",
-    "검은무늬병": "검은점무늬병",   # 명칭 혼용 → 검은점무늬병으로 흡수(클래스 제거에 따른 하위호환)
+    "검은무늬병": "검은점무늬병",
     "건강": "정상", "건전": "정상",
 }
-# 부정 표현 (병명 직후 window 안에 있으면 후보 제외)
 NEG_PAT = re.compile(r"^(?:은|는|이|가)?\s*(?:아니|아님|아닙|제외|배제)")
 NEG_WINDOW = 6
 
 
+# 토큰 안에 들어 있는 정규 병명(동의어 포함)을 찾는다
 def _canon_of(token: str):
-    """토큰(공백제거)이 정규명/동의어면 정규명 반환, 아니면 None."""
     t = token.replace(" ", "").strip()
     for name in CANON:
         if name in t:
@@ -43,8 +36,8 @@ def _canon_of(token: str):
     return None
 
 
+# 부정문으로 언급된 것을 뺀 (위치, 정규 병명) 목록을 만든다
 def _candidates(text_nospace: str):
-    """(위치, 정규명) 목록. 부정문으로 언급된 것은 제외."""
     out = []
     names = [(n, n) for n in CANON] + [(s, c) for s, c in SYNONYM.items()]
     for surface, canon in names:
@@ -60,26 +53,23 @@ def _candidates(text_nospace: str):
     return sorted(out)
 
 
+# 생성 답변에서 병명을 찾아 클래스 키로 돌려준다
 def extract_label(text: str) -> str:
-    """예측 클래스 키 반환. 못 찾으면 'unknown'."""
     if not text:
         return "unknown"
     t = text.replace(" ", "")
 
-    # 1) 굵게 강조된 병명 (**병명**)
     for bold in re.findall(r"\*\*(.+?)\*\*", text):
         canon = _canon_of(bold)
         if canon:
             return LABEL_TO_KEY[canon]
 
-    # 2) '진단: X' / '병명: X' — 콜론 필수
     m = re.search(r"(?:진단|병명|의심\s*병명|의심되는\s*병명)\s*[:：]\s*([^\n,.]+)", text)
     if m:
         canon = _canon_of(m.group(1))
         if canon:
             return LABEL_TO_KEY[canon]
 
-    # 3) 본문에서 등장 위치가 가장 앞선 병명 (부정문 제외)
     cands = _candidates(t)
     if cands:
         return LABEL_TO_KEY[cands[0][1]]
@@ -87,18 +77,18 @@ def extract_label(text: str) -> str:
     return "unknown"
 
 
-if __name__ == "__main__":
+# 대표 문장으로 병명 추출 규칙을 점검한다
+def self_test():
     tests = [
-        # (입력, 기대)
         ("사진 속 감귤에서 관찰되는 증상으로 볼 때 **궤양병**(으)로 진단됩니다.", "canker"),
-        ("**궤양병**(으)로 진단됩니다. 더뎅이병과 감별 필요.", "canker"),      # 강조 우선
-        ("진단: 검은무늬병\n증상은...", "black_spot"),   # 검은무늬병 → 검은점무늬병 흡수(동의어)
+        ("**궤양병**(으)로 진단됩니다. 더뎅이병과 감별 필요.", "canker"),
+        ("진단: 검은무늬병\n증상은...", "black_spot"),
         ("이 감귤은 검은점무늬병으로 보입니다.", "black_spot"),
         ("회색곰팡이병(잿빛곰팡이병) 가능성", "gray_mold"),
-        ("더뎅이병보다는 궤양병일 가능성이 높습니다.", "scab"),               # 위치 기준: 더뎅이병이 먼저
-        ("궤양병 또는 더뎅이병 가능성이 있습니다.", "canker"),                 # 위치 기준
-        ("잿빛곰팡이병은 아니고 탄저병으로 보입니다.", "anthracnose"),         # 부정문 제외
-        ("이 감귤은 **검은반점병**으로 진단됩니다.", "unknown"),               # 없는 병명 → unknown
+        ("더뎅이병보다는 궤양병일 가능성이 높습니다.", "scab"),
+        ("궤양병 또는 더뎅이병 가능성이 있습니다.", "canker"),
+        ("잿빛곰팡이병은 아니고 탄저병으로 보입니다.", "anthracnose"),
+        ("이 감귤은 **검은반점병**으로 진단됩니다.", "unknown"),
         ("이 감귤은 **정상**(건강)으로 보입니다.", "normal"),
         ("뚜렷한 병징이 없어 건강한 상태로 보입니다.", "normal"),
     ]
@@ -109,3 +99,7 @@ if __name__ == "__main__":
         ok += good
         print(f"{'OK  ' if good else 'FAIL'} exp={exp:13s} got={got:13s} | {txt[:42]}")
     print(f"\n{ok}/{len(tests)} 통과")
+
+
+if __name__ == "__main__":
+    self_test()
